@@ -1,0 +1,46 @@
+name: Windows Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+          .\scripts\setup_env.ps1
+
+      - name: Run smoke checks
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python.exe main.py --self-check
+          .\.venv\Scripts\python.exe main.py --smoke-test
+
+      - name: Build executable
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+          .\scripts\build_exe.ps1
+
+      - name: Upload executable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AgentGuiStarter-windows
+          path: dist/AgentGuiStarter
+
