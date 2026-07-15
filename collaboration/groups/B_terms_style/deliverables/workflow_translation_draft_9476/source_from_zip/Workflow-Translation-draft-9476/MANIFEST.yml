@@ -1,0 +1,11 @@
+type: Workflow
+version: 1.0.0
+main:
+    id: 7661678571702747178
+    name: Translation
+    desc: 中国文化多模态知识库外译智能体_B的工作流，输入待翻译中文文本后，自动控制风格、统一术语，再通过大模型相互辩论学习汲取初译文优点，最终输出供人工译后编辑的最终译文。
+    icon: plugin_icon/workflow.png
+    version: ""
+    flowMode: 0
+    commitId: ""
+sub: []

@@ -14,8 +14,15 @@
 
 | 类型 | 路径 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| 术语库 | `collaboration/groups/B_terms_style/terminology/` | 待提交 | 稳定后同步到 `collaboration/shared/terminology/` |
-| 风格提示词 | `collaboration/groups/B_terms_style/prompts/` | 待提交 | 儿童文学翻译风格控制 |
+| 术语库 | `collaboration/groups/B_terms_style/terminology/中华文化术语对照表.xlsx` | 已归档 | B 组原始 Excel |
+| 术语库机器可读版 | `collaboration/groups/B_terms_style/terminology/zhonghua_culture_terms.normalized.csv` | 已生成 | 同步 JSON 版本 |
+| 共享术语库 | `collaboration/shared/terminology/` | 已同步 | 供 A/C 组和总整合调用 |
+| 来源 PDF | `collaboration/groups/B_terms_style/references/翻译资源编写-中国文化知识百科（图文有声版）.pdf` | 已归档 | B 组自编知识库来源 |
+| PRD | `collaboration/groups/B_terms_style/deliverables/prd/B组工作流prd文档.docx` | 已归档 | 已抽取 Markdown |
+| Coze 工作流压缩包 | `collaboration/groups/B_terms_style/deliverables/workflow_translation_draft_9476/archives/Workflow-Translation-draft-9476.zip` | 已归档 | 原始导出包 |
+| Coze 工作流展开 | `collaboration/groups/B_terms_style/deliverables/workflow_translation_draft_9476/source_from_zip/` | 已归档 | 已生成 `workflow_summary.json` |
+| 风格提示词 | `collaboration/groups/B_terms_style/prompts/workflow_b_prompts_from_yaml.md` | 已抽取 | 从实际 Coze YAML 提取，便于审阅 |
+| 验收反馈 | `collaboration/groups/B_terms_style/deliverables/notes/B组交付物验收反馈_20260715.md` | 已归档 | 含需 B 组补充事项 |
 
 ## C 组：文本、DOCX 与音频翻译
 
@@ -30,6 +37,6 @@
 ## 总整合待办
 
 - 统一 Excel 字段规范。
-- 从 B 组术语库生成可检索资源。
+- 将 B 组共享术语库接入总智能体、GUI 或 A/C 组适配器。
 - 为 A/C 组成果编写适配器。
 - 在主 GUI 中增加分通道入口和整合状态面板。

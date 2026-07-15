@@ -1,0 +1,319 @@
+{
+  "workflow_id": "7661678571702747178",
+  "name": "Translation",
+  "description": "中国文化多模态知识库外译智能体_B的工作流，输入待翻译中文文本后，自动控制风格、统一术语，再通过大模型相互辩论学习汲取初译文优点，最终输出供人工译后编辑的最终译文。",
+  "node_count": 18,
+  "edge_count": 28,
+  "nodes": [
+    {
+      "id": "100001",
+      "type": "start",
+      "title": "开始",
+      "model": "",
+      "timeoutMs": null,
+      "retryTimes": null,
+      "outputs": [
+        "input_text",
+        "input_title"
+      ],
+      "input_ref_nodes": []
+    },
+    {
+      "id": "900001",
+      "type": "end",
+      "title": "结束",
+      "model": "",
+      "timeoutMs": null,
+      "retryTimes": null,
+      "outputs": [],
+      "input_ref_nodes": [
+        "187943"
+      ]
+    },
+    {
+      "id": "168404",
+      "type": "llm",
+      "title": "术语提取",
+      "model": "豆包·1.5·Lite·32k",
+      "timeoutMs": 300000,
+      "retryTimes": 0,
+      "outputs": [
+        "knowledgeFCParam",
+        "term"
+      ],
+      "input_ref_nodes": [
+        "100001"
+      ]
+    },
+    {
+      "id": "111800",
+      "type": "llm",
+      "title": "风格提炼",
+      "model": "Kimi-128k",
+      "timeoutMs": 300000,
+      "retryTimes": 0,
+      "outputs": [
+        "pluginFCParam",
+        "style"
+      ],
+      "input_ref_nodes": [
+        "100001"
+      ]
+    },
+    {
+      "id": "189818",
+      "type": "llm",
+      "title": "Kimi初译",
+      "model": "Kimi-32k",
+      "timeoutMs": 300000,
+      "retryTimes": 0,
+      "outputs": [
+        "kimi1output"
+      ],
+      "input_ref_nodes": [
+        "100001",
+        "177272"
+      ]
+    },
+    {
+      "id": "134388",
+      "type": "llm",
+      "title": "DeepSeek初译",
+      "model": "DeepSeek-V3.2",
+      "timeoutMs": 300000,
+      "retryTimes": 0,
+      "outputs": [
+        "deep1output"
+      ],
+      "input_ref_nodes": [
+        "100001",
+        "177272"
+      ]
+    },
+    {
+      "id": "174113",
+      "type": "llm",
+      "title": "豆包初译",
+      "model": "豆包·1.8·深度思考",
+      "timeoutMs": 300000,
+      "retryTimes": 0,
+      "outputs": [
+        "dou1output",
+        "reasoning_content"
+      ],
+      "input_ref_nodes": [
+        "100001",
+        "177272"
+      ]
+    },
+    {
+      "id": "141329",
+      "type": "llm",
+      "title": "Kimi学习评估",
+      "model": "Kimi-32k",
+      "timeoutMs": 300000,
+      "retryTimes": 0,
+      "outputs": [
+        "kimi_learn"
+      ],
+      "input_ref_nodes": [
+        "100001",
+        "134388",
+        "168404",
+        "174113",
+        "189818"
+      ]
+    },
+    {
+      "id": "183969",
+      "type": "llm",
+      "title": "豆包学习评估",
+      "model": "豆包·1.8·深度思考",
+      "timeoutMs": 300000,
+      "retryTimes": 0,
+      "outputs": [
+        "dou_learn",
+        "reasoning_content"
+      ],
+      "input_ref_nodes": [
+        "100001",
+        "134388",
+        "168404",
+        "174113",
+        "189818"
+      ]
+    },
+    {
+      "id": "128266",
+      "type": "llm",
+      "title": "DeepSeek学习评估",
+      "model": "DeepSeek-V3.2",
+      "timeoutMs": 300000,
+      "retryTimes": 0,
+      "outputs": [
+        "deep_learn"
+      ],
+      "input_ref_nodes": [
+        "100001",
+        "134388",
+        "168404",
+        "174113",
+        "189818"
+      ]
+    },
+    {
+      "id": "179545",
+      "type": "llm",
+      "title": "智谱总控融合",
+      "model": "GLM-4.7",
+      "timeoutMs": 600000,
+      "retryTimes": 0,
+      "outputs": [
+        "final_translation"
+      ],
+      "input_ref_nodes": [
+        "100001",
+        "111800",
+        "128266",
+        "134388",
+        "141329",
+        "168404",
+        "174113",
+        "183969",
+        "189818"
+      ]
+    },
+    {
+      "id": "194612",
+      "type": "code",
+      "title": "初译聚合",
+      "model": "",
+      "timeoutMs": 60000,
+      "retryTimes": 0,
+      "outputs": [
+        "trans"
+      ],
+      "input_ref_nodes": [
+        "134388",
+        "174113",
+        "189818"
+      ]
+    },
+    {
+      "id": "193245",
+      "type": "llm",
+      "title": "豆包辩论",
+      "model": "豆包·1.8·深度思考",
+      "timeoutMs": 300000,
+      "retryTimes": 0,
+      "outputs": [
+        "doubao_debate",
+        "reasoning_content"
+      ],
+      "input_ref_nodes": [
+        "100001",
+        "111800",
+        "168404",
+        "179545"
+      ]
+    },
+    {
+      "id": "143044",
+      "type": "llm",
+      "title": "Kimi辩论",
+      "model": "Kimi-128k",
+      "timeoutMs": 300000,
+      "retryTimes": 0,
+      "outputs": [
+        "kimi_debate"
+      ],
+      "input_ref_nodes": [
+        "100001",
+        "111800",
+        "168404",
+        "179545"
+      ]
+    },
+    {
+      "id": "149372",
+      "type": "llm",
+      "title": "DeepSeek辩论",
+      "model": "DeepSeek-V3.2",
+      "timeoutMs": 300000,
+      "retryTimes": 0,
+      "outputs": [
+        "deepseek_debate"
+      ],
+      "input_ref_nodes": [
+        "100001",
+        "111800",
+        "168404",
+        "179545"
+      ]
+    },
+    {
+      "id": "187943",
+      "type": "llm",
+      "title": "最终输出",
+      "model": "GLM-4.7",
+      "timeoutMs": 600000,
+      "retryTimes": 0,
+      "outputs": [
+        "final_output"
+      ],
+      "input_ref_nodes": [
+        "191870"
+      ]
+    },
+    {
+      "id": "177272",
+      "type": "code",
+      "title": "风格术语聚合",
+      "model": "",
+      "timeoutMs": 60000,
+      "retryTimes": 0,
+      "outputs": [
+        "data"
+      ],
+      "input_ref_nodes": [
+        "111800",
+        "168404"
+      ]
+    },
+    {
+      "id": "191870",
+      "type": "code",
+      "title": "辩论聚合",
+      "model": "",
+      "timeoutMs": 60000,
+      "retryTimes": 0,
+      "outputs": [
+        "debate"
+      ],
+      "input_ref_nodes": [
+        "100001",
+        "111800",
+        "143044",
+        "149372",
+        "168404",
+        "179545",
+        "193245"
+      ]
+    }
+  ],
+  "retryTimes_distribution": {
+    "0": 16
+  },
+  "timeoutMs_distribution": {
+    "60000": 3,
+    "300000": 11,
+    "600000": 2
+  },
+  "knowledge_ids": [
+    "7661642922585440283"
+  ],
+  "plugin_api_names": [
+    "complex_search",
+    "paper_search"
+  ]
+}

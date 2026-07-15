@@ -1,0 +1,32 @@
+[
+  {
+    "path": "collaboration/groups/B_terms_style/deliverables/workflow_translation_draft_9476/archives/Workflow-Translation-draft-9476.zip",
+    "bytes": 8861,
+    "sha256": "2cf8b5aa3bdc7119b98f1a8bd24f50f778269bd78f437237928f4954a6cf4990"
+  },
+  {
+    "path": "collaboration/groups/B_terms_style/deliverables/workflow_translation_draft_9476/source_from_zip/Workflow-Translation-draft-9476/workflow/Translation-draft.yaml",
+    "bytes": 76063,
+    "sha256": "45da86ab983136179c292e5809180ac45fa2bf1185973f63f520adc28bfe32a6"
+  },
+  {
+    "path": "collaboration/groups/B_terms_style/deliverables/workflow_translation_draft_9476/source_from_zip/Workflow-Translation-draft-9476/MANIFEST.yml",
+    "bytes": 431,
+    "sha256": "ac94c2a2b18de17eb79ceae78814452676663b556b708ad8f6cbf1abbf9d8c9c"
+  },
+  {
+    "path": "collaboration/groups/B_terms_style/deliverables/prd/B组工作流prd文档.docx",
+    "bytes": 40191,
+    "sha256": "06aca14d72c6e2583a40d539ecd4df19ceafb2206a3cf24597b7125f88c29d89"
+  },
+  {
+    "path": "collaboration/groups/B_terms_style/terminology/中华文化术语对照表.xlsx",
+    "bytes": 59936,
+    "sha256": "03659afb0c709d30de28e0eef6b6114669c24895432e7d855493b3d921b41ac7"
+  },
+  {
+    "path": "collaboration/groups/B_terms_style/references/翻译资源编写-中国文化知识百科（图文有声版）.pdf",
+    "bytes": 10978986,
+    "sha256": "924b8b3987b4e1b06694cce17410c507c6ea44b289958ae6d25cce52fb0dd243"
+  }
+]

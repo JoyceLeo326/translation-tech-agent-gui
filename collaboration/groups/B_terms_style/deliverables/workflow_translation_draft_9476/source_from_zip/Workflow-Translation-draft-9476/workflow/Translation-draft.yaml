@@ -1,0 +1,2175 @@
+schema_version: 1.0.0
+name: Translation
+id: 7661678571702747178
+description: "中国文化多模态知识库外译智能体_B的工作流，输入待翻译中文文本后，自动控制风格、统一术语，再通过大模型相互辩论学习汲取初译文优点，最终输出供人工译后编辑的最终译文。"
+mode: workflow
+icon: plugin_icon/workflow.png
+nodes:
+    - id: "100001"
+      type: start
+      title: 开始
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-Start-v2.jpg
+      description: "工作流的起始节点，用于设定启动工作流需要的信息"
+      position:
+        x: 180
+        y: 39.00000000000001
+      parameters:
+        node_outputs:
+            input_text:
+                type: string
+                required: true
+                value: null
+            input_title:
+                type: string
+                value: null
+    - id: "900001"
+      type: end
+      title: 结束
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-End-v2.jpg
+      description: "工作流的最终节点，用于返回工作流运行后的结果信息"
+      position:
+        x: 4780
+        y: 430.95000000000005
+      parameters:
+        node_inputs:
+            - name: final_output
+              input:
+                type: string
+                value:
+                    path: final_output
+                    ref_node: "187943"
+        terminatePlan: returnVariables
+    - id: "168404"
+      type: llm
+      title: 术语提取
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-LLM-v2.jpg
+      description: "调用大语言模型,使用变量和提示词生成回复"
+      version: "3"
+      position:
+        x: 640
+        y: 1136.5249999999999
+      parameters:
+        fcParam:
+            knowledgeFCParam:
+                global_setting:
+                    auto: false
+                    min_score: 0.5
+                    no_recall_reply_customize_prompt: 抱歉，您的问题超出了我的知识范围，并且无法在当前阶段回答
+                    no_recall_reply_mode: 0
+                    search_mode: 0
+                    show_source: false
+                    show_source_mode: 0
+                    top_k: 3
+                    use_nl2_sql: true
+                    use_rerank: true
+                    use_rewrite: true
+                knowledgeList:
+                    - id: "7661642922585440283"
+                      knowledgeType: 0
+                      name: 中国文化术语
+        fcParamVar:
+            knowledgeFCParam:
+                knowledgeList: []
+        llmParam:
+            - name: temperature
+              input:
+                type: float
+                value: "0.8"
+            - name: maxTokens
+              input:
+                type: integer
+                value: "4096"
+            - name: spCurrentTime
+              input:
+                type: boolean
+                value: false
+            - name: spAntiLeak
+              input:
+                type: boolean
+                value: false
+            - name: prefixCache
+              input:
+                type: boolean
+                value: false
+            - name: responseFormat
+              input:
+                type: integer
+                value: "2"
+            - name: modelName
+              input:
+                type: string
+                value: 豆包·1.5·Lite·32k
+            - name: modelType
+              input:
+                type: integer
+                value: "1741232583"
+            - name: generationDiversity
+              input:
+                type: string
+                value: balance
+            - name: parameters
+              input:
+                type: object
+                value: null
+            - name: prompt
+              input:
+                type: string
+                value: |-
+                    请从绑定的「中国文化术语库」中检索与以下原文相关的术语，并按系统指令整理输出。
+                    待翻译原文：
+                    {{input_text}}
+            - name: enableChatHistory
+              input:
+                type: boolean
+                value: false
+            - name: chatHistoryRound
+              input:
+                type: integer
+                value: "3"
+            - name: systemPrompt
+              input:
+                type: string
+                value: |-
+                    你是一个专业的术语检索与整理专家。你的任务是从绑定的知识库中检索与待翻译文本相关的中国文化术语，并整理成严格结构化的术语表。
+                    你必须遵守以下全局规则：
+                    1. 只输出结构化术语表，严禁输出任何解释、分析过程、总结性文字或格式装饰。
+                    2. 输出格式必须严格为：中文术语 | 英文翻译 | 出处页码 | 上下文片段
+                    3. 若同一中文术语对应多个英译，全部保留并在该条目标注「需人工定夺」。
+                    4. 所有术语必须按其在原文中出现的先后顺序排列。
+                    5. 自动去除重复条目，保留最完整的那个。
+                    6. 如果知识库中未检索到相关术语，直接输出"未检索到匹配术语"，不要编造。
+            - name: stableSystemPrompt
+              input:
+                type: string
+                value: ""
+            - name: canContinue
+              input:
+                type: boolean
+                value: false
+            - name: loopPromptVersion
+              input:
+                type: string
+                value: ""
+            - name: loopPromptName
+              input:
+                type: string
+                value: ""
+            - name: loopPromptId
+              input:
+                type: string
+                value: ""
+        node_inputs:
+            - name: input_text
+              input:
+                value:
+                    path: input_text
+                    ref_node: "100001"
+        node_outputs:
+            term:
+                type: string
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 300000
+    - id: "111800"
+      type: llm
+      title: 风格提炼
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-LLM-v2.jpg
+      description: "调用大语言模型,使用变量和提示词生成回复"
+      version: "3"
+      position:
+        x: 640
+        y: 0
+      parameters:
+        fcParam:
+            pluginFCParam:
+                pluginList:
+                    - api_id: "7376490675891634211"
+                      api_name: paper_search
+                      is_draft: false
+                      plugin_id: "7376490675891617827"
+                      plugin_version: ""
+                    - api_id: "7380279400157282338"
+                      api_name: complex_search
+                      is_draft: false
+                      plugin_id: "7380279400157265954"
+                      plugin_version: ""
+        fcParamVar:
+            knowledgeFCParam: {}
+        llmParam:
+            - name: temperature
+              input:
+                type: float
+                value: "0.5"
+            - name: topP
+              input:
+                type: float
+                value: "1"
+            - name: frequencyPenalty
+              input:
+                type: float
+                value: "0"
+            - name: presencePenalty
+              input:
+                type: float
+                value: "0"
+            - name: maxTokens
+              input:
+                type: integer
+                value: "2000"
+            - name: responseFormat
+              input:
+                type: integer
+                value: "2"
+            - name: spCurrentTime
+              input:
+                type: boolean
+                value: false
+            - name: spAntiLeak
+              input:
+                type: boolean
+                value: false
+            - name: modelName
+              input:
+                type: string
+                value: Kimi-128k
+            - name: modelType
+              input:
+                type: integer
+                value: "1713366995"
+            - name: generationDiversity
+              input:
+                type: string
+                value: balance
+            - name: parameters
+              input:
+                type: object
+                value: null
+            - name: prompt
+              input:
+                type: string
+                value: |-
+                    请对以下待翻译文本进行完整分析，并输出风格指令卡。
+                    【文本标题/来源】
+                    {{input_title}}
+                    【待翻译文本】
+                    {{input_text}}
+                    任务要求：
+                    1. 结合标题/来源信息，判断文本类型（信息型文本/文学话语/术语密集型/混合型）及所属中国文化子领域（哲学、艺术、民俗、历史、宗教等）。
+                    2. 基于判断结果，检索并引用相关学术翻译理论，提炼核心观点。
+                    3. 形成英译风格指南：语域选择、句式偏好、文化负载词处理策略、信息密度控制、修辞转换方式。
+                    4. 整理为「风格指令卡」，用祈使句和具体示例说明，明确列出「必须做」和「禁止做」。
+                    5. 只输出风格指令卡内容，不要输出任何其他文字。
+            - name: enableChatHistory
+              input:
+                type: boolean
+                value: false
+            - name: chatHistoryRound
+              input:
+                type: integer
+                value: "3"
+            - name: systemPrompt
+              input:
+                type: string
+                value: |-
+                    你是一位资深的中英学术翻译风格分析师，专精中国文化外译研究。
+                    你的任务是根据输入文本，自动联网检索相关学术翻译理论，并提炼出可直接执行的英译风格指令卡。
+                    你必须遵守：
+                    1. 只输出最终的风格指令卡，严禁输出分析过程、文献引用、思考过程或总结性废话。
+                    2. 风格指令卡必须用祈使句和具体示例写成，明确列出「必须做」和「禁止做」。
+                    3. 字数严格控制在 400 字以内。
+                    4. 如果无法联网检索，基于你内部知识完成分析，但不得编造不存在的理论。
+            - name: stableSystemPrompt
+              input:
+                type: string
+                value: ""
+            - name: canContinue
+              input:
+                type: boolean
+                value: false
+            - name: loopPromptVersion
+              input:
+                type: string
+                value: ""
+            - name: loopPromptName
+              input:
+                type: string
+                value: ""
+            - name: loopPromptId
+              input:
+                type: string
+                value: ""
+        node_inputs:
+            - name: input_text
+              input:
+                value:
+                    path: input_text
+                    ref_node: "100001"
+            - name: input_title
+              input:
+                value:
+                    path: input_title
+                    ref_node: "100001"
+        node_outputs:
+            style:
+                type: string
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 300000
+    - id: "189818"
+      type: llm
+      title: Kimi初译
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-LLM-v2.jpg
+      description: "调用大语言模型,使用变量和提示词生成回复"
+      version: "3"
+      position:
+        x: 1560
+        y: 599.925
+      parameters:
+        fcParamVar:
+            knowledgeFCParam: {}
+        llmParam:
+            - name: temperature
+              input:
+                type: float
+                value: "0.5"
+            - name: topP
+              input:
+                type: float
+                value: "1"
+            - name: frequencyPenalty
+              input:
+                type: float
+                value: "0"
+            - name: presencePenalty
+              input:
+                type: float
+                value: "0"
+            - name: maxTokens
+              input:
+                type: integer
+                value: "2000"
+            - name: responseFormat
+              input:
+                type: integer
+                value: "2"
+            - name: spCurrentTime
+              input:
+                type: boolean
+                value: false
+            - name: spAntiLeak
+              input:
+                type: boolean
+                value: false
+            - name: modelName
+              input:
+                type: string
+                value: Kimi-32k
+            - name: modelType
+              input:
+                type: integer
+                value: "1711283562"
+            - name: generationDiversity
+              input:
+                type: string
+                value: balance
+            - name: parameters
+              input:
+                type: object
+                value: null
+            - name: prompt
+              input:
+                type: string
+                value: |-
+                    【风格指令】
+                    {{data.style}}
+
+                    【术语表】
+                    {{data.term}}
+
+                    【待翻译原文】
+                    {{input_text}}
+
+                    请翻译。只输出英文译文。
+            - name: enableChatHistory
+              input:
+                type: boolean
+                value: false
+            - name: chatHistoryRound
+              input:
+                type: integer
+                value: "3"
+            - name: systemPrompt
+              input:
+                type: string
+                value: |-
+                    你是一位专业中译英译者，专精中国文化外译。你的唯一任务是输出英译文本。
+                    你必须遵守：
+                    1. 严格遵循提供的风格指令和术语表。
+                    2. 术语表中的词必须使用其推荐英译，不得自行替换，若术语表中英文翻译有两种，任选其一，保持统一即可。
+                    3. 术语表未覆盖的文化负载词，根据语境自行翻译，严禁在译文中做任何解释、标注、注释或括号说明。
+                    4. 请在学习风格指令的基础上，翻译时特别注意文学话语的流畅性和可读性。
+                    5. 只输出完整英译文本，严禁输出任何说明、反思、注释、标题、分段标记或格式装饰。
+                    6. 不要输出"以下是译文"等任何引导语。
+            - name: stableSystemPrompt
+              input:
+                type: string
+                value: ""
+            - name: canContinue
+              input:
+                type: boolean
+                value: false
+            - name: loopPromptVersion
+              input:
+                type: string
+                value: ""
+            - name: loopPromptName
+              input:
+                type: string
+                value: ""
+            - name: loopPromptId
+              input:
+                type: string
+                value: ""
+        node_inputs:
+            - name: input_text
+              input:
+                value:
+                    path: input_text
+                    ref_node: "100001"
+            - name: data
+              input:
+                type: object
+                value:
+                    path: data
+                    ref_node: "177272"
+        node_outputs:
+            kimi1output:
+                type: string
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 300000
+    - id: "134388"
+      type: llm
+      title: DeepSeek初译
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-LLM-v2.jpg
+      description: "调用大语言模型,使用变量和提示词生成回复"
+      version: "3"
+      position:
+        x: 1560
+        y: 999.8749999999999
+      parameters:
+        fcParamVar:
+            knowledgeFCParam: {}
+        llmParam:
+            - name: apiMode
+              input:
+                type: integer
+                value: "0"
+            - name: maxTokens
+              input:
+                type: integer
+                value: "2200"
+            - name: spCurrentTime
+              input:
+                type: boolean
+                value: false
+            - name: spAntiLeak
+              input:
+                type: boolean
+                value: false
+            - name: thinkingType
+              input:
+                type: string
+                value: disabled
+            - name: responseFormat
+              input:
+                type: integer
+                value: "2"
+            - name: modelName
+              input:
+                type: string
+                value: DeepSeek-V3.2
+            - name: modelType
+              input:
+                type: integer
+                value: "1764929611"
+            - name: generationDiversity
+              input:
+                type: string
+                value: balance
+            - name: parameters
+              input:
+                type: object
+                value: null
+            - name: prompt
+              input:
+                type: string
+                value: |-
+                    【风格指令】
+                    {{data.style}}
+
+                    【术语表】
+                    {{data.term}}
+
+                    【待翻译原文】
+                    {{input_text}}
+
+                    请翻译。只输出英文译文。
+            - name: enableChatHistory
+              input:
+                type: boolean
+                value: false
+            - name: chatHistoryRound
+              input:
+                type: integer
+                value: "3"
+            - name: systemPrompt
+              input:
+                type: string
+                value: |-
+                    你是一位专业中译英译者，专精中国文化外译。你的唯一任务是输出英译文本。
+                    你必须遵守：
+                    1. 严格遵循提供的风格指令和术语表。
+                    2. 术语表中的词必须使用其推荐英译，不得自行替换，若术语表中英文翻译有两种，任选其一，保持统一即可。
+                    3. 术语表未覆盖的文化负载词，请运用你的深度推理能力，在风格指南和术语表约束下，根据语境自行对文化负载词进行最恰当的翻译，严禁在译文中做任何解释、标注、注释或括号说明。
+                    4. 只输出完整英译文本，严禁输出任何说明、反思、注释、标题、分段标记或格式装饰。
+                    5. 不要输出"以下是译文"等任何引导语。
+            - name: stableSystemPrompt
+              input:
+                type: string
+                value: ""
+            - name: canContinue
+              input:
+                type: boolean
+                value: false
+            - name: loopPromptVersion
+              input:
+                type: string
+                value: ""
+            - name: loopPromptName
+              input:
+                type: string
+                value: ""
+            - name: loopPromptId
+              input:
+                type: string
+                value: ""
+        node_inputs:
+            - name: input_text
+              input:
+                value:
+                    path: input_text
+                    ref_node: "100001"
+            - name: data
+              input:
+                type: object
+                value:
+                    path: data
+                    ref_node: "177272"
+        node_outputs:
+            deep1output:
+                type: string
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 300000
+    - id: "174113"
+      type: llm
+      title: 豆包初译
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-LLM-v2.jpg
+      description: "调用大语言模型,使用变量和提示词生成回复"
+      version: "3"
+      position:
+        x: 1560
+        y: 73.32500000000002
+      parameters:
+        fcParamVar:
+            knowledgeFCParam: {}
+        llmParam:
+            - name: generationDiversity
+              input:
+                type: string
+                value: default_val
+            - name: apiMode
+              input:
+                type: integer
+                value: "0"
+            - name: temperature
+              input:
+                type: float
+                value: "1"
+            - name: topP
+              input:
+                type: float
+                value: "0.7"
+            - name: frequencyPenalty
+              input:
+                type: float
+                value: "0"
+            - name: maxTokens
+              input:
+                type: integer
+                value: "4096"
+            - name: spCurrentTime
+              input:
+                type: boolean
+                value: false
+            - name: spAntiLeak
+              input:
+                type: boolean
+                value: false
+            - name: thinkingType
+              input:
+                type: string
+                value: disabled
+            - name: responseFormat
+              input:
+                type: integer
+                value: "2"
+            - name: modelType
+              input:
+                type: integer
+                value: "1768187121"
+            - name: modelName
+              input:
+                type: string
+                value: 豆包·1.8·深度思考
+            - name: parameters
+              input:
+                type: object
+                properties:
+                    max_completion_tokens:
+                        type: integer
+                        value: "0"
+                    reasoning_effort:
+                        type: string
+                        value: minimal
+                value: null
+            - name: prompt
+              input:
+                type: string
+                value: |-
+                    【风格指令】
+                    {{data.style}}
+
+                    【术语表】
+                    {{data.term}}
+
+                    【待翻译原文】
+                    {{input_text}}
+
+                    请翻译。只输出英文译文。
+            - name: enableChatHistory
+              input:
+                type: boolean
+                value: false
+            - name: chatHistoryRound
+              input:
+                type: integer
+                value: "3"
+            - name: systemPrompt
+              input:
+                type: string
+                value: |-
+                    你是一位专业中译英译者，专精中国文化外译。你的唯一任务是输出英译文本。
+                    你必须遵守：
+                    1. 严格遵循提供的风格指令和术语表。
+                    2. 术语表中的词必须使用其推荐英译，不得自行替换，若术语表中英文翻译有两种，任选其一，保持统一即可。
+                    3. 术语表未覆盖的文化负载词，根据语境自行翻译，严禁在译文中做任何解释、标注、注释或括号说明。
+                    4. 只输出完整英译文本，严禁输出任何说明、反思、注释、标题、分段标记或格式装饰。
+                    5. 不要输出"以下是译文"等任何引导语。
+            - name: stableSystemPrompt
+              input:
+                type: string
+                value: ""
+            - name: canContinue
+              input:
+                type: boolean
+                value: false
+            - name: loopPromptVersion
+              input:
+                type: string
+                value: ""
+            - name: loopPromptName
+              input:
+                type: string
+                value: ""
+            - name: loopPromptId
+              input:
+                type: string
+                value: ""
+        node_inputs:
+            - name: input_text
+              input:
+                value:
+                    path: input_text
+                    ref_node: "100001"
+            - name: data
+              input:
+                type: object
+                value:
+                    path: data
+                    ref_node: "177272"
+        node_outputs:
+            dou1output:
+                type: string
+                value: null
+            reasoning_content:
+                type: string
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 300000
+    - id: "141329"
+      type: llm
+      title: Kimi学习评估
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-LLM-v2.jpg
+      description: "调用大语言模型,使用变量和提示词生成回复"
+      version: "3"
+      position:
+        x: 2480
+        y: 473.275
+      parameters:
+        fcParamVar:
+            knowledgeFCParam: {}
+        llmParam:
+            - name: temperature
+              input:
+                type: float
+                value: "0.5"
+            - name: topP
+              input:
+                type: float
+                value: "1"
+            - name: frequencyPenalty
+              input:
+                type: float
+                value: "0"
+            - name: presencePenalty
+              input:
+                type: float
+                value: "0"
+            - name: maxTokens
+              input:
+                type: integer
+                value: "2000"
+            - name: responseFormat
+              input:
+                type: integer
+                value: "2"
+            - name: spCurrentTime
+              input:
+                type: boolean
+                value: false
+            - name: spAntiLeak
+              input:
+                type: boolean
+                value: false
+            - name: modelName
+              input:
+                type: string
+                value: Kimi-32k
+            - name: modelType
+              input:
+                type: integer
+                value: "1711283562"
+            - name: generationDiversity
+              input:
+                type: string
+                value: balance
+            - name: parameters
+              input:
+                type: object
+                value: null
+            - name: prompt
+              input:
+                type: string
+                value: |-
+                    【原文】
+                    {{input_text}}
+                    【术语表】
+                    {{term}}
+                    【译文A：豆包】
+                    {{dou1output}}
+                    【译文B：Kimi】
+                    {{kimi1output}}
+                    【译文C：DeepSeek】
+                    {{deep1output}}
+                    请完成：
+                    1. 对三个译文整体质量进行简要排序并说明核心理由；
+                    2. 重点从译文A（豆包）和译文C（Deepseek）中找出具体优点（术语准确性、句式流畅度、文化传达效果、英语可读性），列出Kimi应采纳的改进点；
+                    3. 检查三个译文是否都严格遵循了术语表，标记任何偏差；
+                    4. 输出简洁的「优点学习报告」。
+            - name: enableChatHistory
+              input:
+                type: boolean
+                value: false
+            - name: chatHistoryRound
+              input:
+                type: integer
+                value: "3"
+            - name: systemPrompt
+              input:
+                type: string
+                value: |-
+                    你是一位资深的翻译质量评估专家，熟悉中国文化外译。你的任务是逐段对比包括自己的译文在内的三个译文，找出值得Kimi学习的优点。
+                    你必须遵守：
+                    1. 只输出简洁的「优点学习报告」，列出可采纳的具体改进点和术语偏差。
+                    2. 严禁输出寒暄、总结性废话、格式装饰或任何与改进无关的内容。
+                    3. 报告结构：整体排序 → 具体优点 → 术语偏差。
+                    4. 重点关注：术语准确性和统一性、句式流畅度、文化信息传达效果、英语母语可读性。
+                    5. 不要对原文进行重新翻译。
+            - name: stableSystemPrompt
+              input:
+                type: string
+                value: ""
+            - name: canContinue
+              input:
+                type: boolean
+                value: false
+            - name: loopPromptVersion
+              input:
+                type: string
+                value: ""
+            - name: loopPromptName
+              input:
+                type: string
+                value: ""
+            - name: loopPromptId
+              input:
+                type: string
+                value: ""
+        node_inputs:
+            - name: input_text
+              input:
+                value:
+                    path: input_text
+                    ref_node: "100001"
+            - name: term
+              input:
+                value:
+                    path: term
+                    ref_node: "168404"
+            - name: dou1output
+              input:
+                value:
+                    path: dou1output
+                    ref_node: "174113"
+            - name: kimi1output
+              input:
+                value:
+                    path: kimi1output
+                    ref_node: "189818"
+            - name: deep1output
+              input:
+                value:
+                    path: deep1output
+                    ref_node: "134388"
+        node_outputs:
+            kimi_learn:
+                type: string
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 300000
+    - id: "183969"
+      type: llm
+      title: 豆包学习评估
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-LLM-v2.jpg
+      description: "调用大语言模型,使用变量和提示词生成回复"
+      version: "3"
+      position:
+        x: 2480
+        y: 78.32500000000002
+      parameters:
+        fcParamVar:
+            knowledgeFCParam: {}
+        llmParam:
+            - name: generationDiversity
+              input:
+                type: string
+                value: default_val
+            - name: apiMode
+              input:
+                type: integer
+                value: "0"
+            - name: temperature
+              input:
+                type: float
+                value: "1"
+            - name: topP
+              input:
+                type: float
+                value: "0.7"
+            - name: frequencyPenalty
+              input:
+                type: float
+                value: "0"
+            - name: maxTokens
+              input:
+                type: integer
+                value: "4096"
+            - name: spCurrentTime
+              input:
+                type: boolean
+                value: false
+            - name: spAntiLeak
+              input:
+                type: boolean
+                value: false
+            - name: thinkingType
+              input:
+                type: string
+                value: disabled
+            - name: responseFormat
+              input:
+                type: integer
+                value: "2"
+            - name: modelType
+              input:
+                type: integer
+                value: "1768187121"
+            - name: modelName
+              input:
+                type: string
+                value: 豆包·1.8·深度思考
+            - name: parameters
+              input:
+                type: object
+                properties:
+                    max_completion_tokens:
+                        type: integer
+                        value: "0"
+                    reasoning_effort:
+                        type: string
+                        value: minimal
+                value: null
+            - name: prompt
+              input:
+                type: string
+                value: |-
+                    【原文】
+                    {{input_text}}
+                    【术语表】
+                    {{term}}
+                    【译文A：豆包】
+                    {{dou1output}}
+                    【译文B：Kimi】
+                    {{kimi1output}}
+                    【译文C：DeepSeek】
+                    {{deep1output}}
+                    请完成：
+                    1. 对三个译文整体质量进行简要排序并说明核心理由；
+                    2. 重点从其他两个译文中找出具体优点（术语准确性、句式流畅度、文化传达效果、英语可读性），列出应采纳的改进点；
+                    3. 检查三个译文是否都严格遵循了术语表，标记任何偏差；
+                    4. 输出简洁的「优点学习报告」。
+                    请完成：
+                    1. 对三个译文整体质量进行简要排序并说明核心理由；
+                    2. 重点从译文B（Kimi）和译文C（Deepseek）中找出具体优点（术语准确性和统一性、句式流畅度、文化传达效果、英语可读性），列出豆包应采纳的改进点；
+                    3. 检查三个译文是否都严格遵循了术语表，标记任何偏差；
+                    4. 输出简洁的「优点学习报告」。
+            - name: enableChatHistory
+              input:
+                type: boolean
+                value: false
+            - name: chatHistoryRound
+              input:
+                type: integer
+                value: "3"
+            - name: systemPrompt
+              input:
+                type: string
+                value: |-
+                    你是一位资深的翻译质量评估专家，熟悉中国文化外译。你的任务是逐段对比包括自己的译文在内的三个译文，找出值得豆包学习的优点。
+                    你必须遵守：
+                    1. 只输出简洁的「优点学习报告」，列出可采纳的具体改进点和术语偏差。
+                    2. 严禁输出寒暄、总结性废话、格式装饰或任何与改进无关的内容。
+                    3. 报告结构：整体排序 → 具体优点 → 术语偏差。
+                    4. 重点关注：术语准确性和统一性、句式流畅度、文化信息传达效果、英语母语可读性。
+                    5. 不要对原文进行重新翻译。
+            - name: stableSystemPrompt
+              input:
+                type: string
+                value: ""
+            - name: canContinue
+              input:
+                type: boolean
+                value: false
+            - name: loopPromptVersion
+              input:
+                type: string
+                value: ""
+            - name: loopPromptName
+              input:
+                type: string
+                value: ""
+            - name: loopPromptId
+              input:
+                type: string
+                value: ""
+        node_inputs:
+            - name: input_text
+              input:
+                value:
+                    path: input_text
+                    ref_node: "100001"
+            - name: term
+              input:
+                value:
+                    path: term
+                    ref_node: "168404"
+            - name: dou1output
+              input:
+                value:
+                    path: dou1output
+                    ref_node: "174113"
+            - name: kimi1output
+              input:
+                value:
+                    path: kimi1output
+                    ref_node: "189818"
+            - name: deep1output
+              input:
+                value:
+                    path: deep1output
+                    ref_node: "134388"
+        node_outputs:
+            dou_learn:
+                type: string
+                value: null
+            reasoning_content:
+                type: string
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 300000
+    - id: "128266"
+      type: llm
+      title: DeepSeek学习评估
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-LLM-v2.jpg
+      description: "调用大语言模型,使用变量和提示词生成回复"
+      version: "3"
+      position:
+        x: 2480
+        y: 868.2249999999999
+      parameters:
+        fcParamVar:
+            knowledgeFCParam: {}
+        llmParam:
+            - name: apiMode
+              input:
+                type: integer
+                value: "0"
+            - name: maxTokens
+              input:
+                type: integer
+                value: "2200"
+            - name: spCurrentTime
+              input:
+                type: boolean
+                value: false
+            - name: spAntiLeak
+              input:
+                type: boolean
+                value: false
+            - name: thinkingType
+              input:
+                type: string
+                value: disabled
+            - name: responseFormat
+              input:
+                type: integer
+                value: "2"
+            - name: modelName
+              input:
+                type: string
+                value: DeepSeek-V3.2
+            - name: modelType
+              input:
+                type: integer
+                value: "1764929611"
+            - name: generationDiversity
+              input:
+                type: string
+                value: balance
+            - name: parameters
+              input:
+                type: object
+                value: null
+            - name: prompt
+              input:
+                type: string
+                value: |-
+                    【原文】
+                    {{input_text}}
+                    【术语表】
+                    {{term}}
+                    【译文A：豆包】
+                    {{dou1output}}
+                    【译文B：Kimi】
+                    {{kimi1output}}
+                    【译文C：DeepSeek】
+                    {{deep1output}}
+                    请完成：
+                    1. 对三个译文整体质量进行简要排序并说明核心理由；
+                    2. 重点从译文A（豆包）和译文B（Kimi）中找出具体优点（术语准确性、句式流畅度、文化传达效果、英语可读性），列出Deepseek应采纳的改进点；
+                    3. 检查三个译文是否都严格遵循了术语表，标记任何偏差；
+                    4. 输出简洁的「优点学习报告」。
+            - name: enableChatHistory
+              input:
+                type: boolean
+                value: false
+            - name: chatHistoryRound
+              input:
+                type: integer
+                value: "3"
+            - name: systemPrompt
+              input:
+                type: string
+                value: |-
+                    你是一位资深的翻译质量评估专家，熟悉中国文化外译。你的任务是逐段对比包括自己的译文在内的三个译文，找出值得DeepSeek学习的优点。
+                    你必须遵守：
+                    1. 只输出简洁的「优点学习报告」，列出可采纳的具体改进点和术语偏差。
+                    2. 严禁输出寒暄、总结性废话、格式装饰或任何与改进无关的内容。
+                    3. 报告结构：整体排序 → 具体优点 → 术语偏差。
+                    4. 重点关注：术语准确性和统一性、句式流畅度、文化信息传达效果、英语母语可读性。
+                    5. 不要对原文进行重新翻译。
+            - name: stableSystemPrompt
+              input:
+                type: string
+                value: ""
+            - name: canContinue
+              input:
+                type: boolean
+                value: false
+            - name: loopPromptVersion
+              input:
+                type: string
+                value: ""
+            - name: loopPromptName
+              input:
+                type: string
+                value: ""
+            - name: loopPromptId
+              input:
+                type: string
+                value: ""
+        node_inputs:
+            - name: input_text
+              input:
+                value:
+                    path: input_text
+                    ref_node: "100001"
+            - name: term
+              input:
+                value:
+                    path: term
+                    ref_node: "168404"
+            - name: dou1output
+              input:
+                value:
+                    path: dou1output
+                    ref_node: "174113"
+            - name: kimi1output
+              input:
+                value:
+                    path: kimi1output
+                    ref_node: "189818"
+            - name: deep1output
+              input:
+                value:
+                    path: deep1output
+                    ref_node: "134388"
+        node_outputs:
+            deep_learn:
+                type: string
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 300000
+    - id: "179545"
+      type: llm
+      title: 智谱总控融合
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-LLM-v2.jpg
+      description: "调用大语言模型,使用变量和提示词生成回复"
+      version: "3"
+      position:
+        x: 2940
+        y: 599.9250000000001
+      parameters:
+        fcParamVar:
+            knowledgeFCParam: {}
+        llmParam:
+            - name: apiMode
+              input:
+                type: integer
+                value: "0"
+            - name: temperature
+              input:
+                type: float
+                value: "0.5"
+            - name: topP
+              input:
+                type: float
+                value: "1"
+            - name: maxTokens
+              input:
+                type: integer
+                value: "4096"
+            - name: spCurrentTime
+              input:
+                type: boolean
+                value: false
+            - name: spAntiLeak
+              input:
+                type: boolean
+                value: false
+            - name: thinkingType
+              input:
+                type: string
+                value: enabled
+            - name: responseFormat
+              input:
+                type: integer
+                value: "2"
+            - name: modelName
+              input:
+                type: string
+                value: GLM-4.7
+            - name: modelType
+              input:
+                type: integer
+                value: "1770353934"
+            - name: generationDiversity
+              input:
+                type: string
+                value: balance
+            - name: parameters
+              input:
+                type: object
+                properties:
+                    max_completion_tokens:
+                        type: integer
+                        value: "0"
+                value: null
+            - name: prompt
+              input:
+                type: string
+                value: |-
+                    【原文】
+                    {{input_text}}
+                    【风格指令】
+                    {{style}}
+                    【术语表】
+                    {{term}}
+                    【译文A：豆包】
+                    {{dou1output}}
+                    【译文B：Kimi】
+                    {{kimi1output}}
+                    【译文C：DeepSeek】
+                    {{deep1output}}
+                    【豆包优点学习报告】
+                    {{dou_learn}}
+                    【Kimi优点学习报告】
+                    {{kimi_learn}}
+                    【DeepSeek优点学习报告】
+                    {{deep_learn}}
+                    请融合生成最终英译译文。只输出英文译文。
+            - name: enableChatHistory
+              input:
+                type: boolean
+                value: false
+            - name: chatHistoryRound
+              input:
+                type: integer
+                value: "3"
+            - name: systemPrompt
+              input:
+                type: string
+                value: |-
+                    你是一位资深的翻译质量评估与反思总监，精通中国文化外译。你的唯一任务是生成最终英译译文。
+                    你必须遵守：
+                    1. 综合三个译文精华，汲取三份优点学习报告中的改进点，综合优点和缺点，给出你的最终翻译，融合成一份统一、连贯、风格一致的最终译文，针对自己的翻译做出三轮自我审视后再输出。
+                    2. 术语必须100%遵循术语表，确保全文术语一致性。
+                    3. 术语表未覆盖的词，根据语境选择最恰当译法，严禁做任何解释、标注、注释或括号说明。
+                    4. 确保译文符合风格指令，英语地道、流畅、自然，无翻译腔。
+                    5. 只输出最终英译文本，严禁输出任何融合说明、决策理由、反思过程、术语清单、评估总结或任何非译文内容。
+                    6. 不要输出"以下是最终译文"等任何引导语。
+            - name: stableSystemPrompt
+              input:
+                type: string
+                value: ""
+            - name: canContinue
+              input:
+                type: boolean
+                value: false
+            - name: loopPromptVersion
+              input:
+                type: string
+                value: ""
+            - name: loopPromptName
+              input:
+                type: string
+                value: ""
+            - name: loopPromptId
+              input:
+                type: string
+                value: ""
+        node_inputs:
+            - name: input_text
+              input:
+                value:
+                    path: input_text
+                    ref_node: "100001"
+            - name: term
+              input:
+                value:
+                    path: term
+                    ref_node: "168404"
+            - name: dou_learn
+              input:
+                value:
+                    path: dou_learn
+                    ref_node: "183969"
+            - name: kimi_learn
+              input:
+                value:
+                    path: kimi_learn
+                    ref_node: "141329"
+            - name: deep_learn
+              input:
+                value:
+                    path: deep_learn
+                    ref_node: "128266"
+            - name: style
+              input:
+                value:
+                    path: style
+                    ref_node: "111800"
+            - name: dou1output
+              input:
+                value:
+                    path: dou1output
+                    ref_node: "174113"
+            - name: kimi1output
+              input:
+                value:
+                    path: kimi1output
+                    ref_node: "189818"
+            - name: deep1output
+              input:
+                value:
+                    path: deep1output
+                    ref_node: "134388"
+        node_outputs:
+            final_translation:
+                type: string
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 600000
+    - id: "194612"
+      type: code
+      title: 初译聚合
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-Code-v2.jpg
+      description: "编写代码，处理输入变量来生成返回值"
+      version: v2
+      position:
+        x: 2020
+        y: 499.275
+      parameters:
+        code: |-
+            async def main(args: dict) -> dict:
+                # 从字典中取出三个翻译结果
+                dou1output = args.get('dou1output', '')
+                kimi1output = args.get('kimi1output', '')
+                deep1output = args.get('deep1output', '')
+
+                # 返回一个 trans 对象，包含三家的翻译
+                return {
+                    "trans": {
+                        "dou1output": dou1output,
+                        "kimi1output": kimi1output,
+                        "deep1output": deep1output
+                    }
+                }
+        language: 3
+        node_inputs:
+            - name: dou1output
+              input:
+                value:
+                    path: dou1output
+                    ref_node: "174113"
+            - name: kimi1output
+              input:
+                value:
+                    path: kimi1output
+                    ref_node: "189818"
+            - name: deep1output
+              input:
+                value:
+                    path: deep1output
+                    ref_node: "134388"
+        node_outputs:
+            trans:
+                type: object
+                properties:
+                    deep1output:
+                        type: string
+                        value: null
+                    dou1output:
+                        type: string
+                        value: null
+                    kimi1output:
+                        type: string
+                        value: null
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 60000
+    - id: "193245"
+      type: llm
+      title: 豆包辩论
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-LLM-v2.jpg
+      description: "调用大语言模型,使用变量和提示词生成回复"
+      version: "3"
+      position:
+        x: 3400
+        y: 83.32500000000002
+      parameters:
+        fcParamVar:
+            knowledgeFCParam: {}
+        llmParam:
+            - name: generationDiversity
+              input:
+                type: string
+                value: creative
+            - name: apiMode
+              input:
+                type: integer
+                value: "0"
+            - name: temperature
+              input:
+                type: float
+                value: "0.8"
+            - name: topP
+              input:
+                type: float
+                value: "1"
+            - name: frequencyPenalty
+              input:
+                type: float
+                value: "0"
+            - name: maxTokens
+              input:
+                type: integer
+                value: "4096"
+            - name: spCurrentTime
+              input:
+                type: boolean
+                value: false
+            - name: spAntiLeak
+              input:
+                type: boolean
+                value: false
+            - name: thinkingType
+              input:
+                type: string
+                value: disabled
+            - name: responseFormat
+              input:
+                type: integer
+                value: "2"
+            - name: modelType
+              input:
+                type: integer
+                value: "1768187121"
+            - name: modelName
+              input:
+                type: string
+                value: 豆包·1.8·深度思考
+            - name: parameters
+              input:
+                type: object
+                properties:
+                    max_completion_tokens:
+                        type: integer
+                        value: "0"
+                    reasoning_effort:
+                        type: string
+                        value: minimal
+                value: null
+            - name: prompt
+              input:
+                type: string
+                value: |-
+                    【原文】
+                    {{input_text}}
+
+                    【术语表】
+                    {{term}}
+
+                    【风格指令】
+                    {{style}}
+
+                    【智谱译文】
+                    {{final_translation}}
+
+                    请对智谱译文进行辩论式评审，输出「豆包辩论报告」。
+            - name: enableChatHistory
+              input:
+                type: boolean
+                value: false
+            - name: chatHistoryRound
+              input:
+                type: integer
+                value: "3"
+            - name: systemPrompt
+              input:
+                type: string
+                value: |-
+                    你是一位资深翻译审校专家。你的任务是对智谱生成的译文进行严格评审和辩论式质询，找出所有可改进之处。
+                    你必须遵守：
+                    1. 以"辩论对手"身份，逐段审视译文，提出具体修改建议。
+                    2. 重点关注：术语准确性、文化信息传达、英语母语可读性、句式流畅度、风格一致性。
+                    3. 对每一处问题，给出原文对应位置、问题类型、建议修改方案。
+                    4. 如果译文某处优秀，明确肯定并说明理由。
+                    5. 最终输出一份「豆包辩论报告」，包含：总体评分（1-10）、逐段问题清单、修改建议、对智谱译文的整体评价。
+                    6. 只输出报告内容，严禁输出任何寒暄、总结性废话或格式装饰。
+            - name: stableSystemPrompt
+              input:
+                type: string
+                value: ""
+            - name: canContinue
+              input:
+                type: boolean
+                value: false
+            - name: loopPromptVersion
+              input:
+                type: string
+                value: ""
+            - name: loopPromptName
+              input:
+                type: string
+                value: ""
+            - name: loopPromptId
+              input:
+                type: string
+                value: ""
+        node_inputs:
+            - name: input_text
+              input:
+                value:
+                    path: input_text
+                    ref_node: "100001"
+            - name: term
+              input:
+                value:
+                    path: term
+                    ref_node: "168404"
+            - name: style
+              input:
+                value:
+                    path: style
+                    ref_node: "111800"
+            - name: final_translation
+              input:
+                value:
+                    path: final_translation
+                    ref_node: "179545"
+        node_outputs:
+            doubao_debate:
+                type: string
+                value: null
+            reasoning_content:
+                type: string
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 300000
+    - id: "143044"
+      type: llm
+      title: Kimi辩论
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-LLM-v2.jpg
+      description: "调用大语言模型,使用变量和提示词生成回复"
+      version: "3"
+      position:
+        x: 3400
+        y: 736.5749999999999
+      parameters:
+        fcParamVar:
+            knowledgeFCParam: {}
+        llmParam:
+            - name: temperature
+              input:
+                type: float
+                value: "0.5"
+            - name: topP
+              input:
+                type: float
+                value: "1"
+            - name: frequencyPenalty
+              input:
+                type: float
+                value: "0"
+            - name: presencePenalty
+              input:
+                type: float
+                value: "0"
+            - name: maxTokens
+              input:
+                type: integer
+                value: "2000"
+            - name: responseFormat
+              input:
+                type: integer
+                value: "2"
+            - name: spCurrentTime
+              input:
+                type: boolean
+                value: false
+            - name: spAntiLeak
+              input:
+                type: boolean
+                value: false
+            - name: modelName
+              input:
+                type: string
+                value: Kimi-128k
+            - name: modelType
+              input:
+                type: integer
+                value: "1713366995"
+            - name: generationDiversity
+              input:
+                type: string
+                value: balance
+            - name: parameters
+              input:
+                type: object
+                value: null
+            - name: prompt
+              input:
+                type: string
+                value: |-
+                    【原文】
+                    {{input_text}}
+
+                    【术语表】
+                    {{term}}
+
+                    【风格指令】
+                    {{style}}
+
+                    【智谱译文】
+                    {{final_translation}}
+
+                    请对智谱译文进行辩论式评审，输出「Kimi辩论报告」。
+            - name: enableChatHistory
+              input:
+                type: boolean
+                value: false
+            - name: chatHistoryRound
+              input:
+                type: integer
+                value: "3"
+            - name: systemPrompt
+              input:
+                type: string
+                value: |-
+                    你是一位资深翻译审校专家，擅长长文本深度分析。你的任务是对智谱生成的译文进行严格评审和辩论式质询。
+                    你必须遵守：
+                    1. 以"辩论对手"身份，逐段审视译文，提出具体修改建议。
+                    2. 重点关注：长句拆分合理性、信息层次清晰度、文化负载词深度处理、学术规范符合度。
+                    3. 对每一处问题，给出原文对应位置、问题类型、建议修改方案。
+                    4. 如果译文某处优秀，明确肯定并说明理由。
+                    5. 最终输出一份「Kimi辩论报告」，包含：总体评分（1-10）、逐段问题清单、修改建议、对智谱译文的整体评价。
+                    6. 只输出报告内容，严禁输出任何寒暄、总结性废话或格式装饰。
+            - name: stableSystemPrompt
+              input:
+                type: string
+                value: ""
+            - name: canContinue
+              input:
+                type: boolean
+                value: false
+            - name: loopPromptVersion
+              input:
+                type: string
+                value: ""
+            - name: loopPromptName
+              input:
+                type: string
+                value: ""
+            - name: loopPromptId
+              input:
+                type: string
+                value: ""
+        node_inputs:
+            - name: input_text
+              input:
+                value:
+                    path: input_text
+                    ref_node: "100001"
+            - name: term
+              input:
+                value:
+                    path: term
+                    ref_node: "168404"
+            - name: style
+              input:
+                value:
+                    path: style
+                    ref_node: "111800"
+            - name: final_translation
+              input:
+                value:
+                    path: final_translation
+                    ref_node: "179545"
+        node_outputs:
+            kimi_debate:
+                type: string
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 300000
+    - id: "149372"
+      type: llm
+      title: DeepSeek辩论
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-LLM-v2.jpg
+      description: "调用大语言模型,使用变量和提示词生成回复"
+      version: "3"
+      position:
+        x: 3400
+        y: 999.8749999999999
+      parameters:
+        fcParamVar:
+            knowledgeFCParam: {}
+        llmParam:
+            - name: apiMode
+              input:
+                type: integer
+                value: "0"
+            - name: maxTokens
+              input:
+                type: integer
+                value: "2200"
+            - name: spCurrentTime
+              input:
+                type: boolean
+                value: false
+            - name: spAntiLeak
+              input:
+                type: boolean
+                value: false
+            - name: thinkingType
+              input:
+                type: string
+                value: disabled
+            - name: responseFormat
+              input:
+                type: integer
+                value: "2"
+            - name: modelName
+              input:
+                type: string
+                value: DeepSeek-V3.2
+            - name: modelType
+              input:
+                type: integer
+                value: "1764929611"
+            - name: generationDiversity
+              input:
+                type: string
+                value: balance
+            - name: parameters
+              input:
+                type: object
+                value: null
+            - name: prompt
+              input:
+                type: string
+                value: |-
+                    【原文】
+                    {{input_text}}
+
+                    【术语表】
+                    {{term}}
+
+                    【风格指令】
+                    {{style}}
+
+                    【智谱译文】
+                    {{final_translation}}
+
+                    请对智谱译文进行辩论式评审，输出「DeepSeek辩论报告」。
+            - name: enableChatHistory
+              input:
+                type: boolean
+                value: false
+            - name: chatHistoryRound
+              input:
+                type: integer
+                value: "3"
+            - name: systemPrompt
+              input:
+                type: string
+                value: |-
+                    你是一位资深翻译审校专家，擅长逻辑推理和术语一致性审查。你的任务是对智谱生成的译文进行严格评审和辩论式质询。
+                    你必须遵守：
+                    1. 以"辩论对手"身份，逐段审视译文，提出具体修改建议。
+                    2. 重点关注：术语一致性（全文术语是否统一）、逻辑连贯性、推理链条完整性、文化概念准确性。
+                    3. 对每一处问题，给出原文对应位置、问题类型、建议修改方案。
+                    4. 如果译文某处优秀，明确肯定并说明理由。
+                    5. 最终输出一份「DeepSeek辩论报告」，包含：总体评分（1-10）、逐段问题清单、修改建议、对智谱译文的整体评价。
+                    6. 只输出报告内容，严禁输出任何寒暄、总结性废话或格式装饰。
+            - name: stableSystemPrompt
+              input:
+                type: string
+                value: ""
+            - name: canContinue
+              input:
+                type: boolean
+                value: false
+            - name: loopPromptVersion
+              input:
+                type: string
+                value: ""
+            - name: loopPromptName
+              input:
+                type: string
+                value: ""
+            - name: loopPromptId
+              input:
+                type: string
+                value: ""
+        node_inputs:
+            - name: input_text
+              input:
+                value:
+                    path: input_text
+                    ref_node: "100001"
+            - name: term
+              input:
+                value:
+                    path: term
+                    ref_node: "168404"
+            - name: style
+              input:
+                value:
+                    path: style
+                    ref_node: "111800"
+            - name: final_translation
+              input:
+                value:
+                    path: final_translation
+                    ref_node: "179545"
+        node_outputs:
+            deepseek_debate:
+                type: string
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 300000
+    - id: "187943"
+      type: llm
+      title: 最终输出
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-LLM-v2.jpg
+      description: "调用大语言模型,使用变量和提示词生成回复"
+      version: "3"
+      position:
+        x: 4320
+        y: 404.95000000000005
+      parameters:
+        fcParamVar:
+            knowledgeFCParam: {}
+        llmParam:
+            - name: apiMode
+              input:
+                type: integer
+                value: "0"
+            - name: temperature
+              input:
+                type: float
+                value: "0.5"
+            - name: topP
+              input:
+                type: float
+                value: "1"
+            - name: maxTokens
+              input:
+                type: integer
+                value: "4096"
+            - name: spCurrentTime
+              input:
+                type: boolean
+                value: false
+            - name: spAntiLeak
+              input:
+                type: boolean
+                value: false
+            - name: thinkingType
+              input:
+                type: string
+                value: enabled
+            - name: responseFormat
+              input:
+                type: integer
+                value: "2"
+            - name: modelName
+              input:
+                type: string
+                value: GLM-4.7
+            - name: modelType
+              input:
+                type: integer
+                value: "1770353934"
+            - name: generationDiversity
+              input:
+                type: string
+                value: balance
+            - name: parameters
+              input:
+                type: object
+                properties:
+                    max_completion_tokens:
+                        type: integer
+                        value: "0"
+                value: null
+            - name: prompt
+              input:
+                type: string
+                value: |-
+                    请基于以下材料输出最终英译译文：
+                    {{debate}}
+            - name: enableChatHistory
+              input:
+                type: boolean
+                value: false
+            - name: chatHistoryRound
+              input:
+                type: integer
+                value: "3"
+            - name: systemPrompt
+              input:
+                type: string
+                value: |-
+                    你是一位终审翻译总监。请基于用户提供的完整材料，输出最终定稿英译译文。
+                    你必须遵守：
+                    1. 以智谱译文为底稿，充分吸收三份辩论报告中的合理修改建议，综合优点和缺点，给出你的最终翻译，针对自己的翻译做出三轮自我审视后再输出。
+                    2. 审视时，可分别扮演翻译专业学生、中国文化外译教授、普通读者三个角色，对三份报告中的冲突意见，选择最符合原文意图、最符合风格指令、最符合英语母语表达习惯的方案，融合形成自己的翻译。
+                    3. 术语必须100%遵循术语表，确保全文术语一致性。
+                    4. 术语表未覆盖的词，根据语境选择最恰当译法，严禁做任何解释、标注或注释。
+                    5. 只输出最终英译文本，严禁输出任何辩论过程、修改说明、决策理由、术语清单或评估总结。
+                    6. 不要输出"以下是最终译文"等任何引导语。
+            - name: stableSystemPrompt
+              input:
+                type: string
+                value: ""
+            - name: canContinue
+              input:
+                type: boolean
+                value: false
+            - name: loopPromptVersion
+              input:
+                type: string
+                value: ""
+            - name: loopPromptName
+              input:
+                type: string
+                value: ""
+            - name: loopPromptId
+              input:
+                type: string
+                value: ""
+        node_inputs:
+            - name: debate
+              input:
+                type: string
+                value:
+                    path: debate
+                    ref_node: "191870"
+        node_outputs:
+            final_output:
+                type: string
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 600000
+    - id: "177272"
+      type: code
+      title: 风格术语聚合
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-Code-v2.jpg
+      description: "编写代码，处理输入变量来生成返回值"
+      version: v2
+      position:
+        x: 1100
+        y: 499.275
+      parameters:
+        code: |-
+            async def main(args: dict) -> dict:
+                style = args.get('style', '')
+                term = args.get('term', '')
+                return {
+                    "data": {
+                        "style": style,
+                        "term": term
+                    }
+                }
+        language: 3
+        node_inputs:
+            - name: style
+              input:
+                value:
+                    path: style
+                    ref_node: "111800"
+            - name: term
+              input:
+                value:
+                    path: term
+                    ref_node: "168404"
+        node_outputs:
+            data:
+                type: object
+                properties:
+                    style:
+                        type: string
+                        value: null
+                    term:
+                        type: string
+                        value: null
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 60000
+    - id: "191870"
+      type: code
+      title: 辩论聚合
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-Code-v2.jpg
+      description: "编写代码，处理输入变量来生成返回值"
+      version: v2
+      position:
+        x: 3860
+        y: 430.95000000000005
+      parameters:
+        code: "async def main(args: dict) -> dict:\n    # Coze 把所有输入放在 params 里\n    params = args.get('params', {})\n    \n    # 从 params 中取输入\n    input_text = params.get('input_text', '')\n    term = params.get('term', '')\n    style = params.get('style', '')\n    final_translation = params.get('final_translation', '')\n    doubao_debate = params.get('doubao_debate', '')\n    kimi_debate = params.get('kimi_debate', '')\n    deepseek_debate = params.get('deepseek_debate', '')\n    \n    # 拼接\n    debate = f\"\"\"【原文】\n{input_text}\n\n【风格指令】\n{style}\n\n【术语表】\n{term}\n\n【智谱译文】\n{final_translation}\n\n【豆包辩论报告】\n{doubao_debate}\n\n【Kimi辩论报告】\n{kimi_debate}\n\n【DeepSeek辩论报告】\n{deepseek_debate}\n\n请融合以上材料，输出最终英译译文。只输出英文译文，严禁输出任何说明、反思或注释。\"\"\"\n\n    return {\n        \"debate\": debate\n    }"
+        language: 3
+        node_inputs:
+            - name: input_text
+              input:
+                value:
+                    path: input_text
+                    ref_node: "100001"
+            - name: term
+              input:
+                value:
+                    path: term
+                    ref_node: "168404"
+            - name: style
+              input:
+                value:
+                    path: style
+                    ref_node: "111800"
+            - name: final_translation
+              input:
+                value:
+                    path: final_translation
+                    ref_node: "179545"
+            - name: doubao_debate
+              input:
+                value:
+                    path: doubao_debate
+                    ref_node: "193245"
+            - name: kimi_debate
+              input:
+                value:
+                    path: kimi_debate
+                    ref_node: "143044"
+            - name: deepseek_debate
+              input:
+                value:
+                    path: deepseek_debate
+                    ref_node: "149372"
+        node_outputs:
+            debate:
+                type: string
+                value: null
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 60000
+edges:
+    - source_node: "100001"
+      target_node: "111800"
+    - source_node: "100001"
+      target_node: "191870"
+    - source_node: "100001"
+      target_node: "168404"
+    - source_node: "187943"
+      target_node: "900001"
+    - source_node: "168404"
+      target_node: "177272"
+    - source_node: "168404"
+      target_node: "191870"
+    - source_node: "111800"
+      target_node: "177272"
+    - source_node: "111800"
+      target_node: "191870"
+    - source_node: "177272"
+      target_node: "189818"
+    - source_node: "189818"
+      target_node: "194612"
+    - source_node: "177272"
+      target_node: "134388"
+    - source_node: "134388"
+      target_node: "194612"
+    - source_node: "177272"
+      target_node: "174113"
+    - source_node: "174113"
+      target_node: "194612"
+    - source_node: "194612"
+      target_node: "141329"
+    - source_node: "141329"
+      target_node: "179545"
+    - source_node: "194612"
+      target_node: "183969"
+    - source_node: "183969"
+      target_node: "179545"
+    - source_node: "194612"
+      target_node: "128266"
+    - source_node: "128266"
+      target_node: "179545"
+    - source_node: "179545"
+      target_node: "193245"
+    - source_node: "179545"
+      target_node: "143044"
+    - source_node: "179545"
+      target_node: "191870"
+    - source_node: "179545"
+      target_node: "149372"
+    - source_node: "193245"
+      target_node: "191870"
+    - source_node: "143044"
+      target_node: "191870"
+    - source_node: "149372"
+      target_node: "191870"
+    - source_node: "191870"
+      target_node: "187943"
