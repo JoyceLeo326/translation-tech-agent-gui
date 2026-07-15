@@ -89,7 +89,7 @@ scripts/
 3. 不提交 `.env`、API Key、Token、账号密码或私有凭据。
 4. 临时缓存、运行输出、未整理中间文件放 `scratch/`、`runtime_outputs/` 或本地目录，不作为正式整合入口。
 5. 新增交付物后，同步更新 `collaboration/integration/manifests/group_deliveries.md`。
-6. 旧的 `submissions/` 或其它临时收件箱不作为长期入口，正式协作以 `collaboration/` 为准。
+6. 正式协作入口统一以 `collaboration/` 为准，避免重复提交压缩包和中间产物。
 
 ## 本地开发
 

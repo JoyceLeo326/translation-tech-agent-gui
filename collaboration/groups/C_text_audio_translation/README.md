@@ -14,7 +14,7 @@
 - `deliverables/audio_video_workflow/source_from_zip/`：音视频工作流源码展开目录。
 - `deliverables/audio_video_workflow/工作流B — 音视频翻译通道 · 标准化项目交付日志.docx`：原始交付日志。
 
-说明：音视频材料原先位于旧目录 `ABC组交付物/B组_音视频翻译通道/`，按本项目任务分工已归档到 C 组区域。
+说明：音视频材料已按本项目任务分工归档到 C 组区域，后续新增材料继续放入本目录。
 
 ## 后续提交建议
 

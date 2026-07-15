@@ -23,7 +23,7 @@
 | --- | --- | --- | --- |
 | DOCX 交付压缩包 | `collaboration/groups/C_text_audio_translation/deliverables/docx_translation/workflow_c_docx_translation_20260715.zip` | 已归档 | C 组 DOCX 翻译通道 |
 | DOCX 源码展开 | `collaboration/groups/C_text_audio_translation/deliverables/docx_translation/source_from_zip/` | 已归档 | C 组 DOCX 源码、文档和源材料 |
-| 音视频交付压缩包 | `collaboration/groups/C_text_audio_translation/deliverables/audio_video_workflow/音视频翻译工作流.zip` | 已归档 | 原旧目录名为 B 组音视频通道，按任务归入 C 组 |
+| 音视频交付压缩包 | `collaboration/groups/C_text_audio_translation/deliverables/audio_video_workflow/音视频翻译工作流.zip` | 已归档 | 按任务归入 C 组音视频通道 |
 | 音视频源码展开 | `collaboration/groups/C_text_audio_translation/deliverables/audio_video_workflow/source_from_zip/` | 已归档 | 供后续整合分析 |
 | 交付日志 | `collaboration/groups/C_text_audio_translation/deliverables/audio_video_workflow/工作流B — 音视频翻译通道 · 标准化项目交付日志.docx` | 已归档 | 原始日志 |
 
