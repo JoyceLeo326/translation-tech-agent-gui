@@ -7,6 +7,16 @@
 - 工作流：把多个智能体步骤串起来执行
 - 打包：PyInstaller，产出 Windows exe
 
+## 项目协作区
+
+ABC 组交付物和整合材料统一放在 `collaboration/`：
+
+- `collaboration/groups/`：A/B/C 各组独立交付区。
+- `collaboration/shared/`：全组共享资料，例如术语库、参考资料、人工审校表。
+- `collaboration/integration/`：总整合区，用于 GUI 接入、适配器、最终输出和整合清单。
+
+旧目录 `ABC组交付物/` 只保留迁移提示，新材料不要继续放进去。
+
 ## 开源协议
 
 本项目使用 MIT License。后续如果比赛或老师要求其它协议，可以再统一调整。

@@ -1,5 +1,22 @@
 * text=auto
+.gitattributes text eol=lf
 *.ps1 text eol=crlf
 *.py text eol=lf
 *.md text eol=lf
-
+*.sh text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.lock text eol=lf
+.gitkeep text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+.coze text eol=lf
+.gitignore text eol=lf
+*.zip binary
+*.docx binary
+*.xlsx binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.tif binary
+*.tiff binary

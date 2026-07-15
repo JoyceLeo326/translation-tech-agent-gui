@@ -1,0 +1,193 @@
+{
+  "package": "workflow_c_docx_translation_20260715",
+  "updated_at": "2026-07-15",
+  "source_zip": "C:\\Users\\Jerry\\Downloads\\workflow_af374b46.zip",
+  "source_log": "C:\\Users\\Jerry\\Downloads\\工作日志.docx",
+  "source_files": 43,
+  "excluded_from_clean_source": [
+    ".venv/",
+    ".codegraph/",
+    "__pycache__/"
+  ],
+  "local_modifications": [
+    "Removed sample DOCX URL fallback in generate_docx_node.py; file_docx is now required for branch 2.",
+    "Reworked read_excel_node.py column detection with explicit Chinese/review/machine columns and clear errors.",
+    "Applied LLM config thinking parameter when supported, with TypeError fallback for SDK compatibility.",
+    "Added docx_replace_report output with replacement count, unmatched source text, failed XML files, and Chinese residue snippets.",
+    "Updated API/usage/setup/delivery docs to match current behavior."
+  ],
+  "files": [
+    {
+      "path": ".coze",
+      "size": 266
+    },
+    {
+      "path": "AGENTS.md",
+      "size": 3594
+    },
+    {
+      "path": "config/filename_translate_cfg.json",
+      "size": 790
+    },
+    {
+      "path": "config/translate_llm_cfg.json",
+      "size": 1351
+    },
+    {
+      "path": "docs/日志文档.md",
+      "size": 3483
+    },
+    {
+      "path": "pyproject.toml",
+      "size": 1779
+    },
+    {
+      "path": "README.md",
+      "size": 641
+    },
+    {
+      "path": "scripts/http_run.sh",
+      "size": 577
+    },
+    {
+      "path": "scripts/load_env.py",
+      "size": 1032
+    },
+    {
+      "path": "scripts/load_env.sh",
+      "size": 206
+    },
+    {
+      "path": "scripts/local_run.sh",
+      "size": 1503
+    },
+    {
+      "path": "scripts/pack.sh",
+      "size": 73
+    },
+    {
+      "path": "scripts/setup.sh",
+      "size": 584
+    },
+    {
+      "path": "src/__init__.py",
+      "size": 0
+    },
+    {
+      "path": "src/agents/__init__.py",
+      "size": 0
+    },
+    {
+      "path": "src/graphs/__init__.py",
+      "size": 0
+    },
+    {
+      "path": "src/graphs/graph.py",
+      "size": 3274
+    },
+    {
+      "path": "src/graphs/loop_graph.py",
+      "size": 7785
+    },
+    {
+      "path": "src/graphs/nodes/__init__.py",
+      "size": 0
+    },
+    {
+      "path": "src/graphs/nodes/docx_parse_node.py",
+      "size": 5842
+    },
+    {
+      "path": "src/graphs/nodes/generate_docx_node.py",
+      "size": 16936
+    },
+    {
+      "path": "src/graphs/nodes/generate_excel_node.py",
+      "size": 3043
+    },
+    {
+      "path": "src/graphs/nodes/merge_node.py",
+      "size": 777
+    },
+    {
+      "path": "src/graphs/nodes/read_excel_node.py",
+      "size": 3744
+    },
+    {
+      "path": "src/graphs/nodes/router_node.py",
+      "size": 753
+    },
+    {
+      "path": "src/graphs/nodes/split_node.py",
+      "size": 1685
+    },
+    {
+      "path": "src/graphs/nodes/translate_batch_node.py",
+      "size": 1229
+    },
+    {
+      "path": "src/graphs/state.py",
+      "size": 9352
+    },
+    {
+      "path": "src/main.py",
+      "size": 26463
+    },
+    {
+      "path": "src/storage/__init__.py",
+      "size": 0
+    },
+    {
+      "path": "src/storage/database/__init__.py",
+      "size": 0
+    },
+    {
+      "path": "src/storage/database/db.py",
+      "size": 2749
+    },
+    {
+      "path": "src/storage/database/shared/__init__.py",
+      "size": 0
+    },
+    {
+      "path": "src/storage/database/shared/model.py",
+      "size": 259
+    },
+    {
+      "path": "src/storage/memory/__init__.py",
+      "size": 85
+    },
+    {
+      "path": "src/storage/memory/memory_saver.py",
+      "size": 5307
+    },
+    {
+      "path": "src/storage/s3/__init__.py",
+      "size": 0
+    },
+    {
+      "path": "src/storage/s3/s3_storage.py",
+      "size": 19381
+    },
+    {
+      "path": "src/tools/__init__.py",
+      "size": 0
+    },
+    {
+      "path": "src/utils/__init__.py",
+      "size": 0
+    },
+    {
+      "path": "src/utils/file/__init__.py",
+      "size": 0
+    },
+    {
+      "path": "src/utils/file/file.py",
+      "size": 11811
+    },
+    {
+      "path": "uv.lock",
+      "size": 463006
+    }
+  ]
+}
