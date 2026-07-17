@@ -5,8 +5,10 @@ import unittest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication, QScrollArea
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QPushButton, QScrollArea, QToolButton
 
+import agent_gui_starter.app as app_module
 from agent_gui_starter.app import MainWindow, make_brand_icon
 
 
@@ -30,6 +32,20 @@ class WorkbenchUITests(unittest.TestCase):
         self.assertEqual(set(self.window._group_cards), {"A", "B", "C"})
         self.assertEqual(self.window._stack.count(), 6)
         self.assertFalse(make_brand_icon().isNull())
+        self.assertEqual(app_module.UI_FONT_FAMILY, "Noto Sans SC")
+
+    def test_action_controls_have_pointer_and_busy_feedback(self) -> None:
+        controls = (*self.window.findChildren(QPushButton), *self.window.findChildren(QToolButton))
+        self.assertGreater(len(controls), 10)
+        self.assertTrue(all(control.cursor().shape() == Qt.CursorShape.PointingHandCursor for control in controls))
+
+        self.window._set_busy(True)
+        self.assertEqual(self.window._top_run_button.text(), "整合运行中…")
+        self.assertEqual(self.window._agent_run_button.text(), "生成中…")
+        self.assertTrue(self.window._progress.isVisible())
+        self.window._set_busy(False)
+        self.assertEqual(self.window._top_run_button.text(), "运行整合")
+        self.assertEqual(self.window._agent_run_button.text(), "开始生成")
 
     def test_overview_reflows_without_horizontal_scrolling(self) -> None:
         self.window._switch_page("overview")

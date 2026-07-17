@@ -73,8 +73,8 @@ from .workflow import (
 
 
 SYSTEM_PROMPT = "你是中国文化多模态知识库外译项目的桌面端智能体助手。请给出准确、简洁、可执行的结果。"
-GROUP_ACCENTS = {"A": "#1F6F72", "B": "#9A6A24", "C": "#B4543E"}
-UI_FONT_FAMILY = "Microsoft YaHei UI"
+GROUP_ACCENTS = {"A": "#2F6FED", "B": "#0E8F80", "C": "#E16A4A"}
+UI_FONT_FAMILY = "Noto Sans SC"
 ICON_FONT_FAMILY = "Segoe MDL2 Assets"
 _FONTS_CONFIGURED = False
 PAGE_META = {
@@ -86,6 +86,12 @@ PAGE_META = {
 }
 
 
+def _resource_path(relative_path: str) -> Path:
+    bundled_root = getattr(sys, "_MEIPASS", None)
+    base_path = Path(bundled_root) if bundled_root else Path(__file__).resolve().parents[2]
+    return base_path / relative_path
+
+
 def configure_application_fonts(app: QApplication | None = None) -> None:
     global UI_FONT_FAMILY, ICON_FONT_FAMILY, _FONTS_CONFIGURED
     if _FONTS_CONFIGURED:
@@ -93,6 +99,7 @@ def configure_application_fonts(app: QApplication | None = None) -> None:
     _FONTS_CONFIGURED = True
 
     font_candidates = [
+        _resource_path("assets/fonts/NotoSansSC-VF.ttf"),
         Path("C:/Windows/Fonts/msyh.ttc"),
         Path("C:/Windows/Fonts/NotoSansSC-VF.ttf"),
         Path("C:/Windows/Fonts/simhei.ttf"),
@@ -107,7 +114,15 @@ def configure_application_fonts(app: QApplication | None = None) -> None:
             loaded_families.extend(QFontDatabase.applicationFontFamilies(font_id))
 
     families = set(QFontDatabase.families()) | set(loaded_families)
-    for preferred in ("Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", "SimHei", "SimSun"):
+    for preferred in (
+        "Noto Sans SC",
+        "Segoe UI Variable Text",
+        "Segoe UI",
+        "Microsoft YaHei UI",
+        "Microsoft YaHei",
+        "Noto Sans SC",
+        "SimHei",
+    ):
         if preferred in families:
             UI_FONT_FAMILY = preferred
             break
@@ -127,7 +142,7 @@ def make_brand_icon(size: int = 64) -> QIcon:
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     padding = max(1, int(size * 0.03))
-    painter.setBrush(QColor("#F1EFE9"))
+    painter.setBrush(QColor("#2F6FED"))
     painter.setPen(Qt.PenStyle.NoPen)
     painter.drawRoundedRect(
         padding,
@@ -139,34 +154,36 @@ def make_brand_icon(size: int = 64) -> QIcon:
     )
     font = QFont(UI_FONT_FAMILY, max(16, int(size * 0.55)), QFont.Weight.DemiBold)
     painter.setFont(font)
-    painter.setPen(QColor("#1E1F1D"))
+    painter.setPen(QColor("#FFFFFF"))
     painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "译")
-    accent_size = max(3, int(size * 0.11))
-    accent_margin = max(5, int(size * 0.16))
-    painter.setBrush(QColor("#C95A45"))
-    painter.setPen(Qt.PenStyle.NoPen)
-    painter.drawRoundedRect(
-        size - accent_margin - accent_size,
-        size - accent_margin - accent_size,
-        accent_size,
-        accent_size,
-        max(1, int(size * 0.02)),
-        max(1, int(size * 0.02)),
-    )
     painter.end()
     return QIcon(pixmap)
 
 
-def make_glyph_icon(glyph: str, color: str = "#666862", size: int = 32) -> QIcon:
-    pixmap = QPixmap(size, size)
-    pixmap.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(pixmap)
-    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-    painter.setPen(QColor(color))
-    painter.setFont(QFont(ICON_FONT_FAMILY, max(12, int(size * 0.56))))
-    painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, glyph)
-    painter.end()
-    return QIcon(pixmap)
+def make_glyph_icon(
+    glyph: str,
+    color: str = "#667085",
+    size: int = 32,
+    selected_color: str | None = None,
+) -> QIcon:
+    def render(icon_color: str) -> QPixmap:
+        pixmap = QPixmap(size, size)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(QColor(icon_color))
+        painter.setFont(QFont(ICON_FONT_FAMILY, max(12, int(size * 0.56))))
+        painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, glyph)
+        painter.end()
+        return pixmap
+
+    icon = QIcon()
+    icon.addPixmap(render(color), QIcon.Mode.Normal, QIcon.State.Off)
+    if selected_color:
+        selected = render(selected_color)
+        icon.addPixmap(selected, QIcon.Mode.Normal, QIcon.State.On)
+        icon.addPixmap(selected, QIcon.Mode.Selected, QIcon.State.On)
+    return icon
 
 
 class JobWorker(QObject):
@@ -235,14 +252,14 @@ class MarkdownView(QTextBrowser):
         self.setOpenExternalLinks(True)
         self.setReadOnly(True)
         self.document().setDefaultStyleSheet(
-            "h1 { color: #20211f; font-size: 22px; margin-bottom: 10px; }"
-            "h2 { color: #30312e; font-size: 17px; margin-top: 18px; }"
-            "h3 { color: #4d4f4a; font-size: 14px; margin-top: 14px; }"
+            "h1 { color: #172033; font-size: 22px; margin-bottom: 10px; }"
+            "h2 { color: #25324a; font-size: 17px; margin-top: 18px; }"
+            "h3 { color: #475467; font-size: 14px; margin-top: 14px; }"
             "p, li { line-height: 1.55; }"
-            "code { background: #f1f0ec; color: #6f4038; }"
+            "code { background: #eef4ff; color: #2457bd; }"
             "table { border-collapse: collapse; }"
-            "th { background: #f1f1ee; font-weight: 600; }"
-            "th, td { border: 1px solid #dfdfdb; padding: 6px; }"
+            "th { background: #f2f5f9; font-weight: 600; }"
+            "th, td { border: 1px solid #dfe5ec; padding: 6px; }"
         )
 
     def set_output(self, text: str) -> None:
@@ -334,7 +351,7 @@ class GroupCard(QFrame):
 
         open_button = QPushButton("查看交付")
         open_button.setObjectName("CardAction")
-        open_button.setIcon(make_glyph_icon("\uE72A", "#B34E3D"))
+        open_button.setIcon(make_glyph_icon("\uE72A", "#2F6FED"))
         open_button.clicked.connect(lambda: self.open_requested.emit(self._group_key))
 
         layout = QVBoxLayout(self)
@@ -359,12 +376,12 @@ class GroupCard(QFrame):
         if summary.status == "可整合":
             self._status.setText("●  可整合")
             self._status.setStyleSheet(
-                "background: transparent; color: #347255; border: 0; font-weight: 600;"
+                "background: transparent; color: #12805C; border: 0; font-weight: 600;"
             )
         else:
             self._status.setText(f"●  {summary.status}")
             self._status.setStyleSheet(
-                "background: transparent; color: #9B6928; border: 0; font-weight: 600;"
+                "background: transparent; color: #B36B12; border: 0; font-weight: 600;"
             )
 
 
@@ -461,6 +478,7 @@ class MainWindow(QMainWindow):
         self.resize(1440, 900)
         self._build_ui()
         self._apply_styles()
+        self._configure_interactions()
         self._install_shortcuts()
         self._refresh_from_scan()
 
@@ -523,7 +541,7 @@ class MainWindow(QMainWindow):
             button = QPushButton(text)
             button.setObjectName("NavButton")
             button.setCheckable(True)
-            button.setIcon(make_glyph_icon(glyph, "#A9AAA5"))
+            button.setIcon(make_glyph_icon(glyph, "#667085", selected_color="#2F6FED"))
             button.setIconSize(QSize(18, 18))
             button.clicked.connect(lambda checked=False, page=key: self._switch_page(page))
             self._nav_group.addButton(button)
@@ -660,7 +678,7 @@ class MainWindow(QMainWindow):
         entry_row.addStretch(1)
         self._report_button = QPushButton("生成整合报告")
         self._report_button.setObjectName("SecondaryButton")
-        self._report_button.setIcon(make_glyph_icon("\uE9D2", "#252624"))
+        self._report_button.setIcon(make_glyph_icon("\uE9D2", "#344054"))
         self._report_button.clicked.connect(
             lambda: self._start_job("report", self._workflow_input.toPlainText(), allow_empty=True)
         )
@@ -714,7 +732,7 @@ class MainWindow(QMainWindow):
                 "workflow:run",
                 "交付中心",
                 "page:outputs",
-                "#5F6F52",
+                "#6C63C8",
             ),
         )
         for card in self._task_cards:
@@ -726,10 +744,10 @@ class MainWindow(QMainWindow):
         self._stats_grid = QGridLayout()
         self._stats_grid.setHorizontalSpacing(12)
         self._stats_grid.setVerticalSpacing(12)
-        self._stat_ready = StatCard("分组就绪", "#176B4D")
-        self._stat_assets = StatCard("资源文件", "#C84A3D")
-        self._stat_terms = StatCard("共享术语", "#D18A2C")
-        self._stat_outputs = StatCard("已生成输出", "#536F63")
+        self._stat_ready = StatCard("分组就绪", "#12805C")
+        self._stat_assets = StatCard("资源文件", "#2F6FED")
+        self._stat_terms = StatCard("共享术语", "#0E8F80")
+        self._stat_outputs = StatCard("已生成输出", "#6C63C8")
         self._stat_cards = (self._stat_ready, self._stat_assets, self._stat_terms, self._stat_outputs)
         layout.addLayout(self._stats_grid)
 
@@ -998,7 +1016,7 @@ class MainWindow(QMainWindow):
         search_button.clicked.connect(self._search_terms_now)
         self._use_term_button = QPushButton("加入智能体约束")
         self._use_term_button.setObjectName("SecondaryButton")
-        self._use_term_button.setIcon(make_glyph_icon("\uE710", "#252624"))
+        self._use_term_button.setIcon(make_glyph_icon("\uE710", "#344054"))
         self._use_term_button.setEnabled(False)
         self._use_term_button.clicked.connect(self._append_selected_term_to_agent)
         search_row.addWidget(self._term_search, 1)
@@ -1115,7 +1133,7 @@ class MainWindow(QMainWindow):
         path_row.addLayout(path_text, 1)
         open_button = QPushButton("打开目录")
         open_button.setObjectName("SecondaryButton")
-        open_button.setIcon(make_glyph_icon("\uE8B7", "#252624"))
+        open_button.setIcon(make_glyph_icon("\uE8B7", "#344054"))
         open_button.clicked.connect(self._open_output_dir)
         report_button = QPushButton("生成报告")
         report_button.setObjectName("PrimaryButton")
@@ -1216,7 +1234,7 @@ class MainWindow(QMainWindow):
         self._group_query.returnPressed.connect(self._run_group_adapter)
         open_button = QPushButton("打开分组目录")
         open_button.setObjectName("SecondaryButton")
-        open_button.setIcon(make_glyph_icon("\uE8B7", "#252624"))
+        open_button.setIcon(make_glyph_icon("\uE8B7", "#344054"))
         open_button.clicked.connect(self._open_group_dir)
         self._group_run_button = QPushButton("运行适配器")
         self._group_run_button.setObjectName("PrimaryButton")
@@ -1256,6 +1274,11 @@ class MainWindow(QMainWindow):
         button.setIconSize(QSize(17, 17))
         button.setToolTip(tooltip)
         return button
+
+    def _configure_interactions(self) -> None:
+        for button in (*self.findChildren(QPushButton), *self.findChildren(QToolButton)):
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
+            button.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     def resizeEvent(self, event: object) -> None:
         super().resizeEvent(event)  # type: ignore[arg-type]
@@ -1356,9 +1379,9 @@ class MainWindow(QMainWindow):
         self._group_detail_status.setText(f"●  {summary.status}")
         ready = summary.status == "可整合"
         self._group_detail_status.setStyleSheet(
-            "background: transparent; color: #347255; border: 0; font-weight: 600;"
+            "background: transparent; color: #12805C; border: 0; font-weight: 600;"
             if ready
-            else "background: transparent; color: #9B6928; border: 0; font-weight: 600;"
+            else "background: transparent; color: #B36B12; border: 0; font-weight: 600;"
         )
         self._group_file_count.setText(str(summary.file_count))
         self._group_size.setText(format_size(summary.total_size_bytes))
@@ -1510,6 +1533,11 @@ class MainWindow(QMainWindow):
         for control in self._busy_controls:
             control.setEnabled(not busy)
         self._progress.setVisible(busy)
+        self._top_run_button.setText("整合运行中…" if busy else "运行整合")
+        self._agent_run_button.setText("生成中…" if busy else "开始生成")
+        self._workflow_run_button.setText("工作流运行中…" if busy else "运行完整工作流")
+        self._report_button.setText("报告生成中…" if busy else "生成整合报告")
+        self._group_run_button.setText("适配器运行中…" if busy else "运行适配器")
         if busy:
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         else:
@@ -1642,149 +1670,158 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(
             """
             * {
-                font-family: "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", "SimHei";
+                font-family: "Noto Sans SC", "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei";
                 font-size: 13px;
-                color: #20211F;
+                color: #172033;
+                outline: 0;
             }
             QMainWindow, QWidget#Root, QWidget#Workspace, QStackedWidget#PageStack {
-                background: #F6F6F3;
+                background: #F5F7FA;
             }
             QFrame#Sidebar {
-                background: #1B1C1A;
+                background: #FBFCFE;
                 border: 0;
+                border-right: 1px solid #E1E7EF;
             }
             QLabel#BrandTitle {
-                color: #FFFFFF;
-                font-size: 17px;
+                color: #172033;
+                font-size: 16px;
                 font-weight: 700;
             }
             QLabel#BrandSubtitle {
-                color: #93958F;
+                color: #7A8699;
                 font-size: 11px;
             }
             QLabel#SidebarLabel {
-                color: #747671;
+                color: #98A2B3;
                 font-size: 11px;
                 font-weight: 600;
                 padding: 3px 10px;
             }
             QPushButton#NavButton, QPushButton#GroupNavButton {
                 background: transparent;
-                color: #C6C7C2;
-                border: 0;
+                color: #526077;
+                border: 1px solid transparent;
                 border-radius: 6px;
                 padding: 10px 12px;
                 text-align: left;
                 min-height: 21px;
             }
             QPushButton#NavButton:hover, QPushButton#GroupNavButton:hover {
-                background: #252623;
-                color: #FFFFFF;
+                background: #EEF3F9;
+                color: #25324A;
             }
             QPushButton#NavButton:checked {
-                background: #2B2C29;
-                color: #FFFFFF;
+                background: #EAF1FF;
+                color: #245FCC;
                 font-weight: 600;
-                border-left: 3px solid #C95A45;
-                padding-left: 9px;
+                border: 1px solid #D7E4FC;
             }
             QPushButton#GroupNavButton {
-                color: #9B9D97;
+                color: #667085;
                 font-size: 12px;
                 padding-left: 13px;
             }
             QPushButton#GroupNavButton[ready="true"] {
-                color: #D8D9D5;
+                color: #344054;
             }
             QFrame#ConnectionPanel {
-                background: #242522;
-                border: 1px solid #353632;
+                background: #FFFFFF;
+                border: 1px solid #DFE5EC;
                 border-radius: 7px;
             }
             QLabel#ApiState {
-                color: #D4A14C;
+                color: #B36B12;
                 font-weight: 600;
             }
             QLabel#ApiState[connected="true"] {
-                color: #72B28E;
+                color: #12805C;
             }
             QLabel#ModelLabel {
-                color: #858781;
+                color: #98A2B3;
                 font-size: 11px;
             }
             QFrame#TopBar {
-                background: #FDFDFC;
+                background: #FFFFFF;
                 border: 0;
-                border-bottom: 1px solid #E0E0DC;
+                border-bottom: 1px solid #E1E7EF;
             }
             QFrame#HeroPanel {
-                background: #20231F;
-                border: 0;
+                background: #FFFFFF;
+                border: 1px solid #DFE5EC;
                 border-radius: 8px;
             }
             QLabel#HeroEyebrow {
-                color: #E0A65A;
+                color: #2F6FED;
                 font-size: 11px;
-                font-weight: 800;
+                font-weight: 700;
                 letter-spacing: 0;
             }
             QLabel#HeroTitle {
-                color: #FFFFFF;
-                font-size: 28px;
-                font-weight: 800;
+                color: #172033;
+                font-size: 27px;
+                font-weight: 700;
             }
             QLabel#HeroSubtitle {
-                color: #CFD2C8;
+                color: #526077;
                 font-size: 13px;
                 line-height: 1.45;
             }
             QFrame#HeroStatusPanel {
-                background: #2B2E29;
-                border: 1px solid #3C4038;
+                background: #F6F8FB;
+                border: 1px solid #E1E7EF;
                 border-radius: 8px;
             }
             QLabel#HeroStatusTitle {
-                color: #FFFFFF;
+                color: #25324A;
                 font-size: 14px;
                 font-weight: 700;
             }
             QLabel#HeroStatusItem {
-                color: #D8DBD1;
+                color: #526077;
                 font-size: 12px;
                 line-height: 1.4;
             }
             QPushButton#HeroPrimary {
-                background: #C95A45;
+                background: #2F6FED;
                 color: #FFFFFF;
-                border: 1px solid #C95A45;
+                border: 1px solid #2F6FED;
                 border-radius: 7px;
                 padding: 10px 16px;
-                font-weight: 700;
+                font-weight: 600;
                 min-height: 20px;
             }
             QPushButton#HeroPrimary:hover {
-                background: #D46A54;
-                border-color: #D46A54;
+                background: #245FCC;
+                border-color: #245FCC;
+            }
+            QPushButton#HeroPrimary:pressed {
+                background: #1D4FAF;
+                border-color: #1D4FAF;
             }
             QPushButton#HeroSecondary {
-                background: transparent;
-                color: #F4F1EA;
-                border: 1px solid #6A6D62;
+                background: #FFFFFF;
+                color: #344054;
+                border: 1px solid #C8D4E3;
                 border-radius: 7px;
                 padding: 10px 14px;
-                font-weight: 700;
+                font-weight: 600;
                 min-height: 20px;
             }
             QPushButton#HeroSecondary:hover {
-                background: #33362F;
+                background: #F7FAFF;
+                border-color: #91A8C8;
+            }
+            QPushButton#HeroSecondary:pressed {
+                background: #EDF3FA;
             }
             QLabel#PageTitle {
-                color: #1D1E1C;
+                color: #172033;
                 font-size: 20px;
                 font-weight: 700;
             }
             QLabel#PageSubtitle, QLabel#SectionSubtitle, QLabel#PathLabel {
-                color: #747670;
+                color: #7A8699;
                 font-size: 12px;
             }
             QLabel#PathLabel {
@@ -1792,143 +1829,168 @@ class MainWindow(QMainWindow):
             }
             QToolButton#IconButton {
                 background: #FFFFFF;
-                border: 1px solid #DADAD6;
+                border: 1px solid #D9E1EA;
                 border-radius: 6px;
                 min-width: 35px;
                 min-height: 35px;
             }
             QToolButton#IconButton:hover {
-                background: #F2F2EF;
-                border-color: #BFC0BA;
+                background: #EEF4FF;
+                border-color: #AFC6EE;
+            }
+            QToolButton#IconButton:pressed {
+                background: #DCE9FF;
+                border-color: #7FA4E5;
+            }
+            QToolButton#IconButton:focus {
+                border: 1px solid #6C96E8;
             }
             QPushButton#PrimaryButton {
-                background: #242522;
+                background: #2F6FED;
                 color: #FFFFFF;
-                border: 1px solid #242522;
+                border: 1px solid #2F6FED;
                 border-radius: 6px;
                 padding: 9px 16px;
                 font-weight: 600;
                 min-height: 18px;
             }
             QPushButton#PrimaryButton:hover {
-                background: #353632;
-                border-color: #353632;
+                background: #245FCC;
+                border-color: #245FCC;
             }
             QPushButton#PrimaryButton:pressed {
-                background: #121311;
+                background: #1D4FAF;
+                border-color: #1D4FAF;
+            }
+            QPushButton#PrimaryButton:focus {
+                border: 1px solid #17479F;
             }
             QPushButton#PrimaryButton:disabled {
-                background: #A9AAA5;
-                border-color: #A9AAA5;
+                background: #AFC5EE;
+                border-color: #AFC5EE;
             }
             QPushButton#SecondaryButton {
                 background: #FFFFFF;
-                color: #252624;
-                border: 1px solid #D3D3CE;
+                color: #344054;
+                border: 1px solid #D6DEE8;
                 border-radius: 6px;
                 padding: 8px 14px;
                 font-weight: 600;
                 min-height: 18px;
             }
             QPushButton#SecondaryButton:hover {
-                background: #F1F1EE;
-                border-color: #B7B8B2;
+                background: #F3F7FC;
+                border-color: #AFC0D4;
+            }
+            QPushButton#SecondaryButton:pressed {
+                background: #E8EEF6;
+            }
+            QPushButton#SecondaryButton:focus {
+                border: 1px solid #6C96E8;
             }
             QPushButton#SecondaryButton:disabled {
-                color: #9B9C97;
-                background: #F2F2EF;
+                color: #98A2B3;
+                background: #F2F5F9;
+                border-color: #E4E9EF;
             }
             QPushButton#TextButton, QPushButton#CardAction {
                 background: transparent;
-                color: #B34E3D;
+                color: #2F6FED;
                 border: 0;
                 padding: 7px 2px;
                 font-weight: 600;
             }
             QPushButton#TextButton:hover, QPushButton#CardAction:hover {
-                color: #873729;
+                color: #1D4FAF;
             }
             QLabel#SectionTitle {
-                color: #252624;
+                color: #25324A;
                 font-size: 15px;
                 font-weight: 700;
             }
             QFrame#StatCard, QFrame#GroupCard, QFrame#SectionPanel, QFrame#ToolPanel, QFrame#WorkflowNode, QFrame#TaskEntryCard {
                 background: #FFFFFF;
-                border: 1px solid #E0E0DC;
+                border: 1px solid #DFE5EC;
                 border-radius: 8px;
             }
             QFrame#TaskEntryCard:hover {
-                border: 1px solid #C9C7BE;
-                background: #FFFEFC;
+                border: 1px solid #AFC5E8;
+                background: #FBFDFF;
             }
             QLabel#TaskKicker {
-                color: #8A8D85;
+                color: #7A8699;
                 font-size: 11px;
-                font-weight: 700;
+                font-weight: 600;
             }
             QLabel#TaskTitle {
-                color: #1F211E;
+                color: #172033;
                 font-size: 16px;
-                font-weight: 800;
+                font-weight: 700;
             }
             QLabel#TaskBody {
-                color: #555950;
+                color: #526077;
                 font-size: 12px;
                 line-height: 1.45;
             }
             QPushButton#TaskPrimary {
-                background: #242522;
+                background: #25324A;
                 color: #FFFFFF;
-                border: 1px solid #242522;
+                border: 1px solid #25324A;
                 border-radius: 6px;
                 padding: 8px 12px;
-                font-weight: 700;
+                font-weight: 600;
             }
             QPushButton#TaskPrimary:hover {
-                background: #34372F;
-                border-color: #34372F;
+                background: #344563;
+                border-color: #344563;
+            }
+            QPushButton#TaskPrimary:pressed {
+                background: #172033;
             }
             QPushButton#TaskSecondary {
-                background: #F5F3EE;
-                color: #33352F;
-                border: 1px solid #DDD9CE;
+                background: #F2F5F9;
+                color: #344054;
+                border: 1px solid #DFE5EC;
                 border-radius: 6px;
                 padding: 8px 12px;
-                font-weight: 700;
+                font-weight: 600;
             }
             QPushButton#TaskSecondary:hover {
-                background: #ECE8DE;
+                background: #E7EDF5;
+                border-color: #C6D0DC;
+            }
+            QPushButton#TaskSecondary:pressed {
+                background: #DCE4EE;
             }
             QLabel#StatLabel {
-                color: #747670;
+                color: #667085;
                 font-size: 12px;
                 font-weight: 600;
             }
             QLabel#StatValue {
-                color: #1E1F1D;
+                color: #172033;
                 font-size: 26px;
                 font-weight: 700;
             }
             QLabel#StatDetail {
-                color: #969792;
+                color: #98A2B3;
                 font-size: 11px;
             }
             QLabel#GroupTitle {
-                color: #20211F;
+                color: #172033;
                 font-size: 14px;
                 font-weight: 700;
             }
             QLabel#GroupSubtitle, QLabel#GroupDescription, QLabel#GroupMetrics, QLabel#CategoryLine {
-                color: #81837D;
+                color: #7A8699;
                 font-size: 11px;
             }
             QLabel#GroupDescription {
-                color: #555751;
+                color: #526077;
                 font-size: 12px;
             }
             QLabel#GroupMetrics {
-                color: #2B2C29;
+                color: #344054;
                 font-size: 13px;
                 font-weight: 600;
             }
@@ -1936,56 +1998,56 @@ class MainWindow(QMainWindow):
                 background: transparent;
                 border-radius: 0;
                 padding: 3px 0;
-                color: #747670;
+                color: #667085;
             }
             QLabel#StageBadge, QLabel#WorkflowNumber {
-                background: #F0F0EC;
-                color: #3F403D;
+                background: #EAF1FF;
+                color: #2F6FED;
                 border-radius: 6px;
                 font-weight: 700;
             }
             QLabel#StageTitle, QLabel#WorkflowTitle {
-                color: #2B2C29;
+                color: #25324A;
                 font-weight: 600;
             }
             QLabel#StageDetail, QLabel#WorkflowDetail {
-                color: #8C8E88;
+                color: #7A8699;
                 font-size: 11px;
             }
             QLabel#ReadyText {
-                color: #347255;
+                color: #12805C;
                 font-size: 11px;
                 font-weight: 600;
             }
             QLabel#AdviceItem {
-                color: #555751;
+                color: #526077;
                 line-height: 1.4;
             }
             QFrame#Divider {
-                color: #E6E6E2;
+                color: #E6EBF1;
                 max-height: 1px;
                 border: 0;
-                background: #E6E6E2;
+                background: #E6EBF1;
             }
             QFrame#InfoBanner {
-                background: #F3F1EB;
-                border: 1px solid #E0DCD2;
+                background: #EEF4FF;
+                border: 1px solid #D6E4FB;
                 border-radius: 7px;
             }
             QLabel#AgentStateDot {
-                color: #C58A35;
+                color: #B36B12;
             }
             QLabel#AgentStateDot[connected="true"] {
-                color: #347255;
+                color: #12805C;
             }
             QLabel#InfoText {
-                color: #5E594F;
+                color: #526077;
                 font-size: 12px;
             }
             QPushButton#SegmentButton {
-                background: #F1F1EE;
-                color: #70726C;
-                border: 1px solid #DADAD6;
+                background: #EEF2F7;
+                color: #667085;
+                border: 1px solid #D9E1EA;
                 padding: 8px 13px;
             }
             QPushButton#SegmentButton:first {
@@ -1998,21 +2060,25 @@ class MainWindow(QMainWindow):
             }
             QPushButton#SegmentButton:checked {
                 background: #FFFFFF;
-                color: #252624;
-                border-color: #A7A8A2;
+                color: #245FCC;
+                border-color: #8FB0E8;
                 font-weight: 600;
+            }
+            QPushButton#SegmentButton:hover {
+                color: #344054;
+                background: #F8FAFD;
             }
             QPlainTextEdit#InputEditor, QPlainTextEdit#WorkflowInput, QLineEdit#SearchInput,
             QTextBrowser#OutputView, QPlainTextEdit#LogView {
                 background: #FFFFFF;
-                color: #242522;
-                border: 1px solid #DADAD6;
+                color: #25324A;
+                border: 1px solid #D9E1EA;
                 border-radius: 6px;
                 padding: 10px;
-                selection-background-color: #E8DED9;
+                selection-background-color: #DCE9FF;
             }
             QPlainTextEdit#InputEditor:focus, QPlainTextEdit#WorkflowInput:focus, QLineEdit#SearchInput:focus {
-                border: 1px solid #9D6257;
+                border: 1px solid #5D8FE9;
             }
             QLineEdit#SearchInput {
                 min-height: 24px;
@@ -2020,73 +2086,77 @@ class MainWindow(QMainWindow):
             }
             QTableWidget#DataTable {
                 background: #FFFFFF;
-                alternate-background-color: #F8F8F6;
-                border: 1px solid #E0E0DC;
+                alternate-background-color: #F8FAFD;
+                border: 1px solid #DFE5EC;
                 border-radius: 6px;
-                gridline-color: #E8E8E4;
-                selection-background-color: #EEE8E4;
-                selection-color: #20211F;
+                gridline-color: #E8EDF3;
+                selection-background-color: #E4EEFF;
+                selection-color: #172033;
             }
             QTableWidget#DataTable::item {
                 padding: 6px;
                 border: 0;
             }
             QHeaderView::section {
-                background: #F1F1EE;
-                color: #555751;
+                background: #F1F5F9;
+                color: #526077;
                 border: 0;
-                border-bottom: 1px solid #DADAD6;
+                border-bottom: 1px solid #D9E1EA;
                 padding: 9px 8px;
                 font-weight: 600;
             }
             QScrollArea#PageScroll, QWidget#OverviewContent {
-                background: #F6F6F3;
+                background: #F5F7FA;
             }
             QProgressBar#TaskProgress {
-                background: #E0E0DC;
+                background: #DCE5F2;
                 border: 0;
             }
             QProgressBar#TaskProgress::chunk {
-                background: #C95A45;
+                background: #2F6FED;
             }
             QTabWidget#ResultTabs::pane {
                 background: #FFFFFF;
-                border: 1px solid #E0E0DC;
+                border: 1px solid #DFE5EC;
                 border-radius: 6px;
                 top: -1px;
             }
             QTabBar::tab {
                 background: transparent;
-                color: #747670;
+                color: #667085;
                 padding: 8px 14px;
                 border: 0;
             }
+            QTabBar::tab:hover {
+                color: #344054;
+                background: #F2F6FB;
+            }
             QTabBar::tab:selected {
-                color: #252624;
+                color: #245FCC;
                 font-weight: 600;
-                border-bottom: 2px solid #C95A45;
+                border-bottom: 2px solid #2F6FED;
             }
             QLabel#DetailTitle {
-                color: #20211F;
+                color: #172033;
                 font-size: 18px;
                 font-weight: 700;
             }
             QLabel#InfoLabel {
-                color: #8B8D87;
+                color: #7A8699;
                 font-size: 11px;
             }
             QLabel#InfoValue {
-                color: #30312E;
+                color: #25324A;
                 font-weight: 600;
             }
             QStatusBar {
-                background: #FDFDFC;
-                color: #747670;
-                border-top: 1px solid #E0E0DC;
+                background: #FFFFFF;
+                color: #667085;
+                border-top: 1px solid #E1E7EF;
                 padding-left: 8px;
             }
             QSplitter::handle {
-                background: #F6F6F3;
+                background: #F5F7FA;
                 width: 10px;
             }
             QScrollBar:vertical {
@@ -2095,9 +2165,12 @@ class MainWindow(QMainWindow):
                 margin: 2px;
             }
             QScrollBar::handle:vertical {
-                background: #C8C9C4;
+                background: #B8C3D1;
                 border-radius: 4px;
                 min-height: 28px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #98A8BC;
             }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0;

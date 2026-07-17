@@ -4,6 +4,7 @@ $ProjectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $VenvPython = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
 $ToolRoot = "D:\AI_GUI_DevTools"
 $PyInstallerCache = Join-Path $ToolRoot "pyinstaller-cache"
+$FontData = "$(Join-Path $ProjectRoot 'assets\fonts');assets\fonts"
 
 New-Item -ItemType Directory -Force -Path $PyInstallerCache | Out-Null
 $env:PYINSTALLER_CONFIG_DIR = $PyInstallerCache
@@ -20,6 +21,7 @@ try {
         --windowed `
         --name CultureTranslationWorkbench `
         --icon (Join-Path $ProjectRoot "assets\app_icon.ico") `
+        --add-data $FontData `
         --paths (Join-Path $ProjectRoot "src") `
         (Join-Path $ProjectRoot "main.py")
     if ($LASTEXITCODE -ne 0) {
