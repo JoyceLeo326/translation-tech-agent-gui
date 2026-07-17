@@ -1,6 +1,6 @@
 # B group workflow prompt excerpts
 
-> Source: actual Coze export `workflow/Translation-draft.yaml`; original zip is preserved under `deliverables/workflow_translation_draft_9476/archives/`.
+> Source: revised Coze export `workflow/Translation-draft.yaml`; original zip is preserved under `deliverables/workflow_translation_draft_3045/archives/`.
 
 ## 术语提取
 
@@ -225,11 +225,6 @@
 {{kimi1output}}
 【译文C：DeepSeek】
 {{deep1output}}
-请完成：
-1. 对三个译文整体质量进行简要排序并说明核心理由；
-2. 重点从其他两个译文中找出具体优点（术语准确性、句式流畅度、文化传达效果、英语可读性），列出应采纳的改进点；
-3. 检查三个译文是否都严格遵循了术语表，标记任何偏差；
-4. 输出简洁的「优点学习报告」。
 请完成：
 1. 对三个译文整体质量进行简要排序并说明核心理由；
 2. 重点从译文B（Kimi）和译文C（Deepseek）中找出具体优点（术语准确性和统一性、句式流畅度、文化传达效果、英语可读性），列出豆包应采纳的改进点；

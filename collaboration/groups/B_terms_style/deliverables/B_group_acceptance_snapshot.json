@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-07-15",
+  "checked_at": "2026-07-17",
   "term_rows": 212,
   "headers": [
     "术语",
@@ -17,51 +17,39 @@
     "上下文片段": 0
   },
   "duplicate_terms": [],
-  "english_non_ascii_rows_in_source_xlsx": [
-    {
-      "row": 28,
-      "term": "匠心",
-      "english": "Craftsman’s Ingenuity"
-    },
-    {
-      "row": 38,
-      "term": "明心见性",
-      "english": "Illuminating the Mind and Seeing One’s Nature"
-    },
-    {
-      "row": 105,
-      "term": "拙政园",
-      "english": "Humble Administrator’s Garden"
-    }
-  ],
-  "english_curly_quote_rows_in_source_xlsx": [
-    {
-      "row": 28,
-      "term": "匠心",
-      "english": "Craftsman’s Ingenuity"
-    },
-    {
-      "row": 38,
-      "term": "明心见性",
-      "english": "Illuminating the Mind and Seeing One’s Nature"
-    },
-    {
-      "row": 105,
-      "term": "拙政园",
-      "english": "Humble Administrator’s Garden"
-    }
-  ],
+  "english_non_ascii_rows_in_source_xlsx": [],
+  "english_curly_quote_rows_in_source_xlsx": [],
+  "source_revision_external_formula_count": 612,
+  "canonical_xlsx_formula_count": 0,
+  "canonical_xlsx_external_link_count": 0,
+  "canonical_xlsx_matches_normalized_json": true,
+  "canonical_xlsx_matches_shared_copy": true,
   "pdf_pages": 13,
   "terms_found_in_pdf_text": 212,
   "context_prefixes_found_in_pdf_text": 168,
   "workflow_node_count": 18,
   "workflow_edge_count": 28,
+  "workflow_graph_valid": true,
+  "workflow_code_nodes_pass": true,
   "workflow_retryTimes_distribution": {
-    "0": 16
+    "absent": 16
+  },
+  "workflow_errorHandlingSwitch_distribution": {
+    "false": 16
   },
   "workflow_timeoutMs_distribution": {
     "60000": 3,
     "300000": 11,
     "600000": 2
-  }
+  },
+  "workflow_knowledge_id": "7662977203206176822",
+  "workflow_knowledge_name": "中国文化术语-改",
+  "prd_run_evidence_images": 3,
+  "public_agent_url": "https://www.coze.cn/store/agent/7663113233712398377?bot_id=true",
+  "public_agent_title": "Translation测试智能体",
+  "public_agent_page_published_at": "2026-07-16 22:40",
+  "latest_workflow_changes_published": false,
+  "remaining_b_group_actions": [
+    "发布当前包含代码节点和知识库修正的 Coze 工作流，并提供无未发布修改的截图。"
+  ]
 }

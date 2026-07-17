@@ -1,0 +1,75 @@
+{
+  "workflow_id": "7661678571702747178",
+  "node_count": 18,
+  "edge_count": 28,
+  "duplicate_node_ids": [],
+  "start_nodes": [
+    "100001"
+  ],
+  "end_nodes": [
+    "900001"
+  ],
+  "missing_edge_endpoints": [],
+  "missing_input_ref_nodes": [],
+  "unreachable_from_start": [],
+  "cannot_reach_end": [],
+  "code_node_tests": [
+    {
+      "id": "194612",
+      "title": "初译聚合",
+      "input_names": [
+        "dou1output",
+        "kimi1output",
+        "deep1output"
+      ],
+      "uses_params": true,
+      "sample_output": {
+        "trans": {
+          "dou1output": "sample_dou1output",
+          "kimi1output": "sample_kimi1output",
+          "deep1output": "sample_deep1output"
+        }
+      },
+      "error": null,
+      "all_samples_propagated": true
+    },
+    {
+      "id": "177272",
+      "title": "风格术语聚合",
+      "input_names": [
+        "style",
+        "term"
+      ],
+      "uses_params": true,
+      "sample_output": {
+        "data": {
+          "style": "sample_style",
+          "term": "sample_term"
+        }
+      },
+      "error": null,
+      "all_samples_propagated": true
+    },
+    {
+      "id": "191870",
+      "title": "辩论聚合",
+      "input_names": [
+        "input_text",
+        "term",
+        "style",
+        "final_translation",
+        "doubao_debate",
+        "kimi_debate",
+        "deepseek_debate"
+      ],
+      "uses_params": true,
+      "sample_output": {
+        "debate": "【原文】\nsample_input_text\n\n【风格指令】\nsample_style\n\n【术语表】\nsample_term\n\n【智谱译文】\nsample_final_translation\n\n【豆包辩论报告】\nsample_doubao_debate\n\n【Kimi辩论报告】\nsample_kimi_debate\n\n【DeepSeek辩论报告】\nsample_deepseek_debate\n\n请融合以上材料，输出最终英译译文。只输出英文译文，严禁输出任何说明、反思或注释。"
+      },
+      "error": null,
+      "all_samples_propagated": true
+    }
+  ],
+  "all_code_nodes_pass": true,
+  "graph_valid": true
+}

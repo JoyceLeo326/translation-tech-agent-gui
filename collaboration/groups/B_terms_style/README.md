@@ -20,11 +20,12 @@
 
 ## 当前已归档材料
 
-- `terminology/中华文化术语对照表.xlsx`：B 组原始术语库。
+- `terminology/中华文化术语对照表.xlsx`：已移除本机外链公式的可移植正式术语库。
 - `terminology/zhonghua_culture_terms.normalized.csv`：从原始 Excel 生成的规范化 CSV。
 - `terminology/zhonghua_culture_terms.normalized.json`：从原始 Excel 生成的规范化 JSON。
 - `references/翻译资源编写-中国文化知识百科（图文有声版）.pdf`：B 组自编术语来源 PDF。
 - `references/翻译资源编写-中国文化知识百科（图文有声版）.extracted.txt`：PDF 文本抽取结果，用于检索和核验。
-- `deliverables/workflow_translation_draft_9476/`：Coze 工作流原始压缩包、展开源码和工作流摘要。
-- `deliverables/prd/`：B 组工作流 PRD 原始 DOCX 与抽取版 Markdown。
+- `deliverables/workflow_translation_draft_9476/`：首次交付的 Coze 工作流归档。
+- `deliverables/workflow_translation_draft_3045/`：2026-07-17 二次交付；后续整合优先使用。
+- `deliverables/prd/`：B 组新版工作流 PRD、抽取版 Markdown 和实际运行截图。
 - `deliverables/notes/`：聊天截图、验收反馈和需 B 组补充事项。

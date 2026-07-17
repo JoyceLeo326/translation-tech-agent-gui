@@ -1,160 +1,158 @@
-# B group workflow PRD extraction
-
-> Source: `B组工作流prd文档.docx`. Generated from Word body text; original DOCX is preserved.
+<!-- Mechanical extraction of the B group revised PRD. See the acceptance report for validation status. -->
 
 《中国文化多模态知识库外译智能体 — 任务3 PRD》
 
- 1. 项目背景
+1. 项目背景
 
 本项目为“中国文化多模态知识库外译智能体”的任务3：文化术语与文学话语风格控制翻译。目标是通过多模型协作，实现术语一致性保障和译文风格控制，输出供人工译后编辑的机器译文。
 
- 2. 工作流架构（实际配置）
+2. 工作流架构（实际配置）
 
 [开始] input_text + input_title
 
-    │
+│
 
-    ├─→ [风格提炼] Kimi-128k + 文献搜索工具 + 联网问答（免费版）
+├─→ [风格提炼] Kimi-128k + 文献搜索工具 + 联网问答（免费版）
 
-    │       输出: style
+│       输出: style
 
-    │
+│
 
-    ├─→ [术语提取] 豆包·1.5·Lite·32k + 中国文化术语库（知识库）
+├─→ [术语提取] 豆包·1.5·Lite·32k + 中国文化术语库（知识库）
 
-    │       输出: term
+│       输出: term
 
-    │
+│
 
-    └─→ [原文直通] input_text 直接下传
+└─→ [原文直通] input_text 直接下传
 
-            │
+│
 
-            ├──→ [风格术语聚合] 代码节点
+├──→ [风格术语聚合] 代码节点
 
-            │       输入: style, term
+│       输入: style, term
 
-            │       输出: data {style, term} (Object)
+│       输出: data {style, term} (Object)
 
-            │
+│
 
-            ├──→ [豆包初译] 豆包·1.8·深度思考
+├──→ [豆包初译] 豆包·1.8·深度思考
 
-            │       输入: input_text, data
+│       输入: input_text, data
 
-            │       输出: dou1output + reasoning_content
+│       输出: dou1output + reasoning_content
 
-            │
+│
 
-            ├──→ [Kimi初译] Kimi-32k
+├──→ [Kimi初译] Kimi-32k
 
-            │       输入: input_text, data
+│       输入: input_text, data
 
-            │       输出: kimi1output
+│       输出: kimi1output
 
-            │
+│
 
-            └──→ [DeepSeek初译] DeepSeek-V3.2
+└──→ [DeepSeek初译] DeepSeek-V3.2
 
-                    输入: input_text, data
+输入: input_text, data
 
-                    输出: deep1output
+输出: deep1output
 
-                            │
+│
 
-                            ↓
+↓
 
-                      [初译聚合] 代码节点
+[初译聚合] 代码节点
 
-                            输入: dou1output, kimi1output, deep1output
+输入: dou1output, kimi1output, deep1output
 
-                            输出: trans {dou1output, kimi1output, deep1output} (Object)
+输出: trans {dou1output, kimi1output, deep1output} (Object)
 
-                            │
+│
 
-            ├─→ [豆包学习评估] 豆包·1.8·深度思考
+├─→ [豆包学习评估] 豆包·1.8·深度思考
 
-            │       输入: input_text, term, trans
+│       输入: input_text, term, trans
 
-            │       输出: dou_learn + reasoning_content
+│       输出: dou_learn + reasoning_content
 
-            │
+│
 
-            ├─→ [Kimi学习评估] Kimi-32k
+├─→ [Kimi学习评估] Kimi-32k
 
-            │       输入: input_text, term, trans
+│       输入: input_text, term, trans
 
-            │       输出: kimi_learn
+│       输出: kimi_learn
 
-            │
+│
 
-            └──→ [DeepSeek学习评估] DeepSeek-V3.2
+└──→ [DeepSeek学习评估] DeepSeek-V3.2
 
-                    输入: input_text, term, trans
+输入: input_text, term, trans
 
-                    输出: deep_learn
+输出: deep_learn
 
-                            │
+│
 
-                            ↓
+↓
 
-                      [智谱总控融合] GLM-4.7
+[智谱总控融合] GLM-4.7
 
-                            输入: input_text, term, dou_learn, kimi_learn, deep_learn, style, trans
+输入: input_text, term, dou_learn, kimi_learn, deep_learn, style, trans
 
-                            输出: final_translation
+输出: final_translation
 
-                            │
+│
 
-            ├─→ [豆包辩论] 豆包·1.8·深度思考
+├─→ [豆包辩论] 豆包·1.8·深度思考
 
-            │       输入: input_text, term, style, final_translation
+│       输入: input_text, term, style, final_translation
 
-            │       输出: doubao_debate + reasoning_content
+│       输出: doubao_debate + reasoning_content
 
-            │
+│
 
-            ├─→ [Kimi辩论] Kimi-128k
+├─→ [Kimi辩论] Kimi-128k
 
-            │       输入: input_text, term, style, final_translation
+│       输入: input_text, term, style, final_translation
 
-            │       输出: kimi_debate
+│       输出: kimi_debate
 
-            │
+│
 
-            └──→ [DeepSeek辩论] DeepSeek-V3.2
+└──→ [DeepSeek辩论] DeepSeek-V3.2
 
-                    输入: input_text, term, style, final_translation
+输入: input_text, term, style, final_translation
 
-                    输出: deepseek_debate
+输出: deepseek_debate
 
-                            │
+│
 
-                            ↓
+↓
 
-                      [辩论聚合] 代码节点
+[辩论聚合] 代码节点
 
-                            输入: input_text, term, style, final_translation, doubao_debate, kimi_debate, deepseek_debate
+输入: input_text, term, style, final_translation, doubao_debate, kimi_debate, deepseek_debate
 
-                            输出: debate (String)
+输出: debate (String)
 
-                            │
+│
 
-                            ↓
+↓
 
-                      [最终输出] GLM-4.7
+[最终输出] GLM-4.7
 
-                            输入: debate
+输入: debate
 
-                            输出: final_output
+输出: final_output
 
-                            │
+│
 
-                            ↓
+↓
 
-                      [结束] final_output
+[结束] final_output
 
- 3. 节点详细配置
+3. 节点详细配置
 
 # 3.1 开始节点
 
@@ -268,25 +266,25 @@ python
 
 async def main(args: dict) -> dict:
 
-    style = args.get('style', '')
+style = args.get('style', '')
 
-    term = args.get('term', '')
+term = args.get('term', '')
 
-    return {
+return {
 
-        "data": {
+"data": {
 
-            "style": style,
+"style": style,
 
-            "term": term
+"term": term
 
-        }
+}
 
-    }
+}
 
 # 3.5 三模型初译（并行）
 
- 豆包初译
+豆包初译
 
 | 配置项 | 内容 |
 
@@ -328,7 +326,7 @@ async def main(args: dict) -> dict:
 
 请翻译。只输出英文译文。
 
- Kimi初译
+Kimi初译
 
 | 配置项 | 内容 |
 
@@ -372,7 +370,7 @@ async def main(args: dict) -> dict:
 
 请翻译。只输出英文译文。
 
- DeepSeek初译
+DeepSeek初译
 
 | 配置项 | 内容 |
 
@@ -430,33 +428,33 @@ python
 
 async def main(args: dict) -> dict:
 
-    # 从字典中取出三个翻译结果
+# 从字典中取出三个翻译结果
 
-    dou1output = args.get('dou1output', '')
+dou1output = args.get('dou1output', '')
 
-    kimi1output = args.get('kimi1output', '')
+kimi1output = args.get('kimi1output', '')
 
-    deep1output = args.get('deep1output', '')
+deep1output = args.get('deep1output', '')
 
-    # 返回一个 trans 对象，包含三家的翻译
+# 返回一个 trans 对象，包含三家的翻译
 
-    return {
+return {
 
-        "trans": {
+"trans": {
 
-            "dou1output": dou1output,
+"dou1output": dou1output,
 
-            "kimi1output": kimi1output,
+"kimi1output": kimi1output,
 
-            "deep1output": deep1output
+"deep1output": deep1output
 
-        }
+}
 
-    }
+}
 
 # 3.7 三模型学习评估（并行）
 
- 豆包学习评估
+豆包学习评估
 
 | 配置项 | 内容 |
 
@@ -514,7 +512,7 @@ async def main(args: dict) -> dict:
 
 4. 输出简洁的「优点学习报告」。
 
- Kimi学习评估
+Kimi学习评估
 
 | 配置项 | 内容 |
 
@@ -572,7 +570,7 @@ async def main(args: dict) -> dict:
 
 4. 输出简洁的「优点学习报告」。
 
- DeepSeek学习评估
+DeepSeek学习评估
 
 | 配置项 | 内容 |
 
@@ -700,7 +698,7 @@ async def main(args: dict) -> dict:
 
 # 3.9 三模型辩论（并行）
 
- 豆包辩论
+豆包辩论
 
 | 配置项 | 内容 |
 
@@ -748,7 +746,7 @@ async def main(args: dict) -> dict:
 
 请对智谱译文进行辩论式评审，输出「豆包辩论报告」。
 
- Kimi辩论
+Kimi辩论
 
 | 配置项 | 内容 |
 
@@ -796,7 +794,7 @@ async def main(args: dict) -> dict:
 
 请对智谱译文进行辩论式评审，输出「Kimi辩论报告」。
 
- DeepSeek辩论
+DeepSeek辩论
 
 | 配置项 | 内容 |
 
@@ -858,29 +856,29 @@ python
 
 async def main(args: dict) -> dict:
 
-    # Coze 把所有输入放在 params 里
+# Coze 把所有输入放在 params 里
 
-    params = args.get('params', {})
+params = args.get('params', {})
 
-    # 从 params 中取输入
+# 从 params 中取输入
 
-    input_text = params.get('input_text', '')
+input_text = params.get('input_text', '')
 
-    term = params.get('term', '')
+term = params.get('term', '')
 
-    style = params.get('style', '')
+style = params.get('style', '')
 
-    final_translation = params.get('final_translation', '')
+final_translation = params.get('final_translation', '')
 
-    doubao_debate = params.get('doubao_debate', '')
+doubao_debate = params.get('doubao_debate', '')
 
-    kimi_debate = params.get('kimi_debate', '')
+kimi_debate = params.get('kimi_debate', '')
 
-    deepseek_debate = params.get('deepseek_debate', '')
+deepseek_debate = params.get('deepseek_debate', '')
 
-    # 拼接
+# 拼接
 
-    debate = f"""【原文】
+debate = f"""【原文】
 
 {input_text}
 
@@ -910,11 +908,11 @@ async def main(args: dict) -> dict:
 
 请融合以上材料，输出最终英译译文。只输出英文译文，严禁输出任何说明、反思或注释。"""
 
-    return {
+return {
 
-        "debate": debate
+"debate": debate
 
-    }
+}
 
 【风格指令】
 
@@ -942,11 +940,11 @@ async def main(args: dict) -> dict:
 
 请融合以上材料，输出最终英译译文。只输出英文译文，严禁输出任何说明、反思或注释。"""
 
-    return {
+return {
 
-        "debate": debate
+"debate": debate
 
-    }
+}
 
 # 3.11 最终输出
 
@@ -988,7 +986,7 @@ async def main(args: dict) -> dict:
 
 | final_output | 最终输出节点的 final_output |
 
- 4. 输入输出规范
+4. 输入输出规范
 
 | 类型 | 字段 | 类型 | 说明 |
 
@@ -998,7 +996,7 @@ async def main(args: dict) -> dict:
 
 | 输出 | final_output | String | 最终英译译文（纯文本，无解释）|
 
- 5. 依赖资源
+5. 依赖资源
 
 | 资源 | 状态 | 说明 |
 
@@ -1006,7 +1004,7 @@ async def main(args: dict) -> dict:
 
 | 学术风格文献 | 实时检索 | 由Kimi-128k联网搜索获取 |
 
- 6. 与上下游任务接口
+6. 与上下游任务接口
 
 | 方向 | 任务 | 数据格式 | 传递方式 |
 
@@ -1018,7 +1016,7 @@ async def main(args: dict) -> dict:
 
 | 人工环节 | 译后编辑 | 机器译文 → 人工译文 | Excel表格 |
 
- 7. 术语库管理
+7. 术语库管理
 
 | 项目 | 内容 |
 
@@ -1030,7 +1028,7 @@ async def main(args: dict) -> dict:
 
 | 未覆盖术语 | 由模型根据语境自行翻译，不做解释 |
 
- 8. 风格控制机制
+8. 风格控制机制
 
 | 层级 | 控制方式 |
 
@@ -1044,7 +1042,91 @@ async def main(args: dict) -> dict:
 
 | 第五层 | 三模型辩论评审，最终优化 |
 
- 9. 运行配置
+9. 真实运行样例
+
+#9.1 测试输入
+
+| 字段 | 内容 |
+
+| input_title | 民居建筑 |
+
+| input_text | 十里不同风，百里不同俗。中国地域辽阔，民居建筑千姿百态。 |
+
+#9.2 最终输出
+
+| 字段 | 内容 |
+
+| final_output | Local practices differ within a short distance, and Folk Customs vary over a greater distance. China has a vast territory, and its Folk Residences display a diverse array of architectural styles. |
+
+#9.3 关键中间结果
+
+#9.3.1 风格提炼（style）
+
+必须做：使用描述性和信息型文本的语域，确保信息的准确性和清晰性。保持句式简洁，避免复杂从句。对文化负载词如"风"和"俗"，必须提供解释或脚注。控制信息密度。修辞手法应转换为更直接的表达方式。禁止做：不得使用文学化或过于诗意的语言。避免冗长句子。不得省略文化解释。不得过度压缩信息。避免直接复制修辞手法。
+
+#9.3.2 术语提取（term）
+
+风俗 | Customs / Folk Customs | 1 | 这本百科，带你漫步于文化的长廊，在哲学里见天地，在诗文里见性情，在器物里见匠心，在风俗里见人情
+
+民居 | Folk Residence | 6 | 4.3 民居建筑：十里不同风，百里不同俗
+
+#9.3.3 三模型初译（初译聚合）
+
+【豆包初译】Customs vary within ten miles, and folk customs differ across a hundred miles. China has a vast territory, so its folk residences come in a great variety of forms.
+
+【Kimi初译】China's vast territory is home to a diverse array of folk residences, each reflecting unique regional characteristics. Just as the saying goes, "Different winds prevail over ten miles, and different customs over a hundred miles."
+
+【DeepSeek初译】Customs vary from place to place. China has a vast territory, and folk residences display a rich diversity of architectural styles.
+
+#9.3.4 智谱总控融合（final_translation）
+
+Folk Customs vary significantly over short distances. China has a vast territory, and its folk residences display a diverse array of architectural styles.
+
+#9.3.5 三模型辩论（辩论聚合，含三份辩论报告）
+
+豆包辩论报告：总体评分 6/10，指出文化负载词未解释、术语准确性不足等问题，建议补充"风/俗"解释及量化语境。
+
+Kimi辩论报告：总体评分 7/10，关注文化负载词处理及信息层次清晰度，建议添加脚注并拆分长句。
+
+DeepSeek辩论报告：总体评分 6/10，指出术语虽符合术语表但抹杀了"风"与"俗"的细微差异，丢失了谚语的递进逻辑。
+
+#9.4 运行截图
+
+完整工作流正常运行截图
+
+![B group run evidence](evidence_20260717/image1.png)
+
+风格术语聚合模块运行情况截图
+
+![B group run evidence](evidence_20260717/image2.png)
+
+辩论聚合模块运行情况截图
+
+![B group run evidence](evidence_20260717/image3.png)
+
+#9.5 代码节点入参访问方式统一
+
+工作流三个代码节点最初使用了不同的入参访问方式，经实际运行验证，三种写法在当前 Coze 版本中均能正常获取入参：
+
+| 代码节点 | 原写法 |
+
+| 风格术语聚合 (177272) | args.get('style') / args.get('term') |
+
+| 初译聚合 (194612) | args.get('dou1output') 等 |
+
+| 辩论聚合 (191870) | args.get('params', {}) |
+
+为统一代码风格、便于后续维护，v1.1 已将三个节点全部统一为 args.get('params', {}) 模式：
+
+| 代码节点 | 统一后 |
+
+| 风格术语聚合 | args.get('params', {}).get('style') / .get('term') |
+
+| 初译聚合 | args.get('params', {}).get('dou1output') 等 |
+
+| 辩论聚合 | args.get('params', {}).get('input_text') 等（保持不变）|
+
+10. 运行配置
 
 | 项目 | 配置 |
 
@@ -1052,11 +1134,11 @@ async def main(args: dict) -> dict:
 
 | 超时设置 | 普通节点300s，总控融合、最终输出节点600s |
 
-| 失败重试 | 1次 |
+| 失败重试 | 0次 |
 
 | 输出要求 | 只输出纯译文，禁止任何解释/反思/说明 |
 
- 10. 已知限制
+11. 已知限制
 
 | 限制 | 说明 |
 
@@ -1066,9 +1148,9 @@ async def main(args: dict) -> dict:
 
 | 联网稳定性 | Kimi风格提炼依赖联网搜索，网络不稳定时可能降级 |
 
-| 代码节点变量传递 | Coze代码节点输入需通过 `args['params']` 获取 |
+| 代码节点变量传递 | 三种写法在原版中均有效，已统一为 args.get('params', {})，详见 9.5 |
 
- 11. 整合建议
+12. 整合建议
 
 | 建议 | 内容 |
 
@@ -1078,8 +1160,41 @@ async def main(args: dict) -> dict:
 
 | 人工审核点 | 术语冲突标记处、文化负载词处、风格争议处 |
 
-版本：v1.0
+13. 其他说明
 
-日期：2026-07-15
+#13.1 已获取信息
+
+| 项目 | 内容 |
+| --- | --- |
+| 工作流 ID | 7661678571702747178 |
+| 术语知识库 ID | 7662977203206176822 |
+
+#13.2 补充说明
+
+1. Coze 工作流链接或智能体链接：本工作流在 Coze 平台上无法直接生成对外分享链接（Coze 工作流功能本身不提供分享链接能力），因此 B 组通过 Coze 智能体（Agent）封装调用该工作流，以智能体链接方式实现对外分享。智能体链接：https://www.coze.cn/store/agent/7663113233712398377?bot_id=true。评审人员可通过该链接访问智能体并运行工作流。
+
+2. 发布状态确认：该工作流当前已发布（Published），智能体状态为已发布，评审人员可直接通过智能体链接访问并运行工作流。
+
+3. 中国文化术语知识库的绑定信息：术语知识库名称为「中华文化术语对照表.xlsx」，以知识库节点方式绑定在 Coze 工作流中。评审人员运行工作流时需同时导入该知识库表格文件，否则术语提取节点将无法正常检索术语。B 组可提供该知识库的导出文件（表格格式）。导入后，请检查工作流中「术语提取」模块的「技能」配置，确保知识库已定向为导入后的表格文件「中华文化术语对照表.xlsx」，否则术语提取节点将无法正确检索术语。
+
+4. 模型权限与额度说明：经调研（2026年7月），各模型在 Coze 平台上的权限与额度情况如下：
+
+a) Kimi-128k（含文献搜索工具 + 联网问答免费版）：Coze 3.0 已将 Kimi 系列纳入内置模型，工作流大模型节点可直接选用，无需额外申请第三方 API 密钥。联网搜索插件在免费版中每日赠送约 20 次调用，超出后当天不可用；若插件需配置搜索 API Key（如 Bing Search），需自行申请并承担外部 API 费用。
+
+b) 豆包·1.5·Lite·32k / 豆包·1.8·深度思考：豆包为字节跳动自有模型，Coze 平台原生内置，免费版即可调用。其中「深度思考」版本可能标注为「订阅模型」，需进阶版（约 39.9 元/月）才能使用。免费版豆包模型每日约 100 次调用限额。
+
+c) DeepSeek-V3.2：Coze 3.0 已内置 DeepSeek 系列模型，免费版可调用 DeepSeek-V3.1 / R1 等版本，无需额外第三方授权。每日调用受 Coze 免费版整体额度限制（约 50 次/天）。
+
+d) GLM-4.7：智谱系列模型在 Coze 平台内置可用，大模型节点可直接选用，无需单独申请智谱开放平台授权或 API 额度。每日调用受 Coze 账号版本额度限制。
+
+综合说明：以上模型均无需申请第三方平台账号或 API Key，在 Coze 工作流中直接选用即可。但免费版存在每日总调用次数上限，若评审期间频繁测试导致额度耗尽，建议 B 组提前确认当前账号版本（免费版/进阶版/企业版），必要时升级或提供备用额度。
+
+补充说明：本工作流所在 Coze 账号为进阶版（约 39.9 元/月），无硬性每日调用次数限制，按实际 Token 消耗计费，联网搜索插件每日约 30 次免费试用，各模型均可正常调用，评审期间无需担心额度不足。
+
+5. 安全说明：以上补充内容仅需提供工作流链接/截图、发布状态、知识库名称与绑定方式、模型权限说明。无需提供任何账号、密码、API Key 或密钥。
+
+版本：v1.1
+
+日期：2026-07-17
 
 负责人：石慕华

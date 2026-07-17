@@ -1,32 +1,57 @@
 [
   {
-    "path": "collaboration/groups/B_terms_style/deliverables/workflow_translation_draft_9476/archives/Workflow-Translation-draft-9476.zip",
-    "bytes": 8861,
-    "sha256": "2cf8b5aa3bdc7119b98f1a8bd24f50f778269bd78f437237928f4954a6cf4990"
+    "path": "collaboration\\groups\\B_terms_style\\deliverables\\workflow_translation_draft_3045\\archives\\Workflow-Translation-draft-3045.zip",
+    "bytes": 8877,
+    "sha256": "6e259e25542aba7c0aa383ffcb0e726b236658b9c642d306a35fb2b9dc51c1ac"
   },
   {
-    "path": "collaboration/groups/B_terms_style/deliverables/workflow_translation_draft_9476/source_from_zip/Workflow-Translation-draft-9476/workflow/Translation-draft.yaml",
-    "bytes": 76063,
-    "sha256": "45da86ab983136179c292e5809180ac45fa2bf1185973f63f520adc28bfe32a6"
-  },
-  {
-    "path": "collaboration/groups/B_terms_style/deliverables/workflow_translation_draft_9476/source_from_zip/Workflow-Translation-draft-9476/MANIFEST.yml",
+    "path": "collaboration\\groups\\B_terms_style\\deliverables\\workflow_translation_draft_3045\\source_from_zip\\Workflow-Translation-draft-3045\\MANIFEST.yml",
     "bytes": 431,
     "sha256": "ac94c2a2b18de17eb79ceae78814452676663b556b708ad8f6cbf1abbf9d8c9c"
   },
   {
-    "path": "collaboration/groups/B_terms_style/deliverables/prd/B组工作流prd文档.docx",
-    "bytes": 40191,
-    "sha256": "06aca14d72c6e2583a40d539ecd4df19ceafb2206a3cf24597b7125f88c29d89"
+    "path": "collaboration\\groups\\B_terms_style\\deliverables\\workflow_translation_draft_3045\\source_from_zip\\Workflow-Translation-draft-3045\\workflow\\Translation-draft.yaml",
+    "bytes": 75706,
+    "sha256": "4a1d12c20522e9a96337b51cf973e78b1d34680a7c6c918b2308dee29fa92f67"
   },
   {
-    "path": "collaboration/groups/B_terms_style/terminology/中华文化术语对照表.xlsx",
-    "bytes": 59936,
-    "sha256": "03659afb0c709d30de28e0eef6b6114669c24895432e7d855493b3d921b41ac7"
+    "path": "collaboration\\groups\\B_terms_style\\deliverables\\prd\\B组工作流prd文档.docx",
+    "bytes": 1063441,
+    "sha256": "a1108cced34d64c763c5b6adff83ac419a3f7f443d455de40a37be77158ea82f"
   },
   {
-    "path": "collaboration/groups/B_terms_style/references/翻译资源编写-中国文化知识百科（图文有声版）.pdf",
+    "path": "collaboration\\groups\\B_terms_style\\deliverables\\revisions\\20260717\\source_from_b\\中华文化术语对照表_B组原始修订版.xlsx",
+    "bytes": 60002,
+    "sha256": "ec3cda2848bf4ae9d59a5bcdb4db33a43eef2e3cb81d19a42c5a3ccca64917a4"
+  },
+  {
+    "path": "collaboration\\groups\\B_terms_style\\terminology\\中华文化术语对照表.xlsx",
+    "bytes": 20715,
+    "sha256": "a4a2785e0f80a4021505f72434bb03fbb3c0a8bb72a1356c7c72be35bf39fdbc"
+  },
+  {
+    "path": "collaboration\\groups\\B_terms_style\\references\\翻译资源编写-中国文化知识百科（图文有声版）.pdf",
     "bytes": 10978986,
     "sha256": "924b8b3987b4e1b06694cce17410c507c6ea44b289958ae6d25cce52fb0dd243"
+  },
+  {
+    "path": "collaboration\\groups\\B_terms_style\\deliverables\\prd\\evidence_20260717\\image1.png",
+    "bytes": 494507,
+    "sha256": "5441aa49c6d08fa02cfa64505849a332281229884dbae2ff4747b47a24682552"
+  },
+  {
+    "path": "collaboration\\groups\\B_terms_style\\deliverables\\prd\\evidence_20260717\\image2.png",
+    "bytes": 291016,
+    "sha256": "6d13c78ba9f23a37a2710aae05515787a58528725d960b92bf710deac78b29df"
+  },
+  {
+    "path": "collaboration\\groups\\B_terms_style\\deliverables\\prd\\evidence_20260717\\image3.png",
+    "bytes": 228307,
+    "sha256": "fb1138d4bf7cc7bd180cdd349832f66ad5ec0a93bd4081334fb633e28aab0687"
+  },
+  {
+    "path": "collaboration\\groups\\B_terms_style\\deliverables\\notes\\chat_screenshots\\image-4-b-feedback-permissions-and-args.png",
+    "bytes": 207409,
+    "sha256": "91135093c8a1e578c614a6e133b79efb7e6b93b3d744625b9034b6e77be4e788"
   }
 ]
