@@ -5,6 +5,7 @@ $VenvPython = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
 $ExePath = Join-Path $ProjectRoot "dist\CultureTranslationWorkbench\CultureTranslationWorkbench.exe"
 $SerifFontPath = Join-Path $ProjectRoot "dist\CultureTranslationWorkbench\_internal\assets\fonts\NotoSerifSC-VF.ttf"
 $LucideIconPath = Join-Path $ProjectRoot "dist\CultureTranslationWorkbench\_internal\assets\icons\lucide\play.svg"
+$ChannelIconPath = Join-Path $ProjectRoot "dist\CultureTranslationWorkbench\_internal\assets\icons\lucide\scan-text.svg"
 $LucideLicensePath = Join-Path $ProjectRoot "dist\CultureTranslationWorkbench\_internal\assets\icons\lucide\LICENSE"
 
 if (-not (Test-Path $VenvPython)) {
@@ -28,6 +29,9 @@ try {
     }
     if (-not (Test-Path $LucideIconPath)) {
         throw "Missing packaged Lucide icon: $LucideIconPath"
+    }
+    if (-not (Test-Path $ChannelIconPath)) {
+        throw "Missing packaged channel icon: $ChannelIconPath"
     }
     if (-not (Test-Path $LucideLicensePath)) {
         throw "Missing packaged Lucide license: $LucideLicensePath"

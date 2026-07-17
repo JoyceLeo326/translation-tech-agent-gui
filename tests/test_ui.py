@@ -34,11 +34,16 @@ class WorkbenchUITests(unittest.TestCase):
         self.assertFalse(make_brand_icon().isNull())
         self.assertFalse(make_icon("layout-dashboard").isNull())
         self.assertFalse(make_icon("play").isNull())
+        self.assertFalse(make_icon("scan-text").isNull())
+        self.assertFalse(make_icon("audio-lines").isNull())
         self.assertEqual(app_module.UI_FONT_FAMILY, "Noto Sans SC")
         self.assertEqual(app_module.DISPLAY_FONT_FAMILY, "Noto Serif SC")
         self.assertIsNotNone(self.window.findChild(QFrame, "ReadinessBand"))
         modes = {str(button.property("mode")) for button in self.window._agent_modes.buttons()}
         self.assertEqual(modes, {"agent", "default_workflow", "coze_workflow"})
+        icon_actions = self.window.findChildren(QToolButton, "TaskSecondaryIcon")
+        self.assertEqual(len(icon_actions), 4)
+        self.assertTrue(all(button.toolTip() for button in icon_actions))
 
     def test_b_group_entry_opens_coze_workflow_mode(self) -> None:
         self.window._handle_task_action("agent:coze")

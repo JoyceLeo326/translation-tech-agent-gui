@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from PySide6.QtCore import QByteArray, QEasingCurve, QObject, QPropertyAnimation, QSize, QThread, Qt, QUrl, Signal, Slot
+from PySide6.QtCore import QByteArray, QEasingCurve, QObject, QPropertyAnimation, QSize, QThread, QTimer, Qt, QUrl, Signal, Slot
 from PySide6.QtGui import (
     QAction,
     QColor,
@@ -78,6 +78,7 @@ from .workflow import (
 
 SYSTEM_PROMPT = "你是中国文化多模态知识库外译项目的桌面端智能体助手。请给出准确、简洁、可执行的结果。"
 GROUP_ACCENTS = {"A": "#426B9B", "B": "#167A65", "C": "#C95F46"}
+GROUP_ICONS = {"A": "image", "B": "languages", "C": "audio-lines"}
 UI_FONT_FAMILY = "Noto Sans SC"
 DISPLAY_FONT_FAMILY = "Noto Serif SC"
 SIDEBAR_WIDTH = 256
@@ -212,12 +213,18 @@ def make_icon(
     return icon
 
 
-def add_surface_shadow(widget: QWidget, blur: int = 20, y_offset: int = 4, alpha: int = 24) -> None:
+def add_surface_shadow(
+    widget: QWidget,
+    blur: int = 20,
+    y_offset: int = 4,
+    alpha: int = 24,
+) -> QGraphicsDropShadowEffect:
     shadow = QGraphicsDropShadowEffect(widget)
     shadow.setBlurRadius(blur)
     shadow.setOffset(0, y_offset)
     shadow.setColor(QColor(18, 28, 24, alpha))
     widget.setGraphicsEffect(shadow)
+    return shadow
 
 
 class GlassFrame(QFrame):
@@ -317,14 +324,14 @@ class MarkdownView(QTextBrowser):
         self.setOpenExternalLinks(True)
         self.setReadOnly(True)
         self.document().setDefaultStyleSheet(
-            "h1 { color: #172033; font-size: 22px; margin-bottom: 10px; }"
-            "h2 { color: #25324a; font-size: 17px; margin-top: 18px; }"
-            "h3 { color: #475467; font-size: 14px; margin-top: 14px; }"
+            "h1 { color: #18201d; font-family: 'Noto Serif SC'; font-size: 22px; margin-bottom: 10px; }"
+            "h2 { color: #26312c; font-family: 'Noto Serif SC'; font-size: 17px; margin-top: 18px; }"
+            "h3 { color: #44524b; font-size: 14px; margin-top: 14px; }"
             "p, li { line-height: 1.55; }"
-            "code { background: #eef4ff; color: #2457bd; }"
+            "code { background: #eaf3ef; color: #126c59; }"
             "table { border-collapse: collapse; }"
-            "th { background: #f2f5f9; font-weight: 600; }"
-            "th, td { border: 1px solid #dfe5ec; padding: 6px; }"
+            "th { background: #edf1ee; font-weight: 600; }"
+            "th, td { border: 1px solid #dce2dd; padding: 6px; }"
         )
 
     def set_output(self, text: str) -> None:
@@ -337,15 +344,27 @@ class MarkdownView(QTextBrowser):
 
 
 class StatCard(QFrame):
-    def __init__(self, label: str, accent: str) -> None:
+    def __init__(self, label: str, accent: str, icon_name: str) -> None:
         super().__init__()
         self.setObjectName("StatCard")
         self.setProperty("accent", accent)
         self.setMinimumHeight(112)
 
+        icon = QLabel()
+        icon.setObjectName("StatIcon")
+        icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon.setFixedSize(30, 30)
+        icon.setPixmap(make_icon(icon_name, accent, 17).pixmap(17, 17))
+        tone = QColor(accent)
+        icon.setStyleSheet(
+            f"background: rgba({tone.red()}, {tone.green()}, {tone.blue()}, 22); "
+            f"border: 1px solid rgba({tone.red()}, {tone.green()}, {tone.blue()}, 32); "
+            "border-radius: 6px;"
+        )
+
         signal = QFrame()
         signal.setObjectName("StatSignal")
-        signal.setFixedSize(38, 3)
+        signal.setFixedSize(30, 3)
         signal.setStyleSheet(f"background: {accent}; border: 0; border-radius: 1px;")
 
         self._value = QLabel("-")
@@ -355,12 +374,19 @@ class StatCard(QFrame):
         self._detail = QLabel("")
         self._detail.setObjectName("StatDetail")
 
+        header = QHBoxLayout()
+        header.setContentsMargins(0, 0, 0, 0)
+        header.setSpacing(9)
+        header.addWidget(icon)
+        header.addWidget(self._label)
+        header.addStretch(1)
+        header.addWidget(signal, 0, Qt.AlignmentFlag.AlignTop)
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 15, 18, 15)
         layout.setSpacing(3)
-        layout.addWidget(signal)
-        layout.addSpacing(5)
-        layout.addWidget(self._label)
+        layout.addLayout(header)
+        layout.addSpacing(2)
         layout.addWidget(self._value)
         layout.addWidget(self._detail)
 
@@ -382,12 +408,12 @@ class GroupCard(QFrame):
         signal = QFrame()
         signal.setFixedSize(44, 3)
         signal.setStyleSheet(f"background: {accent}; border: 0; border-radius: 1px;")
-        badge = QLabel(group_key)
+        badge = QLabel()
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         badge.setFixedSize(34, 34)
+        badge.setPixmap(make_icon(GROUP_ICONS[group_key], "#FFFFFF", 19).pixmap(19, 19))
         badge.setStyleSheet(
-            f"background: {accent}; color: #FFFFFF; border: 0; "
-            "border-radius: 7px; font-size: 15px; font-weight: 700;"
+            f"background: {accent}; color: #FFFFFF; border: 0; border-radius: 7px;"
         )
         self._title = QLabel()
         self._title.setObjectName("GroupTitle")
@@ -462,7 +488,7 @@ class TaskEntryCard(QFrame):
 
     def __init__(
         self,
-        badge: str,
+        channel_icon: str,
         title: str,
         kicker: str,
         body: str,
@@ -475,19 +501,22 @@ class TaskEntryCard(QFrame):
         super().__init__()
         self.setObjectName("TaskEntryCard")
         self.setMinimumHeight(202)
-        add_surface_shadow(self, blur=16, y_offset=3, alpha=18)
+        self._shadow = add_surface_shadow(self, blur=16, y_offset=3, alpha=18)
+        self._shadow_animation = QPropertyAnimation(self._shadow, b"blurRadius", self)
+        self._shadow_animation.setDuration(180)
+        self._shadow_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         signal = QFrame()
         signal.setFixedSize(46, 3)
         signal.setStyleSheet(f"background: {accent}; border: 0; border-radius: 1px;")
 
-        badge_label = QLabel(badge)
+        badge_label = QLabel()
         badge_label.setObjectName("TaskBadge")
         badge_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         badge_label.setFixedSize(42, 42)
+        badge_label.setPixmap(make_icon(channel_icon, "#FFFFFF", 23).pixmap(23, 23))
         badge_label.setStyleSheet(
-            f"background: {accent}; color: #FFFFFF; border-radius: 7px; "
-            "font-size: 18px; font-weight: 800;"
+            f"background: {accent}; color: #FFFFFF; border-radius: 7px;"
         )
 
         title_box = QVBoxLayout()
@@ -513,18 +542,30 @@ class TaskEntryCard(QFrame):
 
         primary = QPushButton(primary_label)
         primary.setObjectName("TaskPrimary")
-        primary.setIcon(make_icon("play", "#FFFFFF"))
+        primary_icon = (
+            "play"
+            if primary_action.startswith(("agent:", "workflow:", "adapter:"))
+            else "external-link"
+        )
+        primary.setIcon(make_icon(primary_icon, "#FFFFFF"))
         primary.clicked.connect(lambda: self.action_requested.emit(primary_action))
-        secondary = QPushButton(secondary_label)
-        secondary.setObjectName("TaskSecondary")
-        secondary.setIcon(make_icon("arrow-right", "#25302B"))
+        secondary = QToolButton()
+        secondary.setObjectName("TaskSecondaryIcon")
+        secondary_icon = {
+            "page:terms": "book-open",
+            "page:outputs": "package-check",
+        }.get(secondary_action, "route")
+        secondary.setIcon(make_icon(secondary_icon, "#25302B"))
+        secondary.setIconSize(QSize(17, 17))
+        secondary.setFixedSize(38, 38)
+        secondary.setToolTip(secondary_label)
+        secondary.setAccessibleName(secondary_label)
         secondary.clicked.connect(lambda: self.action_requested.emit(secondary_action))
 
         actions = QHBoxLayout()
         actions.setSpacing(9)
-        actions.addWidget(primary)
+        actions.addWidget(primary, 1)
         actions.addWidget(secondary)
-        actions.addStretch(1)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 16, 18, 16)
@@ -533,6 +574,20 @@ class TaskEntryCard(QFrame):
         layout.addLayout(header)
         layout.addWidget(body_label, 1)
         layout.addLayout(actions)
+
+    def enterEvent(self, event: object) -> None:
+        self._animate_shadow(26)
+        super().enterEvent(event)  # type: ignore[arg-type]
+
+    def leaveEvent(self, event: object) -> None:
+        self._animate_shadow(16)
+        super().leaveEvent(event)  # type: ignore[arg-type]
+
+    def _animate_shadow(self, target_blur: float) -> None:
+        self._shadow_animation.stop()
+        self._shadow_animation.setStartValue(self._shadow.blurRadius())
+        self._shadow_animation.setEndValue(target_blur)
+        self._shadow_animation.start()
 
 
 class MainWindow(QMainWindow):
@@ -553,6 +608,7 @@ class MainWindow(QMainWindow):
         self._pages: dict[str, QWidget] = {}
         self._page_animation: QPropertyAnimation | None = None
         self._animated_page: QWidget | None = None
+        self._reveal_animations: dict[QWidget, QPropertyAnimation] = {}
 
         self.setWindowTitle(self._config.app_name)
         self.setWindowIcon(make_brand_icon())
@@ -563,6 +619,7 @@ class MainWindow(QMainWindow):
         self._configure_interactions()
         self._install_shortcuts()
         self._refresh_from_scan()
+        QTimer.singleShot(100, self._animate_overview_intro)
 
     def _build_ui(self) -> None:
         root = QWidget()
@@ -775,9 +832,7 @@ class MainWindow(QMainWindow):
         entry_text.addWidget(self._scan_time_label)
         entry_row.addLayout(entry_text)
         entry_row.addStretch(1)
-        self._report_button = QPushButton("生成整合报告")
-        self._report_button.setObjectName("SecondaryButton")
-        self._report_button.setIcon(make_icon("file-text", "#344054"))
+        self._report_button = self._icon_button("file-text", "生成整合报告")
         self._report_button.clicked.connect(
             lambda: self._start_job("report", self._workflow_input.toPlainText(), allow_empty=True)
         )
@@ -790,7 +845,7 @@ class MainWindow(QMainWindow):
         self._task_grid.setVerticalSpacing(12)
         self._task_cards = (
             TaskEntryCard(
-                "A",
+                "scan-text",
                 "图文翻译与回填",
                 "图片 OCR / 图文回填",
                 "读取 71 条审校清单、最终 DOCX、10 个 SVG 与 17 页渲染证据。",
@@ -801,7 +856,7 @@ class MainWindow(QMainWindow):
                 GROUP_ACCENTS["A"],
             ),
             TaskEntryCard(
-                "B",
+                "languages",
                 "术语与风格约束",
                 "共享术语库 / 儿童文学风格",
                 "调用 B 组扣子多模型工作流，并以 212 条共享术语作为全局翻译约束。",
@@ -812,7 +867,7 @@ class MainWindow(QMainWindow):
                 GROUP_ACCENTS["B"],
             ),
             TaskEntryCard(
-                "D",
+                "file-text",
                 "文本与 DOCX 翻译",
                 "普通文本 / DOCX 回填",
                 "使用 C 组二次交付的修正版 DOCX 通道，支持译文表回填和替换覆盖报告。",
@@ -823,7 +878,7 @@ class MainWindow(QMainWindow):
                 GROUP_ACCENTS["C"],
             ),
             TaskEntryCard(
-                "V",
+                "audio-lines",
                 "音视频翻译通道",
                 "ASR / 审校表 / 语音合成",
                 "面向模式一音频转表格、模式二定稿表格生成总音频的后续整合入口。",
@@ -843,10 +898,10 @@ class MainWindow(QMainWindow):
         self._stats_grid = QGridLayout()
         self._stats_grid.setHorizontalSpacing(12)
         self._stats_grid.setVerticalSpacing(12)
-        self._stat_ready = StatCard("分组就绪", "#167A65")
-        self._stat_assets = StatCard("资源文件", "#426B9B")
-        self._stat_terms = StatCard("共享术语", "#C95F46")
-        self._stat_outputs = StatCard("已生成输出", "#7565A8")
+        self._stat_ready = StatCard("分组就绪", "#167A65", "circle-check")
+        self._stat_assets = StatCard("资源文件", "#426B9B", "files")
+        self._stat_terms = StatCard("共享术语", "#C95F46", "library")
+        self._stat_outputs = StatCard("已生成输出", "#7565A8", "package-check")
         self._stat_cards = (self._stat_ready, self._stat_assets, self._stat_terms, self._stat_outputs)
         layout.addLayout(self._stats_grid)
 
@@ -915,9 +970,7 @@ class MainWindow(QMainWindow):
         pending.setObjectName("ReadinessPending")
         pending.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        open_record = QPushButton("验收记录")
-        open_record.setObjectName("SecondaryButton")
-        open_record.setIcon(make_icon("clipboard-check", "#29342F"))
+        open_record = self._icon_button("clipboard-check", "打开完整验收记录")
         open_record.clicked.connect(self._open_acceptance_record)
 
         layout = QHBoxLayout(band)
@@ -947,6 +1000,7 @@ class MainWindow(QMainWindow):
         )
         subtitle.setObjectName("HeroSubtitle")
         subtitle.setWordWrap(True)
+        self._hero_reveal_widgets = (eyebrow, title, subtitle)
 
         run_button = QPushButton("运行总整合")
         run_button.setObjectName("HeroPrimary")
@@ -954,8 +1008,13 @@ class MainWindow(QMainWindow):
         run_button.clicked.connect(
             lambda: self._start_job("integration_workflow", self._workflow_input.toPlainText(), allow_empty=True)
         )
-        outputs_button = QPushButton("查看交付中心")
-        outputs_button.setObjectName("HeroSecondary")
+        outputs_button = QToolButton()
+        outputs_button.setObjectName("HeroIconButton")
+        outputs_button.setIcon(make_icon("package-check", "#E6ECE8"))
+        outputs_button.setIconSize(QSize(18, 18))
+        outputs_button.setFixedSize(42, 42)
+        outputs_button.setToolTip("查看交付中心")
+        outputs_button.setAccessibleName("查看交付中心")
         outputs_button.clicked.connect(lambda: self._switch_page("outputs"))
         self._busy_controls.append(run_button)
 
@@ -994,11 +1053,19 @@ class MainWindow(QMainWindow):
         status_layout.addWidget(status_title)
         self._hero_status_labels: list[QLabel] = []
         for _ in range(4):
+            status_row = QHBoxLayout()
+            status_row.setContentsMargins(0, 0, 0, 0)
+            status_row.setSpacing(7)
+            status_icon = QLabel()
+            status_icon.setFixedSize(14, 14)
+            status_icon.setPixmap(make_icon("circle-check", "#68C1A7", 14).pixmap(14, 14))
             label = QLabel()
             label.setObjectName("HeroStatusItem")
             label.setWordWrap(True)
             self._hero_status_labels.append(label)
-            status_layout.addWidget(label)
+            status_row.addWidget(status_icon, 0, Qt.AlignmentFlag.AlignTop)
+            status_row.addWidget(label, 1)
+            status_layout.addLayout(status_row)
         status_layout.addStretch(1)
 
         layout = QHBoxLayout(panel)
@@ -1016,17 +1083,18 @@ class MainWindow(QMainWindow):
         layout.setSpacing(12)
         layout.addWidget(self._section_title("整合链路"))
         stages = [
-            ("01", "统一术语约束", "读取 B 组共享术语库"),
-            ("02", "接入图文成果", "校验 A 组清单、DOCX 与预览"),
-            ("03", "接入文本音频", "读取 C 组二次交付目录"),
-            ("04", "生成最终交付", "输出 Markdown、CSV 与 Excel"),
+            ("library", "统一术语约束", "读取 B 组共享术语库"),
+            ("scan-text", "接入图文成果", "校验 A 组清单、DOCX 与预览"),
+            ("audio-lines", "接入文本音频", "读取 C 组二次交付目录"),
+            ("package-check", "生成最终交付", "输出 Markdown、CSV 与 Excel"),
         ]
-        for number, title, detail in stages:
+        for icon_name, title, detail in stages:
             row = QHBoxLayout()
-            badge = QLabel(number)
+            badge = QLabel()
             badge.setObjectName("StageBadge")
             badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
             badge.setFixedSize(34, 28)
+            badge.setPixmap(make_icon(icon_name, "#167A65", 17).pixmap(17, 17))
             texts = QVBoxLayout()
             texts.setSpacing(0)
             title_label = QLabel(title)
@@ -1229,18 +1297,22 @@ class MainWindow(QMainWindow):
 
         stages = QGridLayout()
         stages.setHorizontalSpacing(10)
-        for index, (title, detail) in enumerate(
-            (("扫描资源", "A/B/C 协作区"), ("运行适配器", "统一接入结果"), ("生成报告", "MD · CSV · Excel"), ("智能质检", "给出交付建议")),
-            start=1,
-        ):
+        workflow_stages = (
+            ("scan-text", "扫描资源", "A/B/C 协作区"),
+            ("plug", "运行适配器", "统一接入结果"),
+            ("file-output", "生成报告", "MD · CSV · Excel"),
+            ("shield-check", "智能质检", "给出交付建议"),
+        )
+        for index, (icon_name, title, detail) in enumerate(workflow_stages):
             node = QFrame()
             node.setObjectName("WorkflowNode")
             node_layout = QHBoxLayout(node)
             node_layout.setContentsMargins(13, 11, 13, 11)
-            number = QLabel(f"{index:02}")
-            number.setObjectName("WorkflowNumber")
-            number.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            number.setFixedSize(32, 32)
+            stage_icon = QLabel()
+            stage_icon.setObjectName("WorkflowNumber")
+            stage_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            stage_icon.setFixedSize(32, 32)
+            stage_icon.setPixmap(make_icon(icon_name, "#167A65", 18).pixmap(18, 18))
             texts = QVBoxLayout()
             texts.setSpacing(0)
             title_label = QLabel(title)
@@ -1252,11 +1324,11 @@ class MainWindow(QMainWindow):
             state = QLabel("就绪")
             state.setObjectName("WorkflowState")
             state.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            node_layout.addWidget(number)
+            node_layout.addWidget(stage_icon)
             node_layout.addLayout(texts, 1)
             node_layout.addWidget(state)
-            stages.addWidget(node, 0, index - 1)
-            stages.setColumnStretch(index - 1, 1)
+            stages.addWidget(node, 0, index)
+            stages.setColumnStretch(index, 1)
         layout.addLayout(stages)
 
         input_row = QHBoxLayout()
@@ -1378,7 +1450,7 @@ class MainWindow(QMainWindow):
         layout.setSpacing(16)
 
         summary_row = QHBoxLayout()
-        self._group_badge = QLabel("A")
+        self._group_badge = QLabel()
         self._group_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._group_badge.setFixedSize(52, 52)
         self._group_badge.setObjectName("DetailGroupBadge")
@@ -1427,9 +1499,7 @@ class MainWindow(QMainWindow):
         self._group_query.setObjectName("SearchInput")
         self._group_query.setPlaceholderText("可选：输入适配目标；B 组可直接输入术语关键词")
         self._group_query.returnPressed.connect(self._run_group_adapter)
-        open_button = QPushButton("打开分组目录")
-        open_button.setObjectName("SecondaryButton")
-        open_button.setIcon(make_icon("folder-open", "#344054"))
+        open_button = self._icon_button("folder-open", "打开分组目录")
         open_button.clicked.connect(self._open_group_dir)
         self._group_run_button = QPushButton("运行适配器")
         self._group_run_button.setObjectName("PrimaryButton")
@@ -1549,11 +1619,14 @@ class MainWindow(QMainWindow):
         if page_key not in self._pages:
             return
         self._current_page_key = page_key
-        self._stack.setCurrentWidget(self._pages[page_key])
-        self._animate_page(self._pages[page_key])
         title, subtitle = PAGE_META[page_key]
         self._page_title.setText(title)
         self._page_subtitle.setText(subtitle)
+        self._stack.setCurrentWidget(self._pages[page_key])
+        self._animate_page(self._pages[page_key])
+        self._animate_text_reveal((self._page_title, self._page_subtitle), 45, 300)
+        if page_key == "overview":
+            self._animate_overview_intro()
         button = self._nav_buttons.get(page_key)
         if button is not None:
             button.setChecked(True)
@@ -1575,9 +1648,11 @@ class MainWindow(QMainWindow):
         summary = next(group for group in self._scan.groups if group.key == group_key)
         self._page_title.setText(summary.name)
         self._page_subtitle.setText("分组交付详情与本地适配器")
-        self._group_badge.setText(group_key)
+        self._group_badge.setPixmap(
+            make_icon(GROUP_ICONS[group_key], "#FFFFFF", 27).pixmap(27, 27)
+        )
         self._group_badge.setStyleSheet(
-            f"background: {GROUP_ACCENTS[group_key]}; color: white; border-radius: 8px; font-size: 22px; font-weight: 700;"
+            f"background: {GROUP_ACCENTS[group_key]}; color: white; border-radius: 8px;"
         )
         self._group_detail_title.setText(summary.name.partition("：")[2] or summary.name)
         self._group_detail_description.setText(summary.description)
@@ -1593,6 +1668,7 @@ class MainWindow(QMainWindow):
         self._group_updated.setText(summary.latest_modified_at)
         self._group_path.setText(summary.relative_path)
         self._group_output.set_output(run_group_adapter(group_key, self._group_query.text(), self._project_root))
+        self._animate_text_reveal((self._page_title, self._page_subtitle), 45, 300)
 
     def _animate_page(self, page: QWidget) -> None:
         if self._page_animation is not None:
@@ -1603,13 +1679,56 @@ class MainWindow(QMainWindow):
         effect = QGraphicsOpacityEffect(page)
         page.setGraphicsEffect(effect)
         animation = QPropertyAnimation(effect, b"opacity", self)
-        animation.setDuration(160)
-        animation.setStartValue(0.72)
+        animation.setDuration(220)
+        animation.setStartValue(0.64)
         animation.setEndValue(1.0)
         animation.setEasingCurve(QEasingCurve.Type.OutCubic)
         animation.finished.connect(lambda: page.setGraphicsEffect(None))
         self._page_animation = animation
         self._animated_page = page
+        animation.start()
+
+    def _animate_overview_intro(self) -> None:
+        widgets = getattr(self, "_hero_reveal_widgets", ())
+        self._animate_text_reveal(widgets, 85, 520)
+
+    def _animate_text_reveal(
+        self,
+        widgets: tuple[QWidget, ...],
+        delay_step: int,
+        duration: int,
+    ) -> None:
+        for index, widget in enumerate(widgets):
+            QTimer.singleShot(
+                index * delay_step,
+                lambda target=widget: self._start_text_reveal(target, duration),
+            )
+
+    def _start_text_reveal(self, widget: QWidget, duration: int) -> None:
+        if not widget.isVisible():
+            return
+        previous = self._reveal_animations.pop(widget, None)
+        if previous is not None:
+            previous.stop()
+        if widget.graphicsEffect() is not None:
+            widget.setGraphicsEffect(None)
+        effect = QGraphicsOpacityEffect(widget)
+        effect.setOpacity(0.08)
+        widget.setGraphicsEffect(effect)
+        animation = QPropertyAnimation(effect, b"opacity", self)
+        animation.setDuration(duration)
+        animation.setStartValue(0.08)
+        animation.setEndValue(1.0)
+        animation.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        def finish() -> None:
+            if widget.graphicsEffect() is effect:
+                widget.setGraphicsEffect(None)
+            if self._reveal_animations.get(widget) is animation:
+                self._reveal_animations.pop(widget, None)
+
+        animation.finished.connect(finish)
+        self._reveal_animations[widget] = animation
         animation.start()
 
     def _refresh_from_scan(self) -> None:
@@ -1636,10 +1755,10 @@ class MainWindow(QMainWindow):
             label.setText(f"{group.key}  {handoff_messages.get(group.key, group.recommendation)}")
 
         hero_items = [
-            f"● A/B/C 就绪：{ready}/{len(self._scan.groups)}",
-            f"● 共享术语：{self._scan.terminology.count} 条，可直接检索约束",
-            "● Coze：API 入口已接入，最新版发布待 B 组确认",
-            f"● 输出中心：{len(output_files)} 个已生成文件",
+            f"A/B/C 就绪：{ready}/{len(self._scan.groups)}",
+            f"共享术语：{self._scan.terminology.count} 条，可直接检索约束",
+            "Coze：API 入口已接入，最新版发布待 B 组确认",
+            f"输出中心：{len(output_files)} 个已生成文件",
         ]
         for label, text in zip(self._hero_status_labels, hero_items):
             label.setText(text)
@@ -1791,7 +1910,7 @@ class MainWindow(QMainWindow):
         self._top_run_button.setText("整合运行中…" if busy else "运行整合")
         self._agent_run_button.setText("生成中…" if busy else "开始生成")
         self._workflow_run_button.setText("工作流运行中…" if busy else "运行完整工作流")
-        self._report_button.setText("报告生成中…" if busy else "生成整合报告")
+        self._report_button.setToolTip("报告生成中…" if busy else "生成整合报告")
         self._group_run_button.setText("适配器运行中…" if busy else "运行适配器")
         if busy:
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
@@ -2676,6 +2795,18 @@ class MainWindow(QMainWindow):
                 background: #252E2A;
                 border-color: #7A8981;
             }
+            QToolButton#HeroIconButton {
+                background: transparent;
+                border: 1px solid #56635D;
+                border-radius: 6px;
+            }
+            QToolButton#HeroIconButton:hover {
+                background: #252E2A;
+                border-color: #7A8981;
+            }
+            QToolButton#HeroIconButton:pressed {
+                background: #101713;
+            }
             QToolButton#IconButton {
                 background: #FCFDFC;
                 border: 1px solid #D6DED8;
@@ -2775,6 +2906,19 @@ class MainWindow(QMainWindow):
             QPushButton#TaskSecondary:hover {
                 background: #E7EEEA;
                 border-color: #BFCFC7;
+            }
+            QToolButton#TaskSecondaryIcon {
+                background: #F1F4F2;
+                color: #2D3833;
+                border: 1px solid #DDE3DF;
+                border-radius: 6px;
+            }
+            QToolButton#TaskSecondaryIcon:hover {
+                background: #E7EEEA;
+                border-color: #AFC4BA;
+            }
+            QToolButton#TaskSecondaryIcon:pressed {
+                background: #DCE6E1;
             }
             QLabel#StatLabel {
                 color: #6A756F;
