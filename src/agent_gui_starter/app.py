@@ -446,6 +446,7 @@ class MainWindow(QMainWindow):
 
 
 def main(argv: list[str] | None = None) -> int:
+    _configure_console_output()
     argv = list(sys.argv[1:] if argv is None else argv)
     project_root = find_project_root()
 
@@ -496,3 +497,10 @@ def main(argv: list[str] | None = None) -> int:
     window = MainWindow()
     window.show()
     return app.exec()
+
+
+def _configure_console_output() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="replace")
