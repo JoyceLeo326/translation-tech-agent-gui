@@ -1,6 +1,6 @@
 # ABC 组交付清单
 
-更新时间：2026-07-15
+更新时间：2026-07-17
 
 ## A 组：图文翻译与回填
 
@@ -30,9 +30,12 @@
 | --- | --- | --- | --- |
 | DOCX 交付压缩包 | `collaboration/groups/C_text_audio_translation/deliverables/docx_translation/workflow_c_docx_translation_20260715.zip` | 已归档 | C 组 DOCX 翻译通道 |
 | DOCX 源码展开 | `collaboration/groups/C_text_audio_translation/deliverables/docx_translation/source_from_zip/` | 已归档 | C 组 DOCX 源码、文档和源材料 |
+| 文字/DOCX 二次交付 | `collaboration/groups/C_text_audio_translation/deliverables/docx_translation/revised_20260717/` | 已整理 | 含修正后源码、5 组测试样例、截图和日志；整合优先使用 |
 | 音视频交付压缩包 | `collaboration/groups/C_text_audio_translation/deliverables/audio_video_workflow/音视频翻译工作流.zip` | 已归档 | 按任务归入 C 组音视频通道 |
 | 音视频源码展开 | `collaboration/groups/C_text_audio_translation/deliverables/audio_video_workflow/source_from_zip/` | 已归档 | 供后续整合分析 |
 | 交付日志 | `collaboration/groups/C_text_audio_translation/deliverables/audio_video_workflow/工作流B — 音视频翻译通道 · 标准化项目交付日志.docx` | 已归档 | 原始日志 |
+| 音视频二次交付 | `collaboration/groups/C_text_audio_translation/deliverables/audio_video_workflow/revised_20260717/` | 已整理 | 含新版源码、补充测试音频、模式二输出音频、四列表格、二维码和截图 |
+| 二次验收反馈 | `collaboration/groups/C_text_audio_translation/deliverables/notes/C组二次交付验收反馈_20260717.md` | 已归档 | 平台侧仍需确认文字流画布同步、API Token 安全交付、运行日志追溯 |
 
 ## 总整合待办
 
