@@ -32,6 +32,12 @@ jobs:
           .\.venv\Scripts\python.exe main.py --self-check
           .\.venv\Scripts\python.exe main.py --smoke-test
 
+      - name: Run unit tests
+        shell: pwsh
+        run: |
+          $env:PYTHONPATH = Join-Path (Get-Location) 'src'
+          .\.venv\Scripts\python.exe -m unittest discover -s tests -v
+
       - name: Build executable
         shell: pwsh
         run: |
@@ -41,5 +47,5 @@ jobs:
       - name: Upload executable artifact
         uses: actions/upload-artifact@v7
         with:
-          name: AgentGuiStarter-windows
-          path: dist/AgentGuiStarter
+          name: CultureTranslationWorkbench-windows
+          path: dist/CultureTranslationWorkbench

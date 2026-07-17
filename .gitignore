@@ -12,3 +12,4 @@ collaboration/**/scratch/
 collaboration/**/runtime_outputs/
 collaboration/**/temp/
 collaboration/**/.env
+collaboration/integration/final_outputs/generated/

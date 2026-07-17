@@ -9,7 +9,18 @@
 - A/B/C 组把稳定成果放入自己的协作区。
 - 公共资料放入共享区，供所有组读取。
 - 最终 GUI、适配器、总清单和输出放入整合区。
-- Python 桌面程序使用 PySide6，最终用 PyInstaller 打包为 Windows exe。
+- Python 桌面程序使用 PySide6/Qt，最终用 PyInstaller 打包为 Windows exe。
+
+## 当前 GUI 能力
+
+主程序已经从启动器升级为总整合工作台：
+
+- 左侧扫描 `collaboration/`，展示 A/B/C 组资源树、状态、文件数量和资产类别。
+- 右侧提供整合看板、智能体/工作流输出、运行日志三页。
+- 支持一键生成整合报告，输出 Markdown、CSV 和 Excel。
+- 支持检索 B 组共享术语库，并把术语结果作为翻译约束。
+- 支持 A/B/C 本地适配器，分别读取图文回填、术语风格、DOCX/音视频交付状态。
+- 支持通用智能体调用和总整合工作流调用；未配置 `OPENAI_API_KEY` 时自动使用本地占位结果，便于离线演示和打包验证。
 
 ## 目录结构
 
@@ -82,6 +93,14 @@ scripts/
 
 当前交付清单见：`collaboration/integration/manifests/group_deliveries.md`
 
+GUI 生成的整合输出默认进入：
+
+```text
+collaboration/integration/final_outputs/generated/
+```
+
+该目录用于运行产物，不直接入库；正式提交物确认后再复制到 `final_outputs/` 下的稳定位置。
+
 ## 协作规则
 
 1. 各组稳定成果放到自己的 `deliverables/` 下。
@@ -120,6 +139,13 @@ OPENAI_MODEL=gpt-4.1-mini
 .\scripts\verify_build.ps1
 ```
 
+单元测试：
+
+```powershell
+$env:PYTHONPATH = Join-Path (Get-Location) 'src'
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
 打包 exe：
 
 ```powershell
@@ -129,7 +155,16 @@ OPENAI_MODEL=gpt-4.1-mini
 打包结果：
 
 ```text
-dist\AgentGuiStarter\AgentGuiStarter.exe
+dist\CultureTranslationWorkbench\CultureTranslationWorkbench.exe
+```
+
+命令行自检：
+
+```powershell
+.\.venv\Scripts\python.exe main.py --self-check
+.\.venv\Scripts\python.exe main.py --smoke-test
+.\.venv\Scripts\python.exe main.py --integration-report "生成当前整合状态"
+.\.venv\Scripts\python.exe main.py --term-search 孔子
 ```
 
 ## 主程序位置
@@ -137,7 +172,19 @@ dist\AgentGuiStarter\AgentGuiStarter.exe
 - GUI：`src/agent_gui_starter/app.py`
 - 智能体连接：`src/agent_gui_starter/agent.py`
 - 工作流步骤：`src/agent_gui_starter/workflow.py`
+- 总整合引擎：`src/agent_gui_starter/integration.py`
 - 环境配置：`src/agent_gui_starter/config.py`
+
+## 验收标准
+
+当前版本按以下标准交付：
+
+1. Qt GUI 可以启动，并能扫描公开仓库内 A/B/C 组协作区。
+2. 不配置真实 API Key 时也能离线演示；配置 `.env` 后切换为真实 OpenAI 智能体调用。
+3. A/B/C 组已有交付物均有可读入口和本地适配器说明。
+4. B 组共享术语库可由 GUI 和命令行检索。
+5. 总整合工作流可生成 Markdown、CSV、Excel 输出。
+6. `scripts\build_exe.ps1` 可打包 Windows exe；`scripts\verify_build.ps1` 会验证源码自检、烟测、exe 烟测和 GUI 启动。
 
 ## 开源协议
 

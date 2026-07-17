@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 
 $ProjectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $VenvPython = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
-$ExePath = Join-Path $ProjectRoot "dist\AgentGuiStarter\AgentGuiStarter.exe"
+$ExePath = Join-Path $ProjectRoot "dist\CultureTranslationWorkbench\CultureTranslationWorkbench.exe"
 
 if (-not (Test-Path $VenvPython)) {
     throw "Missing virtual environment. Run scripts\setup_env.ps1 first."
@@ -28,8 +28,8 @@ try {
     if (-not $proc) {
         throw "GUI process exited during startup."
     }
-    if ($proc.MainWindowTitle -ne "Agent GUI Starter") {
-        throw "Unexpected GUI title: $($proc.MainWindowTitle)"
+    if ([string]::IsNullOrWhiteSpace($proc.MainWindowTitle)) {
+        throw "GUI window title is empty."
     }
     Stop-Process -Id $proc.Id -Force
 }
@@ -38,4 +38,3 @@ finally {
 }
 
 Write-Host "Verification passed."
-

@@ -1,15 +1,15 @@
 [project]
 name = "agent-gui-starter"
-version = "0.1.0"
-description = "Qt desktop starter for agent and workflow apps."
+version = "0.2.0"
+description = "Qt desktop workbench for multimodal Chinese culture translation workflows."
 requires-python = ">=3.11"
 dependencies = [
   "PySide6>=6.7,<7",
   "openai>=1.40,<3",
   "python-dotenv>=1.0,<2",
   "pydantic>=2.7,<3",
+  "openpyxl>=3.1,<4",
 ]
 
 [tool.pyinstaller]
-name = "AgentGuiStarter"
-
+name = "CultureTranslationWorkbench"

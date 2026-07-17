@@ -28,7 +28,7 @@ def load_config() -> AppConfig:
             load_dotenv(env_file, override=False)
 
     return AppConfig(
-        app_name="Agent GUI Starter",
+        app_name="中国文化多模态知识库外译智能体",
         openai_api_key=_blank_to_none(os.getenv("OPENAI_API_KEY")),
         openai_model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
         openai_organization=_blank_to_none(os.getenv("OPENAI_ORGANIZATION")),
@@ -53,4 +53,3 @@ def _blank_to_none(value: str | None) -> str | None:
         return None
     value = value.strip()
     return value or None
-

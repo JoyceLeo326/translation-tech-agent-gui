@@ -1,9 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable
 
 from .agent import AgentClient
+from .integration import (
+    find_project_root,
+    format_dashboard_markdown,
+    run_group_adapter,
+    scan_collaboration,
+    write_integration_outputs,
+)
 
 
 ProgressCallback = Callable[[str], None]
@@ -61,6 +69,56 @@ def run_default_workflow(
     return run_workflow(client, DEFAULT_WORKFLOW, original_prompt, progress)
 
 
+def run_translation_integration_workflow(
+    client: AgentClient,
+    original_prompt: str,
+    project_root: Path | None = None,
+    progress: ProgressCallback | None = None,
+) -> WorkflowResult:
+    root = find_project_root(project_root)
+    results: list[StepResult] = []
+
+    if progress:
+        progress("正在扫描 A/B/C 协作区")
+    scan = scan_collaboration(root)
+    dashboard = format_dashboard_markdown(scan)
+    results.append(StepResult("协作区扫描", dashboard, "local-integration"))
+
+    if progress:
+        progress("正在运行 A/B/C 本地适配器")
+    adapter_output = "\n\n".join(
+        [
+            run_group_adapter("A", original_prompt, root),
+            run_group_adapter("B", original_prompt, root),
+            run_group_adapter("C", original_prompt, root),
+        ]
+    )
+    results.append(StepResult("A/B/C 适配器", adapter_output, "local-integration"))
+
+    if progress:
+        progress("正在生成整合输出文件")
+    bundle = write_integration_outputs(scan, original_prompt)
+    results.append(StepResult("整合文件输出", bundle.summary_markdown, "local-files"))
+
+    if progress:
+        progress("正在调用智能体生成总整合建议")
+    response = client.run(
+        "你是翻译技术大赛总整合负责人。请基于扫描结果、术语库和 A/B/C 交付状态，给出下一步可执行整合建议。",
+        (
+            f"用户目标：\n{original_prompt.strip() or '生成当前项目的完整整合状态与交付建议'}\n\n"
+            f"协作区扫描：\n{dashboard}\n\n"
+            f"适配器输出：\n{adapter_output}\n\n"
+            "请输出：1. 当前是否可演示；2. GUI 接入重点；3. 仍需 A/B/C 组补充的非阻塞项；"
+            "4. 最终提交前检查清单。"
+        ),
+    )
+    results.append(StepResult("智能体总整合建议", response.text, response.source))
+
+    if progress:
+        progress("整合工作流完成")
+    return WorkflowResult(results)
+
+
 def run_workflow(
     client: AgentClient,
     steps: list[WorkflowStep],
@@ -93,4 +151,3 @@ def format_workflow_result(result: WorkflowResult) -> str:
     for index, step in enumerate(result.steps, start=1):
         sections.append(f"## {index}. {step.name} [{step.source}]\n\n{step.output.strip()}")
     return "\n\n".join(sections).strip()
-

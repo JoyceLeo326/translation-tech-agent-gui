@@ -5,7 +5,7 @@
 - Virtual environment: `.venv`
 - Source code: `src\agent_gui_starter`
 - Development entry: `main.py`
-- Packaged executable: `dist\AgentGuiStarter\AgentGuiStarter.exe`
+- Packaged executable: `dist\CultureTranslationWorkbench\CultureTranslationWorkbench.exe`
 
 ## D-drive shared tools
 
@@ -24,4 +24,3 @@
 
 - Inno Setup or NSIS, only if we need a formal installer instead of a portable exe folder.
 - Qt Designer, only if a future task requires visual `.ui` editing instead of building the interface in Python.
-
