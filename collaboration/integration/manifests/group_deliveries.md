@@ -8,6 +8,7 @@
 | --- | --- | --- | --- |
 | 交付压缩包 | `collaboration/groups/A_image_translation/deliverables/archives/pic_trans_replace_fixed_20260715.zip` | 已归档 | 图文翻译修正版 |
 | 需求说明 | `collaboration/groups/A_image_translation/deliverables/notes/A组整改需求_20260715.md` | 已归档 | 整改需求 |
+| 独立复核记录 | `collaboration/groups/A_image_translation/deliverables/notes/A组独立复核记录_20260717.md` | 已归档 | 复核结果与需 A 组补充事项 |
 | 展开材料 | `collaboration/groups/A_image_translation/deliverables/extracted_20260715/` | 已归档 | 脚本、翻译清单、预览图、最终 DOCX |
 
 ## B 组：术语库与儿童文学风格控制
