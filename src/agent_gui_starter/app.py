@@ -10,6 +10,7 @@ from PySide6.QtGui import (
     QColor,
     QDesktopServices,
     QFont,
+    QFontDatabase,
     QIcon,
     QKeySequence,
     QPainter,
@@ -72,14 +73,52 @@ from .workflow import (
 
 
 SYSTEM_PROMPT = "你是中国文化多模态知识库外译项目的桌面端智能体助手。请给出准确、简洁、可执行的结果。"
-GROUP_ACCENTS = {"A": "#252624", "B": "#252624", "C": "#252624"}
+GROUP_ACCENTS = {"A": "#1F6F72", "B": "#9A6A24", "C": "#B4543E"}
+UI_FONT_FAMILY = "Microsoft YaHei UI"
+ICON_FONT_FAMILY = "Segoe MDL2 Assets"
+_FONTS_CONFIGURED = False
 PAGE_META = {
-    "overview": ("项目总览", "A/B/C 协作区与整合就绪状态"),
+    "overview": ("项目总览", "从真实翻译通道进入整合、审校与交付"),
     "agent": ("智能体", "生成、校验并整理翻译任务结果"),
     "terms": ("术语库", "统一文化术语译法与上下文依据"),
     "workflow": ("总整合工作流", "扫描、适配、导出与智能质检"),
     "outputs": ("交付中心", "报告、表格、运行日志与最终输出"),
 }
+
+
+def configure_application_fonts(app: QApplication | None = None) -> None:
+    global UI_FONT_FAMILY, ICON_FONT_FAMILY, _FONTS_CONFIGURED
+    if _FONTS_CONFIGURED:
+        return
+    _FONTS_CONFIGURED = True
+
+    font_candidates = [
+        Path("C:/Windows/Fonts/msyh.ttc"),
+        Path("C:/Windows/Fonts/NotoSansSC-VF.ttf"),
+        Path("C:/Windows/Fonts/simhei.ttf"),
+        Path("C:/Windows/Fonts/segmdl2.ttf"),
+    ]
+    loaded_families: list[str] = []
+    for font_path in font_candidates:
+        if not font_path.exists():
+            continue
+        font_id = QFontDatabase.addApplicationFont(str(font_path))
+        if font_id >= 0:
+            loaded_families.extend(QFontDatabase.applicationFontFamilies(font_id))
+
+    families = set(QFontDatabase.families()) | set(loaded_families)
+    for preferred in ("Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", "SimHei", "SimSun"):
+        if preferred in families:
+            UI_FONT_FAMILY = preferred
+            break
+    for preferred in ("Segoe MDL2 Assets", "Segoe Fluent Icons", "Segoe UI Symbol"):
+        if preferred in families:
+            ICON_FONT_FAMILY = preferred
+            break
+
+    target_app = app or QApplication.instance()
+    if target_app is not None:
+        target_app.setFont(QFont(UI_FONT_FAMILY, 10))
 
 
 def make_brand_icon(size: int = 64) -> QIcon:
@@ -98,7 +137,7 @@ def make_brand_icon(size: int = 64) -> QIcon:
         max(4, int(size * 0.15)),
         max(4, int(size * 0.15)),
     )
-    font = QFont("Microsoft YaHei UI", max(16, int(size * 0.55)), QFont.Weight.DemiBold)
+    font = QFont(UI_FONT_FAMILY, max(16, int(size * 0.55)), QFont.Weight.DemiBold)
     painter.setFont(font)
     painter.setPen(QColor("#1E1F1D"))
     painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "译")
@@ -124,7 +163,7 @@ def make_glyph_icon(glyph: str, color: str = "#666862", size: int = 32) -> QIcon
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     painter.setPen(QColor(color))
-    painter.setFont(QFont("Segoe Fluent Icons", max(12, int(size * 0.56))))
+    painter.setFont(QFont(ICON_FONT_FAMILY, max(12, int(size * 0.56))))
     painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, glyph)
     painter.end()
     return QIcon(pixmap)
@@ -259,7 +298,7 @@ class GroupCard(QFrame):
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         badge.setFixedSize(34, 34)
         badge.setStyleSheet(
-            "background: #F0F0ED; color: #252624; border: 1px solid #DEDEDA; "
+            f"background: {accent}; color: #FFFFFF; border: 0; "
             "border-radius: 6px; font-size: 15px; font-weight: 700;"
         )
         self._title = QLabel()
@@ -329,9 +368,80 @@ class GroupCard(QFrame):
             )
 
 
+class TaskEntryCard(QFrame):
+    action_requested = Signal(str)
+
+    def __init__(
+        self,
+        badge: str,
+        title: str,
+        kicker: str,
+        body: str,
+        primary_label: str,
+        primary_action: str,
+        secondary_label: str,
+        secondary_action: str,
+        accent: str,
+    ) -> None:
+        super().__init__()
+        self.setObjectName("TaskEntryCard")
+        self.setMinimumHeight(190)
+
+        badge_label = QLabel(badge)
+        badge_label.setObjectName("TaskBadge")
+        badge_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        badge_label.setFixedSize(42, 42)
+        badge_label.setStyleSheet(
+            f"background: {accent}; color: #FFFFFF; border-radius: 8px; "
+            "font-size: 18px; font-weight: 800;"
+        )
+
+        title_box = QVBoxLayout()
+        title_box.setContentsMargins(0, 0, 0, 0)
+        title_box.setSpacing(2)
+        kicker_label = QLabel(kicker)
+        kicker_label.setObjectName("TaskKicker")
+        title_label = QLabel(title)
+        title_label.setObjectName("TaskTitle")
+        title_label.setWordWrap(True)
+        title_box.addWidget(kicker_label)
+        title_box.addWidget(title_label)
+
+        header = QHBoxLayout()
+        header.setSpacing(12)
+        header.addWidget(badge_label)
+        header.addLayout(title_box, 1)
+
+        body_label = QLabel(body)
+        body_label.setObjectName("TaskBody")
+        body_label.setWordWrap(True)
+        body_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        primary = QPushButton(primary_label)
+        primary.setObjectName("TaskPrimary")
+        primary.clicked.connect(lambda: self.action_requested.emit(primary_action))
+        secondary = QPushButton(secondary_label)
+        secondary.setObjectName("TaskSecondary")
+        secondary.clicked.connect(lambda: self.action_requested.emit(secondary_action))
+
+        actions = QHBoxLayout()
+        actions.setSpacing(9)
+        actions.addWidget(primary)
+        actions.addWidget(secondary)
+        actions.addStretch(1)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(18, 18, 18, 16)
+        layout.setSpacing(13)
+        layout.addLayout(header)
+        layout.addWidget(body_label, 1)
+        layout.addLayout(actions)
+
+
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
+        configure_application_fonts(QApplication.instance())
         self._thread: QThread | None = None
         self._worker: JobWorker | None = None
         self._active_mode = "dashboard"
@@ -534,18 +644,20 @@ class MainWindow(QMainWindow):
         content = QWidget()
         content.setObjectName("OverviewContent")
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(28, 24, 28, 28)
-        layout.setSpacing(20)
+        layout.setContentsMargins(28, 24, 28, 30)
+        layout.setSpacing(18)
 
-        intro_row = QHBoxLayout()
-        intro_text = QVBoxLayout()
-        intro_text.setSpacing(3)
-        intro_text.addWidget(self._section_title("交付状态"))
+        layout.addWidget(self._overview_hero_panel())
+
+        entry_row = QHBoxLayout()
+        entry_text = QVBoxLayout()
+        entry_text.setSpacing(3)
+        entry_text.addWidget(self._section_title("真实工作入口"))
         self._scan_time_label = QLabel()
         self._scan_time_label.setObjectName("SectionSubtitle")
-        intro_text.addWidget(self._scan_time_label)
-        intro_row.addLayout(intro_text)
-        intro_row.addStretch(1)
+        entry_text.addWidget(self._scan_time_label)
+        entry_row.addLayout(entry_text)
+        entry_row.addStretch(1)
         self._report_button = QPushButton("生成整合报告")
         self._report_button.setObjectName("SecondaryButton")
         self._report_button.setIcon(make_glyph_icon("\uE9D2", "#252624"))
@@ -553,8 +665,63 @@ class MainWindow(QMainWindow):
             lambda: self._start_job("report", self._workflow_input.toPlainText(), allow_empty=True)
         )
         self._busy_controls.append(self._report_button)
-        intro_row.addWidget(self._report_button)
-        layout.addLayout(intro_row)
+        entry_row.addWidget(self._report_button)
+        layout.addLayout(entry_row)
+
+        self._task_grid = QGridLayout()
+        self._task_grid.setHorizontalSpacing(12)
+        self._task_grid.setVerticalSpacing(12)
+        self._task_cards = (
+            TaskEntryCard(
+                "A",
+                "图文翻译与回填",
+                "图片 OCR / 图文回填",
+                "读取 A 组翻译清单、最终 DOCX 和图片总览，用于图文资源的翻译回填演示。",
+                "查看 A 组",
+                "group:A",
+                "运行适配器",
+                "adapter:A",
+                GROUP_ACCENTS["A"],
+            ),
+            TaskEntryCard(
+                "B",
+                "术语与风格约束",
+                "共享术语库 / 儿童文学风格",
+                "把 B 组术语库作为全局约束，检索术语后可直接加入智能体任务。",
+                "打开术语库",
+                "page:terms",
+                "查看 B 组",
+                "group:B",
+                GROUP_ACCENTS["B"],
+            ),
+            TaskEntryCard(
+                "D",
+                "文本与 DOCX 翻译",
+                "普通文本 / DOCX 回填",
+                "使用 C 组二次交付的修正版 DOCX 通道，支持译文表回填和替换覆盖报告。",
+                "查看 C 组",
+                "group:C",
+                "运行适配器",
+                "adapter:C",
+                GROUP_ACCENTS["C"],
+            ),
+            TaskEntryCard(
+                "V",
+                "音视频翻译通道",
+                "ASR / 审校表 / 语音合成",
+                "面向模式一音频转表格、模式二定稿表格生成总音频的后续整合入口。",
+                "运行总整合",
+                "workflow:run",
+                "交付中心",
+                "page:outputs",
+                "#5F6F52",
+            ),
+        )
+        for card in self._task_cards:
+            card.action_requested.connect(self._handle_task_action)
+        layout.addLayout(self._task_grid)
+
+        layout.addWidget(self._section_title("整合状态"))
 
         self._stats_grid = QGridLayout()
         self._stats_grid.setHorizontalSpacing(12)
@@ -566,7 +733,7 @@ class MainWindow(QMainWindow):
         self._stat_cards = (self._stat_ready, self._stat_assets, self._stat_terms, self._stat_outputs)
         layout.addLayout(self._stats_grid)
 
-        layout.addWidget(self._section_title("协作分组"))
+        layout.addWidget(self._section_title("交付物接手状态"))
         self._group_grid = QGridLayout()
         self._group_grid.setHorizontalSpacing(12)
         self._group_grid.setVerticalSpacing(12)
@@ -595,6 +762,73 @@ class MainWindow(QMainWindow):
         self._overview_layout_mode = -1
         self._relayout_overview(4, 3)
         return scroll
+
+    def _overview_hero_panel(self) -> QWidget:
+        panel = QFrame()
+        panel.setObjectName("HeroPanel")
+        panel.setMinimumHeight(218)
+
+        eyebrow = QLabel("TRANSLATION TECH WORKBENCH")
+        eyebrow.setObjectName("HeroEyebrow")
+        title = QLabel("把 A/B/C 交付物变成可演示的翻译工作台")
+        title.setObjectName("HeroTitle")
+        title.setWordWrap(True)
+        subtitle = QLabel(
+            "围绕图文回填、术语风格、DOCX 翻译、音视频翻译四条真实路径组织功能。"
+            "当前交付物以仓库修正版为准，整合侧可以继续接手。"
+        )
+        subtitle.setObjectName("HeroSubtitle")
+        subtitle.setWordWrap(True)
+
+        run_button = QPushButton("运行总整合")
+        run_button.setObjectName("HeroPrimary")
+        run_button.setIcon(make_glyph_icon("\uE768", "#FFFFFF"))
+        run_button.clicked.connect(
+            lambda: self._start_job("integration_workflow", self._workflow_input.toPlainText(), allow_empty=True)
+        )
+        outputs_button = QPushButton("查看交付中心")
+        outputs_button.setObjectName("HeroSecondary")
+        outputs_button.clicked.connect(lambda: self._switch_page("outputs"))
+        self._busy_controls.append(run_button)
+
+        actions = QHBoxLayout()
+        actions.setSpacing(10)
+        actions.addWidget(run_button)
+        actions.addWidget(outputs_button)
+        actions.addStretch(1)
+
+        left = QVBoxLayout()
+        left.setContentsMargins(0, 0, 0, 0)
+        left.setSpacing(10)
+        left.addWidget(eyebrow)
+        left.addWidget(title)
+        left.addWidget(subtitle)
+        left.addStretch(1)
+        left.addLayout(actions)
+
+        status_panel = QFrame()
+        status_panel.setObjectName("HeroStatusPanel")
+        status_layout = QVBoxLayout(status_panel)
+        status_layout.setContentsMargins(16, 15, 16, 15)
+        status_layout.setSpacing(10)
+        status_title = QLabel("当前可接手范围")
+        status_title.setObjectName("HeroStatusTitle")
+        status_layout.addWidget(status_title)
+        self._hero_status_labels: list[QLabel] = []
+        for _ in range(4):
+            label = QLabel()
+            label.setObjectName("HeroStatusItem")
+            label.setWordWrap(True)
+            self._hero_status_labels.append(label)
+            status_layout.addWidget(label)
+        status_layout.addStretch(1)
+
+        layout = QHBoxLayout(panel)
+        layout.setContentsMargins(26, 24, 24, 22)
+        layout.setSpacing(24)
+        layout.addLayout(left, 3)
+        layout.addWidget(status_panel, 2)
+        return panel
 
     def _overview_workflow_panel(self) -> QWidget:
         panel = QFrame()
@@ -637,7 +871,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(18, 17, 18, 16)
         layout.setSpacing(10)
-        layout.addWidget(self._section_title("当前建议"))
+        layout.addWidget(self._section_title("接手结论"))
         self._advice_labels: list[QLabel] = []
         for index in range(3):
             label = QLabel()
@@ -1039,6 +1273,7 @@ class MainWindow(QMainWindow):
         self._overview_layout_mode = mode
 
         for layout, widgets, columns in (
+            (self._task_grid, self._task_cards, stat_columns),
             (self._stats_grid, self._stat_cards, stat_columns),
             (self._group_grid, tuple(self._group_cards.values()), group_columns),
         ):
@@ -1066,6 +1301,23 @@ class MainWindow(QMainWindow):
         save_action.setShortcut(QKeySequence.StandardKey.Save)
         save_action.triggered.connect(self._save_current_output)
         self.addAction(save_action)
+
+    @Slot(str)
+    def _handle_task_action(self, action: str) -> None:
+        category, _, value = action.partition(":")
+        if category == "group" and value in GROUPS:
+            self._show_group(value)
+            return
+        if category == "adapter" and value in GROUPS:
+            self._show_group(value)
+            self._start_job(f"adapter:{value}", "", allow_empty=True)
+            return
+        if category == "page" and value in self._pages:
+            self._switch_page(value)
+            return
+        if action == "workflow:run":
+            self._switch_page("workflow")
+            self._start_job("integration_workflow", self._workflow_input.toPlainText(), allow_empty=True)
 
     def _switch_page(self, page_key: str) -> None:
         if page_key not in self._pages:
@@ -1128,8 +1380,22 @@ class MainWindow(QMainWindow):
             self._group_nav_buttons[group.key].style().unpolish(self._group_nav_buttons[group.key])
             self._group_nav_buttons[group.key].style().polish(self._group_nav_buttons[group.key])
 
+        handoff_messages = {
+            "A": "图文回填材料可接手：优先使用翻译清单、最终 DOCX 和图片总览。",
+            "B": "术语库可接手：共享术语库已作为全局术语与风格控制输入。",
+            "C": "C 组二次交付达标：无需返工，后续接入 DOCX 与音视频通道。",
+        }
         for label, group in zip(self._advice_labels, self._scan.groups):
-            label.setText(f"{group.key}  {group.recommendation}")
+            label.setText(f"{group.key}  {handoff_messages.get(group.key, group.recommendation)}")
+
+        hero_items = [
+            f"● A/B/C 就绪：{ready}/{len(self._scan.groups)}",
+            f"● 共享术语：{self._scan.terminology.count} 条，可直接检索约束",
+            "● C 组：按整合接手标准已达标，无需返工",
+            f"● 输出中心：{len(output_files)} 个已生成文件",
+        ]
+        for label, text in zip(self._hero_status_labels, hero_items):
+            label.setText(text)
 
         api_text = "API 已连接" if self._config.has_api_key else "离线演示模式"
         self._api_state.setText(f"●  {api_text}")
@@ -1376,7 +1642,7 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(
             """
             * {
-                font-family: "Microsoft YaHei UI";
+                font-family: "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", "SimHei";
                 font-size: 13px;
                 color: #20211F;
             }
@@ -1450,6 +1716,67 @@ class MainWindow(QMainWindow):
                 background: #FDFDFC;
                 border: 0;
                 border-bottom: 1px solid #E0E0DC;
+            }
+            QFrame#HeroPanel {
+                background: #20231F;
+                border: 0;
+                border-radius: 8px;
+            }
+            QLabel#HeroEyebrow {
+                color: #E0A65A;
+                font-size: 11px;
+                font-weight: 800;
+                letter-spacing: 0;
+            }
+            QLabel#HeroTitle {
+                color: #FFFFFF;
+                font-size: 28px;
+                font-weight: 800;
+            }
+            QLabel#HeroSubtitle {
+                color: #CFD2C8;
+                font-size: 13px;
+                line-height: 1.45;
+            }
+            QFrame#HeroStatusPanel {
+                background: #2B2E29;
+                border: 1px solid #3C4038;
+                border-radius: 8px;
+            }
+            QLabel#HeroStatusTitle {
+                color: #FFFFFF;
+                font-size: 14px;
+                font-weight: 700;
+            }
+            QLabel#HeroStatusItem {
+                color: #D8DBD1;
+                font-size: 12px;
+                line-height: 1.4;
+            }
+            QPushButton#HeroPrimary {
+                background: #C95A45;
+                color: #FFFFFF;
+                border: 1px solid #C95A45;
+                border-radius: 7px;
+                padding: 10px 16px;
+                font-weight: 700;
+                min-height: 20px;
+            }
+            QPushButton#HeroPrimary:hover {
+                background: #D46A54;
+                border-color: #D46A54;
+            }
+            QPushButton#HeroSecondary {
+                background: transparent;
+                color: #F4F1EA;
+                border: 1px solid #6A6D62;
+                border-radius: 7px;
+                padding: 10px 14px;
+                font-weight: 700;
+                min-height: 20px;
+            }
+            QPushButton#HeroSecondary:hover {
+                background: #33362F;
             }
             QLabel#PageTitle {
                 color: #1D1E1C;
@@ -1526,10 +1853,52 @@ class MainWindow(QMainWindow):
                 font-size: 15px;
                 font-weight: 700;
             }
-            QFrame#StatCard, QFrame#GroupCard, QFrame#SectionPanel, QFrame#ToolPanel, QFrame#WorkflowNode {
+            QFrame#StatCard, QFrame#GroupCard, QFrame#SectionPanel, QFrame#ToolPanel, QFrame#WorkflowNode, QFrame#TaskEntryCard {
                 background: #FFFFFF;
                 border: 1px solid #E0E0DC;
+                border-radius: 8px;
+            }
+            QFrame#TaskEntryCard:hover {
+                border: 1px solid #C9C7BE;
+                background: #FFFEFC;
+            }
+            QLabel#TaskKicker {
+                color: #8A8D85;
+                font-size: 11px;
+                font-weight: 700;
+            }
+            QLabel#TaskTitle {
+                color: #1F211E;
+                font-size: 16px;
+                font-weight: 800;
+            }
+            QLabel#TaskBody {
+                color: #555950;
+                font-size: 12px;
+                line-height: 1.45;
+            }
+            QPushButton#TaskPrimary {
+                background: #242522;
+                color: #FFFFFF;
+                border: 1px solid #242522;
                 border-radius: 6px;
+                padding: 8px 12px;
+                font-weight: 700;
+            }
+            QPushButton#TaskPrimary:hover {
+                background: #34372F;
+                border-color: #34372F;
+            }
+            QPushButton#TaskSecondary {
+                background: #F5F3EE;
+                color: #33352F;
+                border: 1px solid #DDD9CE;
+                border-radius: 6px;
+                padding: 8px 12px;
+                font-weight: 700;
+            }
+            QPushButton#TaskSecondary:hover {
+                background: #ECE8DE;
             }
             QLabel#StatLabel {
                 color: #747670;
@@ -1785,6 +2154,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     app = QApplication(sys.argv)
+    configure_application_fonts(app)
     app.setApplicationName("华译工作台")
     app.setWindowIcon(make_brand_icon())
     window = MainWindow()

@@ -15,7 +15,8 @@
 
 主程序已经升级为现代化 Qt 总整合工作台：
 
-- 项目总览以结构化指标、A/B/C 交付卡和整合链路展示当前状态，不再直接堆叠原始 Markdown。
+- 项目总览改为网页式工作台，首屏直接呈现图文回填、术语风格、DOCX 翻译、音视频翻译四条真实工作入口。
+- 结构化指标、A/B/C 交付卡和整合链路展示当前状态，不再直接堆叠原始 Markdown。
 - 左侧提供总览、智能体、术语库、总整合工作流、交付中心和 A/B/C 分组详情导航。
 - 智能体页支持单次调用与“分析、草稿、质检”三步模式，并提供复制、保存和明确的运行状态反馈。
 - 术语库页支持中英文与上下文检索，可把选中术语直接加入智能体约束。
@@ -29,6 +30,12 @@
 ## 界面预览
 
 ![华译工作台项目总览](docs/screenshots/workbench-overview.png)
+
+更多页面预览：
+
+- [术语库](docs/screenshots/workbench-terms.png)
+- [总整合工作流](docs/screenshots/workbench-workflow.png)
+- [交付中心](docs/screenshots/workbench-outputs.png)
 
 ## 目录结构
 
