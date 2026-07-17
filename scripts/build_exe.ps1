@@ -19,6 +19,7 @@ try {
         --clean `
         --windowed `
         --name CultureTranslationWorkbench `
+        --icon (Join-Path $ProjectRoot "assets\app_icon.ico") `
         --paths (Join-Path $ProjectRoot "src") `
         (Join-Path $ProjectRoot "main.py")
     if ($LASTEXITCODE -ne 0) {
