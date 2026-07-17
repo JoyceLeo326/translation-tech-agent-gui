@@ -5,6 +5,7 @@ $VenvPython = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
 $ToolRoot = "D:\AI_GUI_DevTools"
 $PyInstallerCache = Join-Path $ToolRoot "pyinstaller-cache"
 $FontData = "$(Join-Path $ProjectRoot 'assets\fonts');assets\fonts"
+$IconData = "$(Join-Path $ProjectRoot 'assets\icons');assets\icons"
 
 New-Item -ItemType Directory -Force -Path $PyInstallerCache | Out-Null
 $env:PYINSTALLER_CONFIG_DIR = $PyInstallerCache
@@ -22,6 +23,7 @@ try {
         --name CultureTranslationWorkbench `
         --icon (Join-Path $ProjectRoot "assets\app_icon.ico") `
         --add-data $FontData `
+        --add-data $IconData `
         --paths (Join-Path $ProjectRoot "src") `
         (Join-Path $ProjectRoot "main.py")
     if ($LASTEXITCODE -ne 0) {
@@ -74,9 +76,14 @@ function Copy-DirIfExists {
 }
 
 Copy-FileIfExists (Join-Path $ProjectRoot "collaboration\README.md") (Join-Path $SnapshotRoot "README.md")
+Copy-FileIfExists (Join-Path $ProjectRoot ".env.example") (Join-Path $DistRoot ".env.example")
 Copy-DirIfExists (Join-Path $ProjectRoot "collaboration\shared\terminology") (Join-Path $SnapshotRoot "shared\terminology")
 Copy-DirIfExists (Join-Path $ProjectRoot "collaboration\integration\manifests") (Join-Path $SnapshotRoot "integration\manifests")
+Copy-DirIfExists (Join-Path $ProjectRoot "collaboration\integration\adapters") (Join-Path $SnapshotRoot "integration\adapters")
 Copy-FileIfExists (Join-Path $ProjectRoot "collaboration\integration\README.md") (Join-Path $SnapshotRoot "integration\README.md")
+Copy-FileIfExists `
+    (Join-Path $ProjectRoot "collaboration\integration\final_outputs\INTEGRATION_ACCEPTANCE_20260718.md") `
+    (Join-Path $SnapshotRoot "integration\final_outputs\INTEGRATION_ACCEPTANCE_20260718.md")
 
 foreach ($GroupDir in @("A_image_translation", "B_terms_style", "C_text_audio_translation")) {
     Copy-FileIfExists `
@@ -88,8 +95,11 @@ Copy-DirIfExists `
     (Join-Path $ProjectRoot "collaboration\groups\A_image_translation\deliverables\notes") `
     (Join-Path $SnapshotRoot "groups\A_image_translation\deliverables\notes")
 Copy-DirIfExists `
-    (Join-Path $ProjectRoot "collaboration\groups\A_image_translation\deliverables\extracted_20260715\manifests") `
-    (Join-Path $SnapshotRoot "groups\A_image_translation\deliverables\extracted_20260715\manifests")
+    (Join-Path $ProjectRoot "collaboration\groups\A_image_translation\deliverables\extracted_20260717_update\manifests") `
+    (Join-Path $SnapshotRoot "groups\A_image_translation\deliverables\extracted_20260717_update\manifests")
+Copy-DirIfExists `
+    (Join-Path $ProjectRoot "collaboration\groups\A_image_translation\deliverables\extracted_20260717_update\validation") `
+    (Join-Path $SnapshotRoot "groups\A_image_translation\deliverables\extracted_20260717_update\validation")
 Copy-DirIfExists `
     (Join-Path $ProjectRoot "collaboration\groups\B_terms_style\prompts") `
     (Join-Path $SnapshotRoot "groups\B_terms_style\prompts")

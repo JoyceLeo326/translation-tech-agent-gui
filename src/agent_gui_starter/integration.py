@@ -271,7 +271,7 @@ def format_dashboard_markdown(scan: CollaborationScan) -> str:
             "## 总整合下一步",
             "",
             "1. 优先读取 B 组共享术语库，作为 A/C 组翻译和审校的统一术语约束。",
-            "2. A 组图文回填以翻译清单和最终 DOCX 为主输入，缺失原始 SVG 追溯不阻塞整合。",
+            "2. A 组图文回填优先读取 7 月 17 日更新版的 71 条清单、最终 DOCX、10 个 SVG 和 17 页渲染证据。",
             "3. C 组优先接入 2026-07-17 二次交付目录，旧版源码仅作追溯。",
             "4. 所有最终输出统一落到 `collaboration/integration/final_outputs/generated/`。",
         ]
@@ -423,9 +423,17 @@ def _group_status(root: Path, key: str, files: list[Path]) -> tuple[str, str]:
         return "待补充", "等待组内提交稳定成果"
 
     if key == "A":
-        note = root / "collaboration" / "groups" / "A_image_translation" / "deliverables" / "notes" / "A组独立复核记录_20260717.md"
+        note = (
+            root
+            / "collaboration"
+            / "groups"
+            / "A_image_translation"
+            / "deliverables"
+            / "notes"
+            / "A组第二次提交复核记录_20260717.md"
+        )
         if note.exists():
-            return "可整合", "读取翻译清单、最终 DOCX 和图片总览"
+            return "可整合", "优先读取 7 月 17 日更新版清单、DOCX 与 17 页预览"
         return "已归档", "等待独立复核记录或人工确认"
 
     if key == "B":
@@ -457,9 +465,11 @@ def _terminology_stats(root: Path) -> TerminologyStats:
 
 def _run_a_adapter(root: Path, scan: CollaborationScan) -> str:
     group_root = root / "collaboration" / "groups" / "A_image_translation"
-    manifest = group_root / "deliverables" / "extracted_20260715" / "manifests" / "translation_manifest_fixed.xlsx"
-    final_docx = group_root / "deliverables" / "extracted_20260715" / "final_outputs" / "翻译资源编写-中国文化知识百科_完整修正版.docx"
-    preview = group_root / "deliverables" / "extracted_20260715" / "previews" / "translated_images_fixed_contact_sheet.jpg"
+    latest = group_root / "deliverables" / "extracted_20260717_update"
+    manifest = latest / "manifests" / "translation_manifest_reviewed.xlsx"
+    final_docx = latest / "final_outputs" / "翻译资源编写-中国文化知识百科_A组更新完整修正版.docx"
+    preview = latest / "previews" / "final_docx_pages_contact_sheet.jpg"
+    validation = latest / "validation" / "validation_report.json"
     summary = next(group for group in scan.groups if group.key == "A")
     return "\n".join(
         [
@@ -469,9 +479,10 @@ def _run_a_adapter(root: Path, scan: CollaborationScan) -> str:
             f"- 文件数量：{summary.file_count}",
             f"- 翻译清单：`{_relative_to_root(manifest, root)}` {'已找到' if manifest.exists() else '未找到'}",
             f"- 最终 DOCX：`{_relative_to_root(final_docx, root)}` {'已找到' if final_docx.exists() else '未找到'}",
-            f"- 图片总览：`{_relative_to_root(preview, root)}` {'已找到' if preview.exists() else '未找到'}",
+            f"- 17 页渲染总览：`{_relative_to_root(preview, root)}` {'已找到' if preview.exists() else '未找到'}",
+            f"- 机器可读校验：`{_relative_to_root(validation, root)}` {'已找到' if validation.exists() else '未找到'}",
             "",
-            "接入策略：优先读取 `translation_manifest_fixed.xlsx` 的译文和位置清单，最终展示使用修正版 DOCX 与总览图。A 组待补 SVG 追溯不阻塞当前 GUI 整合。",
+            "接入策略：优先读取 7 月 17 日更新版的 71 条审校清单、最终 DOCX、17 页 Word 渲染证据和结构校验 JSON。",
         ]
     )
 

@@ -1,15 +1,18 @@
 # ABC 组交付清单
 
-更新时间：2026-07-17
+更新时间：2026-07-18
 
 ## A 组：图文翻译与回填
 
 | 类型 | 路径 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| 交付压缩包 | `collaboration/groups/A_image_translation/deliverables/archives/pic_trans_replace_fixed_20260715.zip` | 已归档 | 图文翻译修正版 |
+| 更新修正版压缩包 | `collaboration/groups/A_image_translation/deliverables/archives/pic_trans_update_fixed_20260717.zip` | 已复核 | 2026-07-17 去密、完整修正版，整合优先使用 |
+| 更新修正版展开 | `collaboration/groups/A_image_translation/deliverables/extracted_20260717_update/` | 已复核 | 71 条清单、最终 DOCX、10 个 SVG、17 页渲染证据和校验 JSON |
+| 二次复核记录 | `collaboration/groups/A_image_translation/deliverables/notes/A组第二次提交复核记录_20260717.md` | 已归档 | 技术复核结果及仍需组员确认事项 |
+| 旧版交付压缩包 | `collaboration/groups/A_image_translation/deliverables/archives/pic_trans_replace_fixed_20260715.zip` | 历史留存 | 2026-07-15 修正版，不再作为默认输入 |
 | 需求说明 | `collaboration/groups/A_image_translation/deliverables/notes/A组整改需求_20260715.md` | 已归档 | 整改需求 |
 | 独立复核记录 | `collaboration/groups/A_image_translation/deliverables/notes/A组独立复核记录_20260717.md` | 已归档 | 复核结果与需 A 组补充事项 |
-| 展开材料 | `collaboration/groups/A_image_translation/deliverables/extracted_20260715/` | 已归档 | 脚本、翻译清单、预览图、最终 DOCX |
+| 旧版展开材料 | `collaboration/groups/A_image_translation/deliverables/extracted_20260715/` | 历史留存 | 2026-07-15 脚本、清单、预览图和 DOCX |
 
 ## B 组：术语库与儿童文学风格控制
 
@@ -41,9 +44,16 @@
 | 音视频二次交付 | `collaboration/groups/C_text_audio_translation/deliverables/audio_video_workflow/revised_20260717/` | 已整理 | 含新版源码、补充测试音频、模式二输出音频、四列表格、二维码和截图 |
 | 二次验收反馈 | `collaboration/groups/C_text_audio_translation/deliverables/notes/C组二次交付验收反馈_20260717.md` | 已达标 | 按整合接手标准无需 C 组返工；剩余为部署确认、密钥配置和可选追溯 |
 
-## 总整合待办
+## 总整合完成情况
 
-- 统一 Excel 字段规范。
-- 将 B 组共享术语库接入总智能体、GUI 或 A/C 组适配器。
-- 为 A/C 组成果编写适配器。
-- 在主 GUI 中增加分通道入口和整合状态面板。
+- [x] 统一 Excel 字段规范并生成 Markdown、CSV、Excel 整合输出。
+- [x] 将 B 组 212 条共享术语库接入总智能体、GUI 和本地适配器。
+- [x] 为 A/B/C 组成果编写本地适配器并纳入总工作流。
+- [x] 在主 GUI 中增加图文、术语风格、DOCX、音视频分通道入口和整合状态面板。
+- [x] 增加可配置的 OpenAI 智能体与 Coze 工作流在线调用通道。
+
+## 外部发布条件
+
+- [ ] B 组需在其 Coze 账号内发布 2026-07-17 修订版工作流，并补充“无未发布修改/最新发布时间”的状态证据。整合侧无法代替账号所有者完成发布；GUI 与 API 接入已就绪。
+- [ ] A 组真实成员需在 71 条清单上完成终审署名和日期确认；整合侧技术复核不能代替人工翻译责任。
+- [ ] A 组账号所有者需确认原提交中泄露的翻译服务密钥已经吊销；公开修正版与压缩包均已去除明文凭据。

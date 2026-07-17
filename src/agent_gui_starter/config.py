@@ -15,11 +15,19 @@ class AppConfig:
     openai_model: str
     openai_organization: str | None
     openai_project: str | None
+    coze_api_token: str | None
+    coze_workflow_id: str | None
+    coze_api_base: str
+    coze_timeout_seconds: float
     debug: bool
 
     @property
     def has_api_key(self) -> bool:
         return bool(self.openai_api_key)
+
+    @property
+    def has_coze_workflow(self) -> bool:
+        return bool(self.coze_api_token and self.coze_workflow_id)
 
 
 def load_config() -> AppConfig:
@@ -33,6 +41,12 @@ def load_config() -> AppConfig:
         openai_model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
         openai_organization=_blank_to_none(os.getenv("OPENAI_ORGANIZATION")),
         openai_project=_blank_to_none(os.getenv("OPENAI_PROJECT")),
+        coze_api_token=_blank_to_none(os.getenv("COZE_API_TOKEN")),
+        coze_workflow_id=_blank_to_none(
+            os.getenv("COZE_WORKFLOW_ID", "7661678571702747178")
+        ),
+        coze_api_base=os.getenv("COZE_API_BASE", "https://api.coze.cn").strip().rstrip("/"),
+        coze_timeout_seconds=_positive_float(os.getenv("COZE_TIMEOUT_SECONDS"), 300.0),
         debug=os.getenv("APP_DEBUG", "false").lower() in {"1", "true", "yes", "on"},
     )
 
@@ -53,3 +67,13 @@ def _blank_to_none(value: str | None) -> str | None:
         return None
     value = value.strip()
     return value or None
+
+
+def _positive_float(value: str | None, default: float) -> float:
+    if value is None:
+        return default
+    try:
+        parsed = float(value)
+    except ValueError:
+        return default
+    return parsed if parsed > 0 else default

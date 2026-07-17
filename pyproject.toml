@@ -1,6 +1,6 @@
 [project]
 name = "agent-gui-starter"
-version = "0.3.0"
+version = "0.5.0"
 description = "Modern Qt workbench for multimodal Chinese culture translation workflows."
 requires-python = ">=3.11"
 dependencies = [

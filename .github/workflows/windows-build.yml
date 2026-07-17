@@ -36,6 +36,7 @@ jobs:
       - name: Run smoke checks
         shell: pwsh
         run: |
+          .\.venv\Scripts\python.exe scripts\verify_delivery.py
           .\.venv\Scripts\python.exe main.py --self-check
           .\.venv\Scripts\python.exe main.py --smoke-test
 

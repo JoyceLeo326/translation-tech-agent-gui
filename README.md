@@ -15,14 +15,19 @@
 
 主程序已经升级为现代化 Qt 总整合工作台：
 
-- 项目总览改为网页式工作台，首屏直接呈现图文回填、术语风格、DOCX 翻译、音视频翻译四条真实工作入口。
-- 全界面采用中性工作台配色与小面积蓝色操作信号，统一导航、卡片、表格、输入区和状态提示的视觉层级。
-- 内置可随 exe 分发的 Noto Sans SC 字体，并为按钮、导航、输入框补齐悬停、按下、键盘焦点、禁用和运行中反馈。
+- 项目总览以比赛交付为主线，首屏直接呈现图文回填、术语风格、DOCX 翻译、音视频翻译四条真实工作入口。
+- 视觉系统采用炭黑、纸白、玉绿与少量朱砂色，深色导航和主信息带形成品牌识别，蓝/绿/朱砂/紫只用于区分真实通道。
+- 正文使用 Noto Sans SC，品牌与关键标题使用 Noto Serif SC；两套字体均随 exe 分发。
+- 导航与操作按钮统一使用 Lucide 线性 SVG 图标，图标颜色会随选中、悬停和禁用状态变化，避免字符图标在不同 Windows 环境下失真。
+- 交付准备度横栏使用低透明玻璃材质与双层细边，展示 19/19 技术验收、最新版证据和责任人确认项。
+- 按钮、导航、输入框和页面切换具备悬停、按下、键盘焦点、禁用、运行中与轻量淡入反馈。
 - 结构化指标、A/B/C 交付卡和整合链路展示当前状态，不再直接堆叠原始 Markdown。
 - 左侧提供总览、智能体、术语库、总整合工作流、交付中心和 A/B/C 分组详情导航。
-- 智能体页支持单次调用与“分析、草稿、质检”三步模式，并提供复制、保存和明确的运行状态反馈。
+- 智能体页支持单次调用、“分析、草稿、质检”三步模式与扣子工作流，并提供复制、保存和明确的运行状态反馈。
+- 智能体页提供真实 Coze 工作流模式，按 B 组开始节点规范传入 `input_text` 与可选 `input_title`；未配置令牌时明确显示离线说明。
 - 术语库页支持中英文与上下文检索，可把选中术语直接加入智能体约束。
 - 工作流页可视化展示资源扫描、分组适配、报告导出和智能质检四个阶段。
+- 工作流、交付中心和分组详情打开即显示真实项目快照，不以空白占位界面冒充完成状态。
 - 交付中心集中显示最近生成的 Markdown、CSV、Excel、报告摘要和运行日志。
 - 支持一键生成整合报告，输出 Markdown、CSV 和 Excel。
 - 支持 A/B/C 本地适配器，分别读取图文回填、术语风格、DOCX/音视频交付状态。
@@ -35,6 +40,7 @@
 
 更多页面预览：
 
+- [智能体与扣子工作流](docs/screenshots/workbench-agent.png)
 - [术语库](docs/screenshots/workbench-terms.png)
 - [总整合工作流](docs/screenshots/workbench-workflow.png)
 - [交付中心](docs/screenshots/workbench-outputs.png)
@@ -64,6 +70,8 @@ scripts/
 - 图中文字识别、涂抹修补、翻译和图片回填。
 - 待翻译资源抽取到 Excel。
 - 人工翻译、审校完成后的技术回填。
+
+总整合默认读取 `deliverables/extracted_20260717_update/`：包含 71 条审校清单、最终 DOCX、10 个 SVG 和 17 页渲染证据；7 月 15 日版本仅作历史留存。
 
 ### B 组：术语库与儿童文学风格控制
 
@@ -140,9 +148,11 @@ collaboration/integration/final_outputs/generated/
 ```text
 OPENAI_API_KEY=你的密钥
 OPENAI_MODEL=gpt-4.1-mini
+COZE_API_TOKEN=你的扣子个人访问令牌
+COZE_WORKFLOW_ID=7661678571702747178
 ```
 
-不配置 `OPENAI_API_KEY` 时，程序会使用本地占位结果，方便验证 GUI 和打包流程。
+不配置 `OPENAI_API_KEY` 时，OpenAI 模型步骤使用本地占位结果；不配置 `COZE_API_TOKEN` 时，扣子入口只显示未联网说明。真实扣子调用还要求 B 组在平台发布最新版工作流。
 
 运行开发版：
 
@@ -180,14 +190,17 @@ dist\CultureTranslationWorkbench\CultureTranslationWorkbench.exe
 ```powershell
 .\.venv\Scripts\python.exe main.py --self-check
 .\.venv\Scripts\python.exe main.py --smoke-test
+.\.venv\Scripts\python.exe scripts\verify_delivery.py
 .\.venv\Scripts\python.exe main.py --integration-report "生成当前整合状态"
 .\.venv\Scripts\python.exe main.py --term-search 孔子
+.\.venv\Scripts\python.exe main.py --coze-run "孔融让梨"
 ```
 
 ## 主程序位置
 
 - GUI：`src/agent_gui_starter/app.py`
 - 智能体连接：`src/agent_gui_starter/agent.py`
+- 扣子工作流连接：`src/agent_gui_starter/coze.py`
 - 工作流步骤：`src/agent_gui_starter/workflow.py`
 - 总整合引擎：`src/agent_gui_starter/integration.py`
 - 环境配置：`src/agent_gui_starter/config.py`
@@ -197,12 +210,15 @@ dist\CultureTranslationWorkbench\CultureTranslationWorkbench.exe
 当前版本按以下标准交付：
 
 1. Qt GUI 可以启动，并能扫描公开仓库内 A/B/C 组协作区。
-2. 不配置真实 API Key 时也能离线演示；配置 `.env` 后切换为真实 OpenAI 智能体调用。
+2. 不配置真实 API Key 时也能离线演示；配置 `.env` 后可分别切换为真实 OpenAI 智能体和 Coze 工作流调用。
 3. A/B/C 组已有交付物均有可读入口和本地适配器说明。
 4. B 组共享术语库可由 GUI 和命令行检索。
 5. 总整合工作流可生成 Markdown、CSV、Excel 输出。
 6. `scripts\build_exe.ps1` 可打包 Windows exe；`scripts\verify_build.ps1` 会验证源码自检、烟测、exe 烟测和 GUI 启动。
+7. B 组 Coze 修订包已通过本地结构与代码节点校验；平台侧真实调用以 B 组发布最新版并提供有效 `COZE_API_TOKEN` 为前提。
 
 ## 开源协议
 
 本项目使用 MIT License。后续如果比赛或老师要求其它协议，可以再统一调整。
+
+界面随附的 Noto Sans SC、Noto Serif SC 字体遵循 SIL Open Font License 1.1；Lucide 图标遵循 ISC License，许可证文件随对应资源一同分发。

@@ -8,6 +8,7 @@ from pathlib import Path
 from agent_gui_starter.integration import (
     format_dashboard_markdown,
     format_terms_markdown,
+    run_group_adapter,
     scan_collaboration,
     search_terms,
     write_integration_outputs,
@@ -65,6 +66,30 @@ class IntegrationTests(unittest.TestCase):
         self.assertTrue(bundle.csv_path.exists())
         self.assertIsNotNone(bundle.excel_path)
         self.assertTrue(bundle.excel_path and bundle.excel_path.exists())
+
+    def test_a_adapter_prefers_latest_reviewed_delivery(self) -> None:
+        latest = (
+            self.root
+            / "collaboration"
+            / "groups"
+            / "A_image_translation"
+            / "deliverables"
+            / "extracted_20260717_update"
+        )
+        for path in (
+            latest / "manifests" / "translation_manifest_reviewed.xlsx",
+            latest / "final_outputs" / "翻译资源编写-中国文化知识百科_A组更新完整修正版.docx",
+            latest / "previews" / "final_docx_pages_contact_sheet.jpg",
+            latest / "validation" / "validation_report.json",
+        ):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"test")
+
+        report = run_group_adapter("A", project_root=self.root)
+
+        self.assertIn("extracted_20260717_update", report)
+        self.assertIn("translation_manifest_reviewed.xlsx", report)
+        self.assertNotIn("extracted_20260715", report)
 
 
 if __name__ == "__main__":

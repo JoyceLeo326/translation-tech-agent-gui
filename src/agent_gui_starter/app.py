@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QSize, QThread, Qt, QUrl, Signal, Slot
+from PySide6.QtCore import QByteArray, QEasingCurve, QObject, QPropertyAnimation, QSize, QThread, Qt, QUrl, Signal, Slot
 from PySide6.QtGui import (
     QAction,
     QColor,
@@ -16,12 +16,15 @@ from PySide6.QtGui import (
     QPainter,
     QPixmap,
 )
+from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
     QButtonGroup,
     QFileDialog,
     QFrame,
+    QGraphicsDropShadowEffect,
+    QGraphicsOpacityEffect,
     QGridLayout,
     QHBoxLayout,
     QHeaderView,
@@ -49,6 +52,7 @@ from PySide6.QtWidgets import (
 
 from .agent import AgentClient
 from .config import load_config
+from .coze import CozeWorkflowClient, CozeWorkflowError
 from .integration import (
     GROUPS,
     CollaborationScan,
@@ -73,9 +77,10 @@ from .workflow import (
 
 
 SYSTEM_PROMPT = "你是中国文化多模态知识库外译项目的桌面端智能体助手。请给出准确、简洁、可执行的结果。"
-GROUP_ACCENTS = {"A": "#2F6FED", "B": "#0E8F80", "C": "#E16A4A"}
+GROUP_ACCENTS = {"A": "#426B9B", "B": "#167A65", "C": "#C95F46"}
 UI_FONT_FAMILY = "Noto Sans SC"
-ICON_FONT_FAMILY = "Segoe MDL2 Assets"
+DISPLAY_FONT_FAMILY = "Noto Serif SC"
+SIDEBAR_WIDTH = 256
 _FONTS_CONFIGURED = False
 PAGE_META = {
     "overview": ("项目总览", "从真实翻译通道进入整合、审校与交付"),
@@ -93,17 +98,17 @@ def _resource_path(relative_path: str) -> Path:
 
 
 def configure_application_fonts(app: QApplication | None = None) -> None:
-    global UI_FONT_FAMILY, ICON_FONT_FAMILY, _FONTS_CONFIGURED
+    global UI_FONT_FAMILY, DISPLAY_FONT_FAMILY, _FONTS_CONFIGURED
     if _FONTS_CONFIGURED:
         return
     _FONTS_CONFIGURED = True
 
     font_candidates = [
         _resource_path("assets/fonts/NotoSansSC-VF.ttf"),
+        _resource_path("assets/fonts/NotoSerifSC-VF.ttf"),
         Path("C:/Windows/Fonts/msyh.ttc"),
         Path("C:/Windows/Fonts/NotoSansSC-VF.ttf"),
         Path("C:/Windows/Fonts/simhei.ttf"),
-        Path("C:/Windows/Fonts/segmdl2.ttf"),
     ]
     loaded_families: list[str] = []
     for font_path in font_candidates:
@@ -126,9 +131,9 @@ def configure_application_fonts(app: QApplication | None = None) -> None:
         if preferred in families:
             UI_FONT_FAMILY = preferred
             break
-    for preferred in ("Segoe MDL2 Assets", "Segoe Fluent Icons", "Segoe UI Symbol"):
+    for preferred in ("Noto Serif SC", "Source Han Serif SC", "SimSun"):
         if preferred in families:
-            ICON_FONT_FAMILY = preferred
+            DISPLAY_FONT_FAMILY = preferred
             break
 
     target_app = app or QApplication.instance()
@@ -141,39 +146,60 @@ def make_brand_icon(size: int = 64) -> QIcon:
     pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-    padding = max(1, int(size * 0.03))
-    painter.setBrush(QColor("#2F6FED"))
+    padding = max(1, int(size * 0.04))
+    painter.setBrush(QColor("#18201D"))
     painter.setPen(Qt.PenStyle.NoPen)
     painter.drawRoundedRect(
         padding,
         padding,
         size - padding * 2,
         size - padding * 2,
-        max(4, int(size * 0.15)),
-        max(4, int(size * 0.15)),
+        max(4, int(size * 0.12)),
+        max(4, int(size * 0.12)),
     )
-    font = QFont(UI_FONT_FAMILY, max(16, int(size * 0.55)), QFont.Weight.DemiBold)
+    painter.setBrush(QColor("#42A389"))
+    painter.drawRoundedRect(
+        padding,
+        padding,
+        max(3, int(size * 0.11)),
+        size - padding * 2,
+        max(2, int(size * 0.04)),
+        max(2, int(size * 0.04)),
+    )
+    painter.setBrush(QColor("#D6664E"))
+    dot_size = max(3, int(size * 0.10))
+    painter.drawEllipse(size - padding - dot_size - 2, padding + 3, dot_size, dot_size)
+    font = QFont(DISPLAY_FONT_FAMILY, max(16, int(size * 0.50)), QFont.Weight.DemiBold)
     painter.setFont(font)
-    painter.setPen(QColor("#FFFFFF"))
-    painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "译")
+    painter.setPen(QColor("#F7FAF7"))
+    text_rect = pixmap.rect().adjusted(max(2, int(size * 0.06)), 0, 0, 0)
+    painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, "译")
     painter.end()
     return QIcon(pixmap)
 
 
-def make_glyph_icon(
-    glyph: str,
-    color: str = "#667085",
+def make_icon(
+    name: str,
+    color: str = "#68736E",
     size: int = 32,
     selected_color: str | None = None,
 ) -> QIcon:
+    icon_path = _resource_path(f"assets/icons/lucide/{name}.svg")
+    if not icon_path.exists():
+        return QIcon()
+
+    try:
+        source = icon_path.read_text(encoding="utf-8")
+    except OSError:
+        return QIcon()
+
     def render(icon_color: str) -> QPixmap:
+        renderer = QSvgRenderer(QByteArray(source.replace("currentColor", icon_color).encode("utf-8")))
         pixmap = QPixmap(size, size)
         pixmap.fill(Qt.GlobalColor.transparent)
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setPen(QColor(icon_color))
-        painter.setFont(QFont(ICON_FONT_FAMILY, max(12, int(size * 0.56))))
-        painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, glyph)
+        renderer.render(painter)
         painter.end()
         return pixmap
 
@@ -186,21 +212,60 @@ def make_glyph_icon(
     return icon
 
 
+def add_surface_shadow(widget: QWidget, blur: int = 20, y_offset: int = 4, alpha: int = 24) -> None:
+    shadow = QGraphicsDropShadowEffect(widget)
+    shadow.setBlurRadius(blur)
+    shadow.setOffset(0, y_offset)
+    shadow.setColor(QColor(18, 28, 24, alpha))
+    widget.setGraphicsEffect(shadow)
+
+
+class GlassFrame(QFrame):
+    def __init__(self) -> None:
+        super().__init__()
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+
+    def paintEvent(self, event: object) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        outer = self.rect().adjusted(1, 1, -1, -1)
+        painter.setPen(QColor(255, 255, 255, 232))
+        painter.setBrush(QColor(255, 255, 255, 214))
+        painter.drawRoundedRect(outer, 8, 8)
+        inner = outer.adjusted(1, 1, -1, -1)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.setPen(QColor(73, 102, 89, 30))
+        painter.drawRoundedRect(inner, 7, 7)
+        painter.end()
+        super().paintEvent(event)  # type: ignore[arg-type]
+
+
 class JobWorker(QObject):
     progress = Signal(str)
     finished = Signal(str)
     failed = Signal(str)
 
-    def __init__(self, mode: str, prompt: str, project_root: Path) -> None:
+    def __init__(self, mode: str, prompt: str, project_root: Path, title: str = "") -> None:
         super().__init__()
         self._mode = mode
         self._prompt = prompt
         self._project_root = project_root
+        self._title = title
 
     @Slot()
     def run(self) -> None:
         try:
             config = load_config()
+
+            if self._mode == "coze_workflow":
+                self.progress.emit("正在执行扣子翻译工作流")
+                response = CozeWorkflowClient(config).run(self._prompt, self._title)
+                output = response.text
+                if response.debug_url:
+                    output += f"\n\n---\n扣子运行调试页：{response.debug_url}"
+                self.finished.emit(output)
+                return
+
             client = AgentClient(config)
 
             if self._mode == "integration_workflow":
@@ -276,7 +341,12 @@ class StatCard(QFrame):
         super().__init__()
         self.setObjectName("StatCard")
         self.setProperty("accent", accent)
-        self.setMinimumHeight(104)
+        self.setMinimumHeight(112)
+
+        signal = QFrame()
+        signal.setObjectName("StatSignal")
+        signal.setFixedSize(38, 3)
+        signal.setStyleSheet(f"background: {accent}; border: 0; border-radius: 1px;")
 
         self._value = QLabel("-")
         self._value.setObjectName("StatValue")
@@ -285,16 +355,14 @@ class StatCard(QFrame):
         self._detail = QLabel("")
         self._detail.setObjectName("StatDetail")
 
-        text_layout = QVBoxLayout()
-        text_layout.setContentsMargins(0, 0, 0, 0)
-        text_layout.setSpacing(2)
-        text_layout.addWidget(self._label)
-        text_layout.addWidget(self._value)
-        text_layout.addWidget(self._detail)
-
-        layout = QHBoxLayout(self)
+        layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 15, 18, 15)
-        layout.addLayout(text_layout)
+        layout.setSpacing(3)
+        layout.addWidget(signal)
+        layout.addSpacing(5)
+        layout.addWidget(self._label)
+        layout.addWidget(self._value)
+        layout.addWidget(self._detail)
 
     def update_value(self, value: str, detail: str) -> None:
         self._value.setText(value)
@@ -311,12 +379,15 @@ class GroupCard(QFrame):
         self.setMinimumHeight(228)
 
         accent = GROUP_ACCENTS[group_key]
+        signal = QFrame()
+        signal.setFixedSize(44, 3)
+        signal.setStyleSheet(f"background: {accent}; border: 0; border-radius: 1px;")
         badge = QLabel(group_key)
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         badge.setFixedSize(34, 34)
         badge.setStyleSheet(
             f"background: {accent}; color: #FFFFFF; border: 0; "
-            "border-radius: 6px; font-size: 15px; font-weight: 700;"
+            "border-radius: 7px; font-size: 15px; font-weight: 700;"
         )
         self._title = QLabel()
         self._title.setObjectName("GroupTitle")
@@ -351,12 +422,13 @@ class GroupCard(QFrame):
 
         open_button = QPushButton("查看交付")
         open_button.setObjectName("CardAction")
-        open_button.setIcon(make_glyph_icon("\uE72A", "#2F6FED"))
+        open_button.setIcon(make_icon("external-link", "#167A65"))
         open_button.clicked.connect(lambda: self.open_requested.emit(self._group_key))
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 17, 18, 15)
+        layout.setContentsMargins(18, 16, 18, 15)
         layout.setSpacing(10)
+        layout.addWidget(signal)
         layout.addLayout(top)
         layout.addWidget(self._description)
         layout.addWidget(self._metrics)
@@ -376,12 +448,12 @@ class GroupCard(QFrame):
         if summary.status == "可整合":
             self._status.setText("●  可整合")
             self._status.setStyleSheet(
-                "background: transparent; color: #12805C; border: 0; font-weight: 600;"
+                "background: transparent; color: #167A65; border: 0; font-weight: 650;"
             )
         else:
             self._status.setText(f"●  {summary.status}")
             self._status.setStyleSheet(
-                "background: transparent; color: #B36B12; border: 0; font-weight: 600;"
+                "background: transparent; color: #A36724; border: 0; font-weight: 650;"
             )
 
 
@@ -402,14 +474,19 @@ class TaskEntryCard(QFrame):
     ) -> None:
         super().__init__()
         self.setObjectName("TaskEntryCard")
-        self.setMinimumHeight(190)
+        self.setMinimumHeight(202)
+        add_surface_shadow(self, blur=16, y_offset=3, alpha=18)
+
+        signal = QFrame()
+        signal.setFixedSize(46, 3)
+        signal.setStyleSheet(f"background: {accent}; border: 0; border-radius: 1px;")
 
         badge_label = QLabel(badge)
         badge_label.setObjectName("TaskBadge")
         badge_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         badge_label.setFixedSize(42, 42)
         badge_label.setStyleSheet(
-            f"background: {accent}; color: #FFFFFF; border-radius: 8px; "
+            f"background: {accent}; color: #FFFFFF; border-radius: 7px; "
             "font-size: 18px; font-weight: 800;"
         )
 
@@ -436,9 +513,11 @@ class TaskEntryCard(QFrame):
 
         primary = QPushButton(primary_label)
         primary.setObjectName("TaskPrimary")
+        primary.setIcon(make_icon("play", "#FFFFFF"))
         primary.clicked.connect(lambda: self.action_requested.emit(primary_action))
         secondary = QPushButton(secondary_label)
         secondary.setObjectName("TaskSecondary")
+        secondary.setIcon(make_icon("arrow-right", "#25302B"))
         secondary.clicked.connect(lambda: self.action_requested.emit(secondary_action))
 
         actions = QHBoxLayout()
@@ -448,8 +527,9 @@ class TaskEntryCard(QFrame):
         actions.addStretch(1)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 18, 18, 16)
-        layout.setSpacing(13)
+        layout.setContentsMargins(18, 16, 18, 16)
+        layout.setSpacing(12)
+        layout.addWidget(signal)
         layout.addLayout(header)
         layout.addWidget(body_label, 1)
         layout.addLayout(actions)
@@ -471,6 +551,8 @@ class MainWindow(QMainWindow):
         self._nav_buttons: dict[str, QPushButton] = {}
         self._group_nav_buttons: dict[str, QPushButton] = {}
         self._pages: dict[str, QWidget] = {}
+        self._page_animation: QPropertyAnimation | None = None
+        self._animated_page: QWidget | None = None
 
         self.setWindowTitle(self._config.app_name)
         self.setWindowIcon(make_brand_icon())
@@ -502,14 +584,14 @@ class MainWindow(QMainWindow):
     def _build_sidebar(self) -> QWidget:
         sidebar = QFrame()
         sidebar.setObjectName("Sidebar")
-        sidebar.setFixedWidth(244)
+        sidebar.setFixedWidth(SIDEBAR_WIDTH)
 
         logo = QLabel()
-        logo.setPixmap(make_brand_icon(42).pixmap(42, 42))
-        logo.setFixedSize(42, 42)
+        logo.setPixmap(make_brand_icon(46).pixmap(46, 46))
+        logo.setFixedSize(46, 46)
         brand_title = QLabel("华译工作台")
         brand_title.setObjectName("BrandTitle")
-        brand_subtitle = QLabel("多模态知识库整合")
+        brand_subtitle = QLabel("文化知识 · 多模态外译")
         brand_subtitle.setObjectName("BrandSubtitle")
         brand_text = QVBoxLayout()
         brand_text.setContentsMargins(0, 0, 0, 0)
@@ -517,31 +599,36 @@ class MainWindow(QMainWindow):
         brand_text.addWidget(brand_title)
         brand_text.addWidget(brand_subtitle)
         brand = QHBoxLayout()
-        brand.setSpacing(11)
+        brand.setSpacing(12)
         brand.addWidget(logo)
         brand.addLayout(brand_text, 1)
 
         layout = QVBoxLayout(sidebar)
-        layout.setContentsMargins(17, 21, 17, 18)
-        layout.setSpacing(7)
+        layout.setContentsMargins(18, 23, 18, 17)
+        layout.setSpacing(8)
         layout.addLayout(brand)
-        layout.addSpacing(24)
+        brand_rule = QFrame()
+        brand_rule.setObjectName("SidebarRule")
+        brand_rule.setFixedHeight(1)
+        layout.addSpacing(18)
+        layout.addWidget(brand_rule)
+        layout.addSpacing(14)
         layout.addWidget(self._sidebar_label("工作区"))
 
         self._nav_group = QButtonGroup(self)
         self._nav_group.setExclusive(True)
         nav_items = [
-            ("overview", "项目总览", "\uE80F"),
-            ("agent", "智能体", "\uE77B"),
-            ("terms", "术语库", "\uE82D"),
-            ("workflow", "总整合工作流", "\uE768"),
-            ("outputs", "交付中心", "\uE74E"),
+            ("overview", "项目总览", "layout-dashboard"),
+            ("agent", "智能体", "bot"),
+            ("terms", "术语库", "book-open"),
+            ("workflow", "总整合工作流", "route"),
+            ("outputs", "交付中心", "package-check"),
         ]
-        for key, text, glyph in nav_items:
+        for key, text, icon_name in nav_items:
             button = QPushButton(text)
             button.setObjectName("NavButton")
             button.setCheckable(True)
-            button.setIcon(make_glyph_icon(glyph, "#667085", selected_color="#2F6FED"))
+            button.setIcon(make_icon(icon_name, "#8F9B95", selected_color="#69BEA7"))
             button.setIconSize(QSize(18, 18))
             button.clicked.connect(lambda checked=False, page=key: self._switch_page(page))
             self._nav_group.addButton(button)
@@ -562,12 +649,16 @@ class MainWindow(QMainWindow):
         connection = QFrame()
         connection.setObjectName("ConnectionPanel")
         connection_layout = QVBoxLayout(connection)
-        connection_layout.setContentsMargins(12, 11, 12, 11)
-        connection_layout.setSpacing(3)
+        connection_layout.setContentsMargins(13, 12, 13, 12)
+        connection_layout.setSpacing(4)
+        channel_kicker = QLabel("运行通道")
+        channel_kicker.setObjectName("ChannelKicker")
         self._api_state = QLabel()
         self._api_state.setObjectName("ApiState")
         self._model_label = QLabel(self._config.openai_model)
         self._model_label.setObjectName("ModelLabel")
+        self._model_label.setWordWrap(True)
+        connection_layout.addWidget(channel_kicker)
         connection_layout.addWidget(self._api_state)
         connection_layout.addWidget(self._model_label)
         layout.addWidget(connection)
@@ -612,7 +703,7 @@ class MainWindow(QMainWindow):
     def _build_topbar(self) -> QWidget:
         topbar = QFrame()
         topbar.setObjectName("TopBar")
-        topbar.setFixedHeight(78)
+        topbar.setFixedHeight(82)
         self._page_title = QLabel(PAGE_META["overview"][0])
         self._page_title.setObjectName("PageTitle")
         self._page_subtitle = QLabel(PAGE_META["overview"][1])
@@ -625,34 +716,41 @@ class MainWindow(QMainWindow):
 
         self._scan_button = QToolButton()
         self._scan_button.setObjectName("IconButton")
-        self._scan_button.setIcon(make_glyph_icon("\uE72C"))
+        self._scan_button.setIcon(make_icon("refresh-cw"))
         self._scan_button.setIconSize(QSize(19, 19))
         self._scan_button.setToolTip("重新扫描协作资源 (F5)")
         self._scan_button.clicked.connect(self._scan_now)
 
         output_button = QToolButton()
         output_button.setObjectName("IconButton")
-        output_button.setIcon(make_glyph_icon("\uE8B7"))
+        output_button.setIcon(make_icon("folder-open"))
         output_button.setIconSize(QSize(19, 19))
         output_button.setToolTip("打开输出目录")
         output_button.clicked.connect(self._open_output_dir)
 
         self._top_run_button = QPushButton("运行整合")
         self._top_run_button.setObjectName("PrimaryButton")
-        self._top_run_button.setIcon(make_glyph_icon("\uE768", "#FFFFFF"))
+        self._top_run_button.setIcon(make_icon("play", "#FFFFFF"))
         self._top_run_button.clicked.connect(
             lambda: self._start_job("integration_workflow", self._workflow_input.toPlainText(), allow_empty=True)
         )
         self._busy_controls.extend([self._scan_button, self._top_run_button])
 
+        repository_state = QLabel("PUBLIC · MAIN")
+        repository_state.setObjectName("RepositoryState")
+        repository_state.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        repository_state.setFixedHeight(34)
+        repository_state.setMinimumWidth(96)
+
         actions = QHBoxLayout()
         actions.setSpacing(8)
+        actions.addWidget(repository_state)
         actions.addWidget(self._scan_button)
         actions.addWidget(output_button)
         actions.addWidget(self._top_run_button)
 
         layout = QHBoxLayout(topbar)
-        layout.setContentsMargins(27, 0, 28, 0)
+        layout.setContentsMargins(30, 0, 30, 0)
         layout.addLayout(titles)
         layout.addStretch(1)
         layout.addLayout(actions)
@@ -662,10 +760,11 @@ class MainWindow(QMainWindow):
         content = QWidget()
         content.setObjectName("OverviewContent")
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(28, 24, 28, 30)
-        layout.setSpacing(18)
+        layout.setContentsMargins(30, 26, 30, 34)
+        layout.setSpacing(20)
 
         layout.addWidget(self._overview_hero_panel())
+        layout.addWidget(self._overview_readiness_band())
 
         entry_row = QHBoxLayout()
         entry_text = QVBoxLayout()
@@ -678,7 +777,7 @@ class MainWindow(QMainWindow):
         entry_row.addStretch(1)
         self._report_button = QPushButton("生成整合报告")
         self._report_button.setObjectName("SecondaryButton")
-        self._report_button.setIcon(make_glyph_icon("\uE9D2", "#344054"))
+        self._report_button.setIcon(make_icon("file-text", "#344054"))
         self._report_button.clicked.connect(
             lambda: self._start_job("report", self._workflow_input.toPlainText(), allow_empty=True)
         )
@@ -694,7 +793,7 @@ class MainWindow(QMainWindow):
                 "A",
                 "图文翻译与回填",
                 "图片 OCR / 图文回填",
-                "读取 A 组翻译清单、最终 DOCX 和图片总览，用于图文资源的翻译回填演示。",
+                "读取 71 条审校清单、最终 DOCX、10 个 SVG 与 17 页渲染证据。",
                 "查看 A 组",
                 "group:A",
                 "运行适配器",
@@ -705,11 +804,11 @@ class MainWindow(QMainWindow):
                 "B",
                 "术语与风格约束",
                 "共享术语库 / 儿童文学风格",
-                "把 B 组术语库作为全局约束，检索术语后可直接加入智能体任务。",
+                "调用 B 组扣子多模型工作流，并以 212 条共享术语作为全局翻译约束。",
+                "运行扣子工作流",
+                "agent:coze",
                 "打开术语库",
                 "page:terms",
-                "查看 B 组",
-                "group:B",
                 GROUP_ACCENTS["B"],
             ),
             TaskEntryCard(
@@ -732,7 +831,7 @@ class MainWindow(QMainWindow):
                 "workflow:run",
                 "交付中心",
                 "page:outputs",
-                "#6C63C8",
+                "#7565A8",
             ),
         )
         for card in self._task_cards:
@@ -744,10 +843,10 @@ class MainWindow(QMainWindow):
         self._stats_grid = QGridLayout()
         self._stats_grid.setHorizontalSpacing(12)
         self._stats_grid.setVerticalSpacing(12)
-        self._stat_ready = StatCard("分组就绪", "#12805C")
-        self._stat_assets = StatCard("资源文件", "#2F6FED")
-        self._stat_terms = StatCard("共享术语", "#0E8F80")
-        self._stat_outputs = StatCard("已生成输出", "#6C63C8")
+        self._stat_ready = StatCard("分组就绪", "#167A65")
+        self._stat_assets = StatCard("资源文件", "#426B9B")
+        self._stat_terms = StatCard("共享术语", "#C95F46")
+        self._stat_outputs = StatCard("已生成输出", "#7565A8")
         self._stat_cards = (self._stat_ready, self._stat_assets, self._stat_terms, self._stat_outputs)
         layout.addLayout(self._stats_grid)
 
@@ -781,26 +880,77 @@ class MainWindow(QMainWindow):
         self._relayout_overview(4, 3)
         return scroll
 
+    def _overview_readiness_band(self) -> QWidget:
+        band = GlassFrame()
+        band.setObjectName("ReadinessBand")
+        band.setMinimumHeight(78)
+        add_surface_shadow(band, blur=18, y_offset=4, alpha=18)
+
+        score_box = QVBoxLayout()
+        score_box.setContentsMargins(0, 0, 0, 0)
+        score_box.setSpacing(0)
+        score_label = QLabel("技术验收")
+        score_label.setObjectName("ReadinessLabel")
+        score_value = QLabel("19 / 19")
+        score_value.setObjectName("ReadinessValue")
+        score_box.addWidget(score_label)
+        score_box.addWidget(score_value)
+
+        divider = QFrame()
+        divider.setObjectName("ReadinessDivider")
+        divider.setFixedWidth(1)
+
+        evidence_box = QVBoxLayout()
+        evidence_box.setContentsMargins(0, 0, 0, 0)
+        evidence_box.setSpacing(2)
+        evidence_title = QLabel("最新版证据已接入")
+        evidence_title.setObjectName("ReadinessTitle")
+        evidence = QLabel("A · 71 条清单 / 17 页渲染    B · 212 条术语 / Coze    C · 5 套 DOCX / 2 条音频")
+        evidence.setObjectName("ReadinessSummary")
+        evidence.setWordWrap(True)
+        evidence_box.addWidget(evidence_title)
+        evidence_box.addWidget(evidence)
+
+        pending = QLabel("3 项责任人确认")
+        pending.setObjectName("ReadinessPending")
+        pending.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        open_record = QPushButton("验收记录")
+        open_record.setObjectName("SecondaryButton")
+        open_record.setIcon(make_icon("clipboard-check", "#29342F"))
+        open_record.clicked.connect(self._open_acceptance_record)
+
+        layout = QHBoxLayout(band)
+        layout.setContentsMargins(18, 13, 14, 13)
+        layout.setSpacing(16)
+        layout.addLayout(score_box)
+        layout.addWidget(divider)
+        layout.addLayout(evidence_box, 1)
+        layout.addWidget(pending)
+        layout.addWidget(open_record)
+        return band
+
     def _overview_hero_panel(self) -> QWidget:
         panel = QFrame()
         panel.setObjectName("HeroPanel")
-        panel.setMinimumHeight(218)
+        panel.setMinimumHeight(238)
+        add_surface_shadow(panel, blur=28, y_offset=7, alpha=34)
 
-        eyebrow = QLabel("TRANSLATION TECH WORKBENCH")
+        eyebrow = QLabel("CULTURAL TRANSLATION OPERATIONS")
         eyebrow.setObjectName("HeroEyebrow")
-        title = QLabel("把 A/B/C 交付物变成可演示的翻译工作台")
+        title = QLabel("中国文化多模态外译工作台")
         title.setObjectName("HeroTitle")
         title.setWordWrap(True)
         subtitle = QLabel(
-            "围绕图文回填、术语风格、DOCX 翻译、音视频翻译四条真实路径组织功能。"
-            "当前交付物以仓库修正版为准，整合侧可以继续接手。"
+            "统一接入图文回填、术语风格、DOCX 与音视频翻译。"
+            "A/B/C 最新交付、审校证据和公开构建状态在一个工作区内完成管理。"
         )
         subtitle.setObjectName("HeroSubtitle")
         subtitle.setWordWrap(True)
 
         run_button = QPushButton("运行总整合")
         run_button.setObjectName("HeroPrimary")
-        run_button.setIcon(make_glyph_icon("\uE768", "#FFFFFF"))
+        run_button.setIcon(make_icon("play", "#FFFFFF"))
         run_button.clicked.connect(
             lambda: self._start_job("integration_workflow", self._workflow_input.toPlainText(), allow_empty=True)
         )
@@ -815,12 +965,22 @@ class MainWindow(QMainWindow):
         actions.addWidget(outputs_button)
         actions.addStretch(1)
 
+        channel_row = QHBoxLayout()
+        channel_row.setSpacing(7)
+        for channel in ("图文回填", "术语风格", "DOCX", "音视频"):
+            channel_label = QLabel(channel)
+            channel_label.setObjectName("HeroPill")
+            channel_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            channel_row.addWidget(channel_label)
+        channel_row.addStretch(1)
+
         left = QVBoxLayout()
         left.setContentsMargins(0, 0, 0, 0)
         left.setSpacing(10)
         left.addWidget(eyebrow)
         left.addWidget(title)
         left.addWidget(subtitle)
+        left.addLayout(channel_row)
         left.addStretch(1)
         left.addLayout(actions)
 
@@ -829,7 +989,7 @@ class MainWindow(QMainWindow):
         status_layout = QVBoxLayout(status_panel)
         status_layout.setContentsMargins(16, 15, 16, 15)
         status_layout.setSpacing(10)
-        status_title = QLabel("当前可接手范围")
+        status_title = QLabel("交付运行指数")
         status_title.setObjectName("HeroStatusTitle")
         status_layout.addWidget(status_title)
         self._hero_status_labels: list[QLabel] = []
@@ -842,8 +1002,8 @@ class MainWindow(QMainWindow):
         status_layout.addStretch(1)
 
         layout = QHBoxLayout(panel)
-        layout.setContentsMargins(26, 24, 24, 22)
-        layout.setSpacing(24)
+        layout.setContentsMargins(30, 27, 27, 25)
+        layout.setSpacing(30)
         layout.addLayout(left, 3)
         layout.addWidget(status_panel, 2)
         return panel
@@ -945,7 +1105,11 @@ class MainWindow(QMainWindow):
         mode_row.setSpacing(0)
         self._agent_modes = QButtonGroup(self)
         self._agent_modes.setExclusive(True)
-        for mode, text in (("agent", "单次智能体"), ("default_workflow", "分析 · 草稿 · 质检")):
+        for mode, text in (
+            ("agent", "单次智能体"),
+            ("default_workflow", "分析 · 草稿 · 质检"),
+            ("coze_workflow", "扣子工作流"),
+        ):
             button = QPushButton(text)
             button.setObjectName("SegmentButton")
             button.setCheckable(True)
@@ -954,6 +1118,12 @@ class MainWindow(QMainWindow):
             mode_row.addWidget(button)
         self._agent_modes.buttons()[0].setChecked(True)
         layout.addLayout(mode_row)
+
+        self._agent_title = QLineEdit()
+        self._agent_title.setObjectName("SearchInput")
+        self._agent_title.setPlaceholderText("标题或来源（选填，扣子工作流会作为 input_title 传入）")
+        self._agent_title.setClearButtonEnabled(True)
+        layout.addWidget(self._agent_title)
 
         self._agent_input = QPlainTextEdit()
         self._agent_input.setObjectName("InputEditor")
@@ -964,10 +1134,10 @@ class MainWindow(QMainWindow):
         footer = QHBoxLayout()
         clear = QPushButton("清空")
         clear.setObjectName("TextButton")
-        clear.clicked.connect(self._agent_input.clear)
+        clear.clicked.connect(self._clear_agent_input)
         self._agent_run_button = QPushButton("开始生成")
         self._agent_run_button.setObjectName("PrimaryButton")
-        self._agent_run_button.setIcon(make_glyph_icon("\uE768", "#FFFFFF"))
+        self._agent_run_button.setIcon(make_icon("play", "#FFFFFF"))
         self._agent_run_button.clicked.connect(self._run_agent)
         self._busy_controls.append(self._agent_run_button)
         footer.addWidget(clear)
@@ -985,9 +1155,9 @@ class MainWindow(QMainWindow):
         header = QHBoxLayout()
         header.addWidget(self._section_title("生成结果"))
         header.addStretch(1)
-        copy_button = self._icon_button("\uE8C8", "复制结果")
+        copy_button = self._icon_button("copy", "复制结果")
         copy_button.clicked.connect(lambda: self._copy_view(self._agent_output))
-        save_button = self._icon_button("\uE74E", "保存结果 (Ctrl+S)")
+        save_button = self._icon_button("save", "保存结果 (Ctrl+S)")
         save_button.clicked.connect(lambda: self._save_view(self._agent_output, "agent-output.md"))
         header.addWidget(copy_button)
         header.addWidget(save_button)
@@ -1012,11 +1182,11 @@ class MainWindow(QMainWindow):
         self._term_search.returnPressed.connect(self._search_terms_now)
         search_button = QPushButton("搜索")
         search_button.setObjectName("PrimaryButton")
-        search_button.setIcon(make_glyph_icon("\uE721", "#FFFFFF"))
+        search_button.setIcon(make_icon("search", "#FFFFFF"))
         search_button.clicked.connect(self._search_terms_now)
         self._use_term_button = QPushButton("加入智能体约束")
         self._use_term_button.setObjectName("SecondaryButton")
-        self._use_term_button.setIcon(make_glyph_icon("\uE710", "#344054"))
+        self._use_term_button.setIcon(make_icon("plus", "#344054"))
         self._use_term_button.setEnabled(False)
         self._use_term_button.clicked.connect(self._append_selected_term_to_agent)
         search_row.addWidget(self._term_search, 1)
@@ -1079,8 +1249,12 @@ class MainWindow(QMainWindow):
             detail_label.setObjectName("WorkflowDetail")
             texts.addWidget(title_label)
             texts.addWidget(detail_label)
+            state = QLabel("就绪")
+            state.setObjectName("WorkflowState")
+            state.setAlignment(Qt.AlignmentFlag.AlignCenter)
             node_layout.addWidget(number)
             node_layout.addLayout(texts, 1)
+            node_layout.addWidget(state)
             stages.addWidget(node, 0, index - 1)
             stages.setColumnStretch(index - 1, 1)
         layout.addLayout(stages)
@@ -1093,7 +1267,7 @@ class MainWindow(QMainWindow):
         self._workflow_input.setLineWrapMode(QPlainTextEdit.LineWrapMode.WidgetWidth)
         self._workflow_run_button = QPushButton("运行完整工作流")
         self._workflow_run_button.setObjectName("PrimaryButton")
-        self._workflow_run_button.setIcon(make_glyph_icon("\uE768", "#FFFFFF"))
+        self._workflow_run_button.setIcon(make_icon("play", "#FFFFFF"))
         self._workflow_run_button.setMinimumWidth(160)
         self._workflow_run_button.clicked.connect(
             lambda: self._start_job("integration_workflow", self._workflow_input.toPlainText(), allow_empty=True)
@@ -1106,12 +1280,23 @@ class MainWindow(QMainWindow):
         result_header = QHBoxLayout()
         result_header.addWidget(self._section_title("工作流结果"))
         result_header.addStretch(1)
-        save_button = self._icon_button("\uE74E", "保存工作流结果")
+        save_button = self._icon_button("save", "保存工作流结果")
         save_button.clicked.connect(lambda: self._save_view(self._workflow_output, "workflow-output.md"))
         result_header.addWidget(save_button)
         layout.addLayout(result_header)
-        self._workflow_output = MarkdownView("运行完整工作流后，这里会显示四阶段结果与最终建议。")
+        ready_groups = sum(group.status == "可整合" for group in self._scan.groups)
+        workflow_snapshot = (
+            "# 总整合已就绪\n\n"
+            f"- 协作分组：{ready_groups}/{len(self._scan.groups)} 可整合\n"
+            f"- 共享术语：{self._scan.terminology.count} 条\n"
+            "- A 组：71 条审校清单、10 个 SVG、17 页渲染证据\n"
+            "- B 组：Coze 工作流结构通过，在线发布状态待责任人确认\n"
+            "- C 组：5 套 DOCX 样例、测试音频、总音频、终版表格与二维码\n\n"
+            "本地扫描、分组适配和三类报告导出可直接运行；在线质检按 `.env` 配置决定调用通道。"
+        )
+        self._workflow_output = MarkdownView("工作流状态会显示在这里。")
         self._workflow_output.setObjectName("OutputView")
+        self._workflow_output.set_output(workflow_snapshot)
         layout.addWidget(self._workflow_output, 1)
         return page
 
@@ -1133,11 +1318,11 @@ class MainWindow(QMainWindow):
         path_row.addLayout(path_text, 1)
         open_button = QPushButton("打开目录")
         open_button.setObjectName("SecondaryButton")
-        open_button.setIcon(make_glyph_icon("\uE8B7", "#344054"))
+        open_button.setIcon(make_icon("folder-open", "#344054"))
         open_button.clicked.connect(self._open_output_dir)
         report_button = QPushButton("生成报告")
         report_button.setObjectName("PrimaryButton")
-        report_button.setIcon(make_glyph_icon("\uE9D2", "#FFFFFF"))
+        report_button.setIcon(make_icon("file-text", "#FFFFFF"))
         report_button.clicked.connect(
             lambda: self._start_job("report", self._workflow_input.toPlainText(), allow_empty=True)
         )
@@ -1165,8 +1350,18 @@ class MainWindow(QMainWindow):
 
         tabs = QTabWidget()
         tabs.setObjectName("ResultTabs")
-        self._delivery_output = MarkdownView("生成整合报告后，报告摘要会显示在这里。")
+        delivery_snapshot = (
+            "# 稳定交付基线\n\n"
+            "- 技术验收：19/19\n"
+            "- 单元与界面测试：15 项\n"
+            "- 输出格式：Markdown、CSV、Excel\n"
+            "- Windows：PyInstaller onedir，可独立启动\n"
+            "- 公开协作：GitHub main + Windows CI\n\n"
+            "责任人确认项会保留在正式验收记录中，不计作技术执行失败。"
+        )
+        self._delivery_output = MarkdownView("交付摘要会显示在这里。")
         self._delivery_output.setObjectName("OutputView")
+        self._delivery_output.set_output(delivery_snapshot)
         self._log = QPlainTextEdit()
         self._log.setObjectName("LogView")
         self._log.setReadOnly(True)
@@ -1234,11 +1429,11 @@ class MainWindow(QMainWindow):
         self._group_query.returnPressed.connect(self._run_group_adapter)
         open_button = QPushButton("打开分组目录")
         open_button.setObjectName("SecondaryButton")
-        open_button.setIcon(make_glyph_icon("\uE8B7", "#344054"))
+        open_button.setIcon(make_icon("folder-open", "#344054"))
         open_button.clicked.connect(self._open_group_dir)
         self._group_run_button = QPushButton("运行适配器")
         self._group_run_button.setObjectName("PrimaryButton")
-        self._group_run_button.setIcon(make_glyph_icon("\uE768", "#FFFFFF"))
+        self._group_run_button.setIcon(make_icon("play", "#FFFFFF"))
         self._group_run_button.clicked.connect(self._run_group_adapter)
         self._busy_controls.append(self._group_run_button)
         controls.addWidget(self._group_query, 1)
@@ -1267,10 +1462,10 @@ class MainWindow(QMainWindow):
         label.setWordWrap(True)
         return label
 
-    def _icon_button(self, glyph: str, tooltip: str) -> QToolButton:
+    def _icon_button(self, icon_name: str, tooltip: str) -> QToolButton:
         button = QToolButton()
         button.setObjectName("IconButton")
-        button.setIcon(make_glyph_icon(glyph))
+        button.setIcon(make_icon(icon_name))
         button.setIconSize(QSize(17, 17))
         button.setToolTip(tooltip)
         return button
@@ -1283,7 +1478,7 @@ class MainWindow(QMainWindow):
     def resizeEvent(self, event: object) -> None:
         super().resizeEvent(event)  # type: ignore[arg-type]
         if hasattr(self, "_stats_grid"):
-            workspace_width = max(0, self.width() - 244)
+            workspace_width = max(0, self.width() - SIDEBAR_WIDTH)
             if workspace_width < 1040:
                 self._relayout_overview(2, 2)
             else:
@@ -1338,6 +1533,14 @@ class MainWindow(QMainWindow):
         if category == "page" and value in self._pages:
             self._switch_page(value)
             return
+        if category == "agent" and value == "coze":
+            self._switch_page("agent")
+            for button in self._agent_modes.buttons():
+                if button.property("mode") == "coze_workflow":
+                    button.setChecked(True)
+                    break
+            self._agent_input.setFocus()
+            return
         if action == "workflow:run":
             self._switch_page("workflow")
             self._start_job("integration_workflow", self._workflow_input.toPlainText(), allow_empty=True)
@@ -1347,6 +1550,7 @@ class MainWindow(QMainWindow):
             return
         self._current_page_key = page_key
         self._stack.setCurrentWidget(self._pages[page_key])
+        self._animate_page(self._pages[page_key])
         title, subtitle = PAGE_META[page_key]
         self._page_title.setText(title)
         self._page_subtitle.setText(subtitle)
@@ -1363,6 +1567,7 @@ class MainWindow(QMainWindow):
         self._active_group = group_key
         self._current_page_key = "group"
         self._stack.setCurrentWidget(self._pages["group"])
+        self._animate_page(self._pages["group"])
         self._nav_group.setExclusive(False)
         for button in self._nav_buttons.values():
             button.setChecked(False)
@@ -1379,14 +1584,33 @@ class MainWindow(QMainWindow):
         self._group_detail_status.setText(f"●  {summary.status}")
         ready = summary.status == "可整合"
         self._group_detail_status.setStyleSheet(
-            "background: transparent; color: #12805C; border: 0; font-weight: 600;"
+            "background: transparent; color: #167A65; border: 0; font-weight: 650;"
             if ready
-            else "background: transparent; color: #B36B12; border: 0; font-weight: 600;"
+            else "background: transparent; color: #A36724; border: 0; font-weight: 650;"
         )
         self._group_file_count.setText(str(summary.file_count))
         self._group_size.setText(format_size(summary.total_size_bytes))
         self._group_updated.setText(summary.latest_modified_at)
         self._group_path.setText(summary.relative_path)
+        self._group_output.set_output(run_group_adapter(group_key, self._group_query.text(), self._project_root))
+
+    def _animate_page(self, page: QWidget) -> None:
+        if self._page_animation is not None:
+            self._page_animation.stop()
+        if self._animated_page is not None:
+            self._animated_page.setGraphicsEffect(None)
+
+        effect = QGraphicsOpacityEffect(page)
+        page.setGraphicsEffect(effect)
+        animation = QPropertyAnimation(effect, b"opacity", self)
+        animation.setDuration(160)
+        animation.setStartValue(0.72)
+        animation.setEndValue(1.0)
+        animation.setEasingCurve(QEasingCurve.Type.OutCubic)
+        animation.finished.connect(lambda: page.setGraphicsEffect(None))
+        self._page_animation = animation
+        self._animated_page = page
+        animation.start()
 
     def _refresh_from_scan(self) -> None:
         ready = sum(group.status == "可整合" for group in self._scan.groups)
@@ -1404,8 +1628,8 @@ class MainWindow(QMainWindow):
             self._group_nav_buttons[group.key].style().polish(self._group_nav_buttons[group.key])
 
         handoff_messages = {
-            "A": "图文回填材料可接手：优先使用翻译清单、最终 DOCX 和图片总览。",
-            "B": "术语库可接手：共享术语库已作为全局术语与风格控制输入。",
+            "A": "7 月 17 日图文修正版已接手：71 条清单、10 个 SVG 与 17 页渲染证据通过技术复核。",
+            "B": "术语库与 API 接入已就绪；Coze 平台最新版发布仍待 B 组账号确认。",
             "C": "C 组二次交付达标：无需返工，后续接入 DOCX 与音视频通道。",
         }
         for label, group in zip(self._advice_labels, self._scan.groups):
@@ -1414,23 +1638,39 @@ class MainWindow(QMainWindow):
         hero_items = [
             f"● A/B/C 就绪：{ready}/{len(self._scan.groups)}",
             f"● 共享术语：{self._scan.terminology.count} 条，可直接检索约束",
-            "● C 组：按整合接手标准已达标，无需返工",
+            "● Coze：API 入口已接入，最新版发布待 B 组确认",
             f"● 输出中心：{len(output_files)} 个已生成文件",
         ]
         for label, text in zip(self._hero_status_labels, hero_items):
             label.setText(text)
 
-        api_text = "API 已连接" if self._config.has_api_key else "离线演示模式"
+        providers: list[str] = []
+        if self._config.has_api_key:
+            providers.append("OpenAI")
+        if self._config.has_coze_workflow:
+            providers.append("扣子")
+        online = bool(providers)
+        api_text = f"{' + '.join(providers)} 已连接" if online else "离线演示模式"
         self._api_state.setText(f"●  {api_text}")
-        self._api_state.setProperty("connected", self._config.has_api_key)
+        self._api_state.setProperty("connected", online)
         self._api_state.style().unpolish(self._api_state)
         self._api_state.style().polish(self._api_state)
-        self._agent_state_text.setText(
-            f"已连接 {self._config.openai_model}，将调用真实智能体。"
-            if self._config.has_api_key
-            else "当前未配置 OPENAI_API_KEY；界面与工作流可完整演示，模型步骤返回本地占位结果。"
+        channel_details = [f"OpenAI {self._config.openai_model}", "Coze workflow"]
+        self._model_label.setText(" · ".join(channel_details))
+        self._model_label.setToolTip(
+            f"OpenAI model: {self._config.openai_model}\n"
+            f"Coze workflow ID: {self._config.coze_workflow_id or 'not configured'}"
         )
-        self._agent_state_dot.setProperty("connected", self._config.has_api_key)
+        if online:
+            self._agent_state_text.setText(
+                f"在线通道：{'、'.join(providers)}。未配置的通道仍会明确返回本地说明。"
+            )
+        else:
+            self._agent_state_text.setText(
+                "当前为离线演示模式；界面与本地整合可完整运行，"
+                "在线模型步骤不会伪装成真实调用。"
+            )
+        self._agent_state_dot.setProperty("connected", online)
         self._agent_state_dot.style().unpolish(self._agent_state_dot)
         self._agent_state_dot.style().polish(self._agent_state_dot)
 
@@ -1448,6 +1688,7 @@ class MainWindow(QMainWindow):
             return
         self.statusBar().showMessage("正在扫描协作区…")
         QApplication.processEvents()
+        self._config = load_config()
         self._scan = scan_collaboration(self._project_root)
         self._refresh_from_scan()
         self.statusBar().showMessage(f"扫描完成  ·  {len(self._scan.assets)} 个资源文件", 5000)
@@ -1455,7 +1696,15 @@ class MainWindow(QMainWindow):
     def _run_agent(self) -> None:
         checked = self._agent_modes.checkedButton()
         mode = str(checked.property("mode")) if checked is not None else "agent"
-        self._start_job(mode, self._agent_input.toPlainText())
+        title = self._agent_title.text().strip()
+        prompt = self._agent_input.toPlainText()
+        if title and mode != "coze_workflow":
+            prompt = f"标题/来源：{title}\n\n正文/任务：\n{prompt}"
+        self._start_job(mode, prompt, title=title)
+
+    def _clear_agent_input(self) -> None:
+        self._agent_title.clear()
+        self._agent_input.clear()
 
     def _run_group_adapter(self) -> None:
         self._start_job(f"adapter:{self._active_group}", self._group_query.text(), allow_empty=True)
@@ -1468,7 +1717,13 @@ class MainWindow(QMainWindow):
         else:
             self._start_job("integration_workflow", self._workflow_input.toPlainText(), allow_empty=True)
 
-    def _start_job(self, mode: str, prompt: str = "", allow_empty: bool = False) -> None:
+    def _start_job(
+        self,
+        mode: str,
+        prompt: str = "",
+        allow_empty: bool = False,
+        title: str = "",
+    ) -> None:
         prompt = prompt.strip()
         if not prompt and not allow_empty:
             QMessageBox.information(self, "需要输入", "请先输入要处理的内容。")
@@ -1480,7 +1735,7 @@ class MainWindow(QMainWindow):
         self._set_busy(True)
         self._append_log(f"开始任务：{mode}")
         self._thread = QThread(self)
-        self._worker = JobWorker(mode, prompt, self._project_root)
+        self._worker = JobWorker(mode, prompt, self._project_root, title)
         self._worker.moveToThread(self._thread)
         self._thread.started.connect(self._worker.run)
         self._worker.progress.connect(self._handle_progress)
@@ -1655,6 +1910,20 @@ class MainWindow(QMainWindow):
         out_dir = output_dir_for(self._project_root)
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(out_dir)))
         self._append_log(f"打开输出目录：{out_dir}")
+
+    def _open_acceptance_record(self) -> None:
+        record = (
+            self._project_root
+            / "collaboration"
+            / "integration"
+            / "final_outputs"
+            / "INTEGRATION_ACCEPTANCE_20260718.md"
+        )
+        if record.exists():
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(record)))
+            self._append_log(f"打开验收记录：{record}")
+            return
+        QMessageBox.warning(self, "验收记录不存在", f"未找到文件：\n{record}")
 
     def _open_group_dir(self) -> None:
         directory = GROUPS[self._active_group][0]
@@ -2177,6 +2446,538 @@ class MainWindow(QMainWindow):
             }
             """
         )
+        self.setStyleSheet(
+            self.styleSheet()
+            + """
+            * {
+                color: #1B2420;
+                outline: 0;
+            }
+            QMainWindow, QWidget#Root, QWidget#Workspace, QStackedWidget#PageStack,
+            QScrollArea#PageScroll, QWidget#OverviewContent {
+                background: #F2F4F1;
+            }
+            QFrame#Sidebar {
+                background: #171C1A;
+                border: 0;
+                border-right: 1px solid #29312D;
+            }
+            QLabel#BrandTitle {
+                color: #F7F9F7;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 17px;
+                font-weight: 700;
+            }
+            QLabel#BrandSubtitle {
+                color: #8F9B95;
+                font-size: 11px;
+            }
+            QFrame#SidebarRule {
+                background: #303834;
+                border: 0;
+            }
+            QLabel#SidebarLabel {
+                color: #707D76;
+                font-size: 10px;
+                font-weight: 700;
+                padding: 4px 10px;
+            }
+            QPushButton#NavButton, QPushButton#GroupNavButton {
+                background: transparent;
+                color: #A8B2AD;
+                border: 0;
+                border-left: 3px solid transparent;
+                border-radius: 6px;
+                padding: 10px 12px;
+                text-align: left;
+                min-height: 22px;
+            }
+            QPushButton#NavButton:hover, QPushButton#GroupNavButton:hover {
+                background: #202724;
+                color: #EDF2EF;
+            }
+            QPushButton#NavButton:checked {
+                background: #25302C;
+                color: #F8FAF9;
+                border: 0;
+                border-left: 3px solid #54B398;
+                font-weight: 650;
+            }
+            QPushButton#GroupNavButton {
+                color: #89958F;
+                font-size: 12px;
+            }
+            QPushButton#GroupNavButton[ready="true"] {
+                color: #C2CBC6;
+            }
+            QFrame#ConnectionPanel {
+                background: #202724;
+                border: 1px solid #313A35;
+                border-radius: 8px;
+            }
+            QLabel#ChannelKicker {
+                color: #6F7C75;
+                font-size: 10px;
+                font-weight: 700;
+            }
+            QLabel#ApiState {
+                color: #D9A258;
+                font-size: 12px;
+                font-weight: 650;
+            }
+            QLabel#ApiState[connected="true"] {
+                color: #6EC3A8;
+            }
+            QLabel#ModelLabel {
+                color: #7F8C85;
+                font-size: 10px;
+            }
+            QFrame#TopBar {
+                background: #FCFDFC;
+                border: 0;
+                border-bottom: 1px solid #DDE3DE;
+            }
+            QLabel#PageTitle {
+                color: #18201D;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 21px;
+                font-weight: 700;
+            }
+            QLabel#PageSubtitle, QLabel#SectionSubtitle, QLabel#PathLabel {
+                color: #78837D;
+                font-size: 12px;
+            }
+            QLabel#RepositoryState {
+                background: rgba(229, 242, 236, 205);
+                color: #236D5B;
+                border: 1px solid rgba(174, 207, 193, 190);
+                border-radius: 6px;
+                padding: 7px 10px;
+                font-size: 10px;
+                font-weight: 700;
+            }
+            QFrame#HeroPanel {
+                background: #18201D;
+                border: 1px solid #18201D;
+                border-radius: 8px;
+            }
+            QFrame#ReadinessBand {
+                background: transparent;
+                border: 0;
+                border-radius: 8px;
+            }
+            QLabel#ReadinessLabel {
+                color: #77827C;
+                font-size: 10px;
+                font-weight: 700;
+            }
+            QLabel#ReadinessValue {
+                color: #167A65;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 21px;
+                font-weight: 700;
+            }
+            QFrame#ReadinessDivider {
+                background: #DDE3DF;
+                border: 0;
+            }
+            QLabel#ReadinessTitle {
+                color: #26312C;
+                font-size: 12px;
+                font-weight: 700;
+            }
+            QLabel#ReadinessSummary {
+                color: #6A756F;
+                font-size: 11px;
+            }
+            QLabel#ReadinessPending {
+                background: #FFF5E8;
+                color: #9A641F;
+                border: 1px solid #EED5B3;
+                border-radius: 6px;
+                padding: 7px 10px;
+                font-size: 10px;
+                font-weight: 700;
+            }
+            QLabel#HeroEyebrow {
+                color: #68C1A7;
+                font-size: 10px;
+                font-weight: 750;
+            }
+            QLabel#HeroTitle {
+                color: #F8FAF8;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 29px;
+                font-weight: 700;
+            }
+            QLabel#HeroSubtitle {
+                color: #B7C2BC;
+                font-size: 13px;
+            }
+            QLabel#HeroPill {
+                background: rgba(255, 255, 255, 18);
+                color: #C4CEC8;
+                border: 1px solid rgba(255, 255, 255, 38);
+                border-radius: 5px;
+                padding: 5px 9px;
+                font-size: 10px;
+                font-weight: 600;
+            }
+            QFrame#HeroStatusPanel {
+                background: transparent;
+                border: 0;
+                border-left: 1px solid #39443F;
+                border-radius: 0;
+            }
+            QLabel#HeroStatusTitle {
+                color: #F1F5F2;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 15px;
+                font-weight: 700;
+            }
+            QLabel#HeroStatusItem {
+                color: #AEBAB4;
+                font-size: 12px;
+            }
+            QPushButton#HeroPrimary, QPushButton#PrimaryButton {
+                background: #167A65;
+                color: #FFFFFF;
+                border: 1px solid #167A65;
+                border-radius: 6px;
+                padding: 9px 16px;
+                font-weight: 650;
+                min-height: 20px;
+            }
+            QPushButton#HeroPrimary:hover, QPushButton#PrimaryButton:hover {
+                background: #116B58;
+                border-color: #116B58;
+            }
+            QPushButton#HeroPrimary:pressed, QPushButton#PrimaryButton:pressed {
+                background: #0B5748;
+                border-color: #0B5748;
+            }
+            QPushButton#PrimaryButton:focus {
+                border: 1px solid #74BBA7;
+            }
+            QPushButton#PrimaryButton:disabled {
+                background: #A9C8BE;
+                border-color: #A9C8BE;
+            }
+            QPushButton#HeroSecondary {
+                background: transparent;
+                color: #E6ECE8;
+                border: 1px solid #56635D;
+                border-radius: 6px;
+                padding: 9px 14px;
+                font-weight: 600;
+                min-height: 20px;
+            }
+            QPushButton#HeroSecondary:hover {
+                background: #252E2A;
+                border-color: #7A8981;
+            }
+            QToolButton#IconButton {
+                background: #FCFDFC;
+                border: 1px solid #D6DED8;
+                border-radius: 6px;
+                min-width: 37px;
+                min-height: 37px;
+            }
+            QToolButton#IconButton:hover {
+                background: #EEF4F0;
+                border-color: #AFC9BF;
+            }
+            QToolButton#IconButton:pressed {
+                background: #E1EBE6;
+                border-color: #7EAA9A;
+            }
+            QPushButton#SecondaryButton {
+                background: #FFFFFF;
+                color: #29342F;
+                border: 1px solid #D2DAD5;
+                border-radius: 6px;
+                padding: 8px 14px;
+                font-weight: 600;
+                min-height: 20px;
+            }
+            QPushButton#SecondaryButton:hover {
+                background: #F0F5F2;
+                border-color: #AABDB4;
+            }
+            QPushButton#SecondaryButton:pressed {
+                background: #E5EDE9;
+            }
+            QPushButton#TextButton, QPushButton#CardAction {
+                background: transparent;
+                color: #167A65;
+                border: 0;
+                padding: 7px 2px;
+                font-weight: 650;
+            }
+            QPushButton#TextButton:hover, QPushButton#CardAction:hover {
+                color: #0B5748;
+            }
+            QLabel#SectionTitle {
+                color: #202A25;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 16px;
+                font-weight: 700;
+            }
+            QFrame#StatCard, QFrame#GroupCard, QFrame#SectionPanel,
+            QFrame#ToolPanel, QFrame#WorkflowNode, QFrame#TaskEntryCard {
+                background: #FFFFFF;
+                border: 1px solid #DCE2DD;
+                border-radius: 8px;
+            }
+            QFrame#TaskEntryCard:hover, QFrame#GroupCard:hover {
+                background: #FCFDFC;
+                border: 1px solid #AFC4BA;
+            }
+            QLabel#TaskKicker {
+                color: #7B8781;
+                font-size: 10px;
+                font-weight: 700;
+            }
+            QLabel#TaskTitle {
+                color: #1B2420;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 16px;
+                font-weight: 700;
+            }
+            QLabel#TaskBody {
+                color: #5E6A64;
+                font-size: 12px;
+            }
+            QPushButton#TaskPrimary {
+                background: #202A25;
+                color: #FFFFFF;
+                border: 1px solid #202A25;
+                border-radius: 6px;
+                padding: 8px 12px;
+                font-weight: 650;
+            }
+            QPushButton#TaskPrimary:hover {
+                background: #167A65;
+                border-color: #167A65;
+            }
+            QPushButton#TaskPrimary:pressed {
+                background: #0B5748;
+                border-color: #0B5748;
+            }
+            QPushButton#TaskSecondary {
+                background: #F1F4F2;
+                color: #2D3833;
+                border: 1px solid #DDE3DF;
+                border-radius: 6px;
+                padding: 8px 12px;
+                font-weight: 600;
+            }
+            QPushButton#TaskSecondary:hover {
+                background: #E7EEEA;
+                border-color: #BFCFC7;
+            }
+            QLabel#StatLabel {
+                color: #6A756F;
+                font-size: 11px;
+                font-weight: 650;
+            }
+            QLabel#StatValue {
+                color: #18201D;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 27px;
+                font-weight: 700;
+            }
+            QLabel#StatDetail {
+                color: #919B96;
+                font-size: 10px;
+            }
+            QLabel#GroupTitle {
+                color: #1B2420;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 15px;
+                font-weight: 700;
+            }
+            QLabel#GroupSubtitle, QLabel#GroupDescription, QLabel#GroupMetrics, QLabel#CategoryLine {
+                color: #7D8882;
+                font-size: 11px;
+            }
+            QLabel#GroupDescription {
+                color: #5D6963;
+                font-size: 12px;
+            }
+            QLabel#GroupMetrics {
+                color: #2D3833;
+                font-size: 13px;
+                font-weight: 650;
+            }
+            QLabel#StageBadge, QLabel#WorkflowNumber {
+                background: #EAF3EF;
+                color: #167A65;
+                border-radius: 6px;
+                font-weight: 700;
+            }
+            QLabel#StageTitle, QLabel#WorkflowTitle {
+                color: #26312C;
+                font-weight: 650;
+            }
+            QLabel#StageDetail, QLabel#WorkflowDetail {
+                color: #7E8983;
+                font-size: 11px;
+            }
+            QLabel#WorkflowState {
+                background: #EAF3EF;
+                color: #167A65;
+                border: 1px solid #D0E3DA;
+                border-radius: 5px;
+                padding: 4px 6px;
+                font-size: 9px;
+                font-weight: 700;
+            }
+            QLabel#ReadyText {
+                color: #167A65;
+                font-size: 11px;
+                font-weight: 650;
+            }
+            QLabel#AdviceItem {
+                color: #56625C;
+            }
+            QFrame#Divider {
+                color: #E2E7E3;
+                max-height: 1px;
+                border: 0;
+                background: #E2E7E3;
+            }
+            QFrame#InfoBanner {
+                background: rgba(233, 243, 238, 210);
+                border: 1px solid rgba(186, 211, 199, 185);
+                border-radius: 7px;
+            }
+            QLabel#AgentStateDot {
+                color: #C17A2C;
+            }
+            QLabel#AgentStateDot[connected="true"] {
+                color: #167A65;
+            }
+            QLabel#InfoText {
+                color: #56625C;
+                font-size: 12px;
+            }
+            QPushButton#SegmentButton {
+                background: rgba(229, 235, 231, 210);
+                color: #66716B;
+                border: 1px solid #D6DDD8;
+                border-radius: 5px;
+                padding: 8px 13px;
+            }
+            QPushButton#SegmentButton:checked {
+                background: rgba(255, 255, 255, 235);
+                color: #126C59;
+                border-color: #83B5A5;
+                font-weight: 650;
+            }
+            QPushButton#SegmentButton:hover {
+                color: #26312C;
+                background: #F8FAF8;
+            }
+            QPlainTextEdit#InputEditor, QPlainTextEdit#WorkflowInput, QLineEdit#SearchInput,
+            QTextBrowser#OutputView, QPlainTextEdit#LogView {
+                background: #FCFDFC;
+                color: #27312D;
+                border: 1px solid #D6DED8;
+                border-radius: 6px;
+                padding: 11px;
+                selection-background-color: #CDE4DB;
+            }
+            QPlainTextEdit#InputEditor:focus, QPlainTextEdit#WorkflowInput:focus,
+            QLineEdit#SearchInput:focus {
+                background: #FFFFFF;
+                border: 1px solid #4D9B84;
+            }
+            QTableWidget#DataTable {
+                background: #FFFFFF;
+                alternate-background-color: #F7F9F7;
+                border: 1px solid #DCE2DD;
+                border-radius: 6px;
+                gridline-color: #E7EBE8;
+                selection-background-color: #DCECE5;
+                selection-color: #17201C;
+            }
+            QHeaderView::section {
+                background: #EDF1EE;
+                color: #59655F;
+                border: 0;
+                border-bottom: 1px solid #D6DDD8;
+                padding: 9px 8px;
+                font-weight: 650;
+            }
+            QProgressBar#TaskProgress {
+                background: #DCE5E0;
+                border: 0;
+            }
+            QProgressBar#TaskProgress::chunk {
+                background: #39A286;
+            }
+            QTabWidget#ResultTabs::pane {
+                background: #FFFFFF;
+                border: 1px solid #DCE2DD;
+                border-radius: 6px;
+                top: -1px;
+            }
+            QTabBar::tab {
+                background: transparent;
+                color: #6B7771;
+                padding: 8px 14px;
+                border: 0;
+            }
+            QTabBar::tab:hover {
+                color: #2C3732;
+                background: #EEF3F0;
+            }
+            QTabBar::tab:selected {
+                color: #126C59;
+                font-weight: 650;
+                border-bottom: 2px solid #167A65;
+            }
+            QLabel#DetailTitle {
+                color: #18201D;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 19px;
+                font-weight: 700;
+            }
+            QLabel#InfoLabel {
+                color: #7C8781;
+                font-size: 10px;
+            }
+            QLabel#InfoValue {
+                color: #29342F;
+                font-weight: 650;
+            }
+            QStatusBar {
+                background: #171C1A;
+                color: #9CA7A1;
+                border-top: 1px solid #2B332F;
+                padding-left: 8px;
+            }
+            QSplitter::handle {
+                background: #F2F4F1;
+                width: 10px;
+            }
+            QScrollBar::handle:vertical {
+                background: #AAB5AF;
+                border-radius: 4px;
+                min-height: 28px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #7E8D85;
+            }
+            QToolTip {
+                background: #1D2521;
+                color: #F3F6F4;
+                border: 1px solid #39443F;
+                padding: 6px;
+            }
+            """
+        )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -2190,6 +2991,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"app={config.app_name}")
         print(f"model={config.openai_model}")
         print(f"api_key={'yes' if config.has_api_key else 'no'}")
+        print(f"coze_workflow={'yes' if config.has_coze_workflow else 'no'}")
+        print(f"coze_workflow_id={config.coze_workflow_id or 'none'}")
         print(f"project_root={scan.project_root}")
         print(f"groups={len(scan.groups)}")
         print(f"assets={len(scan.assets)}")
@@ -2224,6 +3027,19 @@ def main(argv: list[str] | None = None) -> int:
     if "--term-search" in argv:
         query_parts = [arg for arg in argv if arg != "--term-search"]
         print(format_terms_markdown(search_terms(" ".join(query_parts), project_root)))
+        return 0
+
+    if "--coze-run" in argv:
+        prompt = " ".join(arg for arg in argv if arg != "--coze-run").strip()
+        if not prompt:
+            print("--coze-run 需要提供待翻译正文。", file=sys.stderr)
+            return 2
+        try:
+            response = CozeWorkflowClient(load_config()).run(prompt)
+        except CozeWorkflowError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        print(response.text)
         return 0
 
     app = QApplication(sys.argv)
