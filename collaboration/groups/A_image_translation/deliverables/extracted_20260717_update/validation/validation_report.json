@@ -1,6 +1,6 @@
 {
-  "review_date": "2026-07-17",
-  "reviewer": "Codex independent technical review",
+  "review_date": "2026-07-18",
+  "reviewer": "Codex independent technical and linguistic review",
   "source_docx": {
     "sha256": "622fa8d1c02e73d9e387d1ce0db589bbc6bb86cf02e5a4f2e76fa543be666003",
     "zip_test": null,
@@ -43,7 +43,7 @@
     ]
   },
   "output_docx": {
-    "sha256": "969c9496b8861b25b00c3cc527f8a3ac1a4524970ee2562646d24a4da88d0bf9",
+    "sha256": "d7af08f7b1941f5aac209682bec54960e3399a377c148b362e08ebe38b337b0d",
     "zip_test": null,
     "media_count": 31,
     "svg_count": 10,
@@ -84,7 +84,7 @@
     ]
   },
   "manifest": {
-    "sha256": "6951afa96abaceb426930a2085a8f25fdaa3f9c4b75dd981275982284250018a",
+    "sha256": "1941a2a8f9978db9cdff76cc145c3169e3ee16b60dafe6f0d015124c6ae2a169",
     "reviewed_rows": 71
   },
   "media": {
@@ -141,7 +141,7 @@
         "translated_nodes": 2,
         "pairs": {
           "第三章 书法绘画": "Chapter 3: Calligraphy and Painting",
-          "笔落云烟，墨成山水": "The brush summons clouds; ink shapes mountains and waters"
+          "笔落云烟，墨成山水": "A brushstroke conjures clouds; ink forms mountains and waters"
         }
       },
       "image12.png": {
@@ -156,7 +156,7 @@
         "translated_nodes": 2,
         "pairs": {
           "第四章 建筑园林": "Chapter 4: Architecture and Gardens",
-          "园林藏天地，砖瓦见诗意": "Gardens encompass a world; bricks and tiles reveal poetry"
+          "园林藏天地，砖瓦见诗意": "Gardens contain worlds; bricks and tiles reveal poetry"
         }
       },
       "image14.png": {
@@ -186,7 +186,7 @@
         "translated_nodes": 2,
         "pairs": {
           "第五章 科技工艺": "Chapter 5: Science, Technology, and Craftsmanship",
-          "器有匠心，物载文明": "Craftsmanship shapes each object; artifacts carry civilization"
+          "器有匠心，物载文明": "Every object embodies craftsmanship; artifacts carry civilization"
         }
       },
       "image19.png": {
@@ -266,7 +266,7 @@
         "translated_nodes": 2,
         "pairs": {
           "第九章 服饰衣冠": "Chapter 9: Traditional Dress and Adornment",
-          "衣冠有礼，章服生辉": "Attire embodies ritual; ceremonial dress shines with distinction"
+          "衣冠有礼，章服生辉": "Attire reflects ritual; ceremonial dress shines"
         }
       },
       "image3.svg": {
@@ -276,7 +276,7 @@
         "translated_nodes": 2,
         "pairs": {
           "第一章 哲学思想": "Chapter 1: Philosophical Thought",
-          "天人合一，儒道禅心": "Harmony between humanity and nature; the spirit of Confucianism, Daoism, and Chan"
+          "天人合一，儒道禅心": "Harmony between humanity and nature; Confucian, Daoist, and Chan wisdom"
         }
       },
       "image30.png": {
@@ -291,7 +291,7 @@
         "translated_nodes": 2,
         "pairs": {
           "第十章 宗教文化": "Chapter 10: Religious Culture",
-          "殊途同归，心向安宁": "Different paths lead to the same end: a heart at peace"
+          "殊途同归，心向安宁": "Different paths lead to the same destination; the heart seeks peace"
         }
       },
       "image4.jpeg": {
@@ -316,7 +316,7 @@
         "translated_nodes": 2,
         "pairs": {
           "第二章 文学诗赋": "Chapter 2: Literature and Poetry",
-          "诗赋载山河，文章见岁月": "Poetry holds landscapes; writing bears witness to the ages"
+          "诗赋载山河，文章见岁月": "Poetry and rhapsody embrace the land; writing bears witness to the ages"
         }
       },
       "image8.jpeg": {
@@ -329,21 +329,120 @@
         "text_blocks": 2,
         "copied": false
       }
+    },
+    "nonsemantic_masks": {}
+  },
+  "raster_ocr_validation": {
+    "scanned_count": 20,
+    "skipped_qr_media": "image1.jpeg",
+    "minimum_confidence": 0.75,
+    "high_confidence_cjk_remaining": 0
+  },
+  "svg_render_validation": {
+    "rendered_count": 10,
+    "details": {
+      "image11.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image13.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image18.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image22.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image25.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image27.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image29.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image3.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image31.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image7.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      }
     }
   },
-  "path_only_svg_negative_test": {
+  "path_only_svg_fallback_test": {
     "passed": true,
-    "message": "SVG contains paths but no editable CJK text nodes; render and OCR are required"
+    "mode": "render-ocr-reviewed-overlay",
+    "source_text": "中国文化",
+    "translation": "Chinese Culture",
+    "output_size": [
+      640,
+      240
+    ]
   },
   "contact_sheet": {
-    "sha256": "84cf4cef253acfbbc3c059f81c897cdb759d5229cfa0d9298a924b7eca00e74e"
+    "sha256": "b76a9d7fa9f494bc4c34c29403dc181124b7dcb8cae3f8fcec3cc7eed73f71b2"
   },
   "word_render": {
     "application": "Microsoft Word 16.0",
     "export_succeeded": true,
+    "pdf_sha256": "e2bae781c2dc23f30d69937d24b90bdad782d3ee4d96846ed8c82971a84aca8a",
+    "preview_pdf_sha256": "e2bae781c2dc23f30d69937d24b90bdad782d3ee4d96846ed8c82971a84aca8a",
     "page_count": 17,
     "rendered_pages_count": 17,
-    "preview_pdf_sha256": "d2a7504ffcdc84aaacfe7dafe8718bf3927bad3b61ad8869723b09393621ee26",
-    "pages_contact_sheet_sha256": "d313bb0634e9cba6a2de057cea0f221ee712a31f1c86dc3bf03bbebe244a386c"
+    "pages_contact_sheet_sha256": "0ecb36b8cfa40aa7765726cd672e78a78c18e604df06d18cc26438d7e16f9250"
   }
 }

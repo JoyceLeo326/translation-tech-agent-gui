@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import base64
 import hashlib
+import io
 import json
 import os
 import re
@@ -29,9 +31,11 @@ VALIDATION_JSON = PACKAGE_ROOT / "validation" / "validation_report.json"
 
 FONT_REGULAR = Path(os.environ.get("PIC_TRANS_FONT_REGULAR", r"C:\Windows\Fonts\arial.ttf"))
 FONT_BOLD = Path(os.environ.get("PIC_TRANS_FONT_BOLD", r"C:\Windows\Fonts\arialbd.ttf"))
-REVIEW_DATE = "2026-07-17"
-REVIEWER = "Codex independent technical review"
+REVIEW_DATE = "2026-07-18"
+REVIEWER = "Codex independent technical and linguistic review"
 CJK_RE = re.compile(r"[\u3400-\u9fff]")
+OCR_MIN_CONFIDENCE = 0.75
+_OCR_ENGINE = None
 
 
 @dataclass(frozen=True)
@@ -85,13 +89,13 @@ RASTER_BLOCKS: dict[str, list[TextBlock]] = {
         "第一章哲学思想",
         "Chapter 1: Philosophical Thought",
         "天人合一，儒道禅心",
-        "Harmony between humanity and nature; the spirit of Confucianism, Daoism, and Chan",
+        "Harmony between humanity and nature; Confucian, Daoist, and Chan wisdom",
     ),
     "image4.jpeg": [
-        block("修身立德，顺应自然", "Cultivate virtue; follow the way of nature", (500, 65, 1145, 170), 42),
+        block("修身立德，顺应自然", "Cultivate the self and virtue; follow nature's way", (500, 65, 1145, 170), 42),
         block(
             "儒家入世修德，道家逍遥自在",
-            "Confucianism cultivates virtue in society; Daoism embraces natural freedom",
+            "Confucians engage with society and cultivate virtue; Daoists live freely and at ease",
             (455, 775, 1190, 870),
             30,
         ),
@@ -115,7 +119,7 @@ RASTER_BLOCKS: dict[str, list[TextBlock]] = {
         "第二章文学诗赋",
         "Chapter 2: Literature and Poetry",
         "诗赋载山河，文章见岁月",
-        "Poetry holds landscapes; writing bears witness to the ages",
+        "Poetry and rhapsody embrace the land; writing bears witness to the ages",
     ),
     "image8.jpeg": [
         block(
@@ -126,13 +130,13 @@ RASTER_BLOCKS: dict[str, list[TextBlock]] = {
         ),
         block(
             "诗词曲赋里的中国精神",
-            "The Chinese spirit in poetry, lyrics, drama, and prose",
+            "The Chinese spirit in poetry, lyric verse, songs, and rhapsodies",
             (632, 470, 1012, 530),
             21,
         ),
         block(
             "《诗经》采集民风",
-            "The Book of Songs:\ncollecting folk ballads",
+            "The Book of Songs:\ngathering folk songs",
             (390, 295, 520, 405),
             18,
             min_size=11,
@@ -142,8 +146,8 @@ RASTER_BLOCKS: dict[str, list[TextBlock]] = {
         ),
         block(
             "屈原行吟泽畔",
-            "Qu Yuan chants\nby the river",
-            (425, 405, 540, 515),
+            "Qu Yuan chants\nby the waterside",
+            (340, 400, 540, 550),
             17,
             min_size=11,
             outline=None,
@@ -172,7 +176,7 @@ RASTER_BLOCKS: dict[str, list[TextBlock]] = {
         ),
         block(
             "曹雪芹著书",
-            "Cao Xueqin\nwrites",
+            "Cao Xueqin\nwrites a novel",
             (1065, 475, 1205, 595),
             17,
             min_size=11,
@@ -182,23 +186,23 @@ RASTER_BLOCKS: dict[str, list[TextBlock]] = {
         ),
     ],
     "image9.png": [
-        block("盛唐气象，两宋风华", "The grandeur of the Tang; the elegance of the Song", (430, 65, 1205, 180), 42),
+        block("盛唐气象，两宋风华", "High Tang grandeur; Northern and Southern Song elegance", (430, 65, 1205, 180), 42),
         block("诗言志，词传情", "Poetry voices aspiration; lyrics convey emotion", (505, 750, 1130, 875), 38),
     ],
     "image10.png": chapter_blocks(
         "第三章书法绘画",
         "Chapter 3: Calligraphy and Painting",
         "笔落云烟，墨成山水",
-        "The brush summons clouds; ink shapes mountains and waters",
+        "A brushstroke conjures clouds; ink forms mountains and waters",
     ),
     "image12.png": chapter_blocks(
         "第四章建筑园林",
         "Chapter 4: Architecture and Gardens",
         "园林藏天地，砖瓦见诗意",
-        "Gardens encompass a world; bricks and tiles reveal poetry",
+        "Gardens contain worlds; bricks and tiles reveal poetry",
     ),
     "image14.png": [
-        block("榫卯相扣，砖瓦成诗", "Mortise and tenon interlock; bricks and tiles become poetry", (410, 710, 1195, 825), 40),
+        block("榫卯相扣，砖瓦成诗", "Mortise-and-tenon joints interlock; bricks and tiles become poetry", (410, 710, 1195, 825), 40),
         block(
             "中国建筑里的礼制与空间美学",
             "Ritual order and spatial aesthetics in Chinese architecture",
@@ -223,7 +227,7 @@ RASTER_BLOCKS: dict[str, list[TextBlock]] = {
     "image16.png": [
         block(
             "一方水土，一方屋舍",
-            "Each region, its own landscape and dwellings",
+            "Each place has its own landscape and dwellings",
             (485, 40, 1170, 150),
             43,
             note="OCR source corrected from 一方水止，一方屋舍 to the visible text 一方水土，一方屋舍",
@@ -261,7 +265,7 @@ RASTER_BLOCKS: dict[str, list[TextBlock]] = {
         "第五章科技工艺",
         "Chapter 5: Science, Technology, and Craftsmanship",
         "器有匠心，物载文明",
-        "Craftsmanship shapes each object; artifacts carry civilization",
+        "Every object embodies craftsmanship; artifacts carry civilization",
     ),
     "image19.png": [
         block("泥土入火，成瓷成韵", "Clay enters the kiln, emerging as porcelain with grace", (450, 705, 1200, 825), 43),
@@ -272,7 +276,7 @@ RASTER_BLOCKS: dict[str, list[TextBlock]] = {
         block("织就锦绣丝路", "Weaving the splendid Silk Road", (1030, 245, 1600, 360), 42),
         block(
             "养蚕缫丝，连接东西文明",
-            "Sericulture and silk weaving connected Eastern and Western civilizations",
+            "Sericulture and silk reeling linked Eastern and Western civilizations",
             (1035, 365, 1535, 450),
             26,
             note="OCR source corrected from 养蚕织丝 to the visible text 养蚕缫丝",
@@ -295,10 +299,10 @@ RASTER_BLOCKS: dict[str, list[TextBlock]] = {
             text_fill=(255, 228, 146),
             note="Prominent sign omitted by the submitted OCR; independently added",
         ),
-        block("一方戏台，一方故事", "One stage, one story", (470, 705, 1200, 825), 50),
+        block("一方戏台，一方故事", "Every stage tells a story", (470, 705, 1200, 825), 50),
         block(
             "三百剧种扎根乡土",
-            "Over 300 opera traditions take root in local communities",
+            "More than 300 opera genres are rooted in local communities",
             (570, 810, 1080, 890),
             27,
         ),
@@ -319,39 +323,49 @@ RASTER_BLOCKS: dict[str, list[TextBlock]] = {
         "第九章服饰衣冠",
         "Chapter 9: Traditional Dress and Adornment",
         "衣冠有礼，章服生辉",
-        "Attire embodies ritual; ceremonial dress shines with distinction",
+        "Attire reflects ritual; ceremonial dress shines",
     ),
     "image30.png": chapter_blocks(
         "第十章宗教文化",
         "Chapter 10: Religious Culture",
         "殊途同归，心向安宁",
-        "Different paths lead to the same end: a heart at peace",
+        "Different paths lead to the same destination; the heart seeks peace",
     ),
 }
+
+
+# Optional cleanup regions for non-semantic AI-generated remnants in future source images.
+MASK_RECTS: dict[str, list[tuple[tuple[int, int, int, int], tuple[int, int, int]]]] = {}
+
+# Reviewed overlays for future SVGs whose visible text is paths or embedded pixels.
+# The current source document has no such SVG, but the fallback is exercised in validation.
+PATH_ONLY_SVG_BLOCKS: dict[str, list[TextBlock]] = {}
 
 
 SVG_TRANSLATIONS: dict[str, dict[str, SvgText]] = {
     "image3.svg": {
         "第一章 哲学思想": SvgText("Chapter 1: Philosophical Thought", 27),
         "天人合一，儒道禅心": SvgText(
-            "Harmony between humanity and nature; the spirit of Confucianism, Daoism, and Chan", 15
+            "Harmony between humanity and nature; Confucian, Daoist, and Chan wisdom", 16
         ),
     },
     "image7.svg": {
         "第二章 文学诗赋": SvgText("Chapter 2: Literature and Poetry", 27),
-        "诗赋载山河，文章见岁月": SvgText("Poetry holds landscapes; writing bears witness to the ages", 16),
+        "诗赋载山河，文章见岁月": SvgText(
+            "Poetry and rhapsody embrace the land; writing bears witness to the ages", 15
+        ),
     },
     "image11.svg": {
         "第三章 书法绘画": SvgText("Chapter 3: Calligraphy and Painting", 27),
-        "笔落云烟，墨成山水": SvgText("The brush summons clouds; ink shapes mountains and waters", 16),
+        "笔落云烟，墨成山水": SvgText("A brushstroke conjures clouds; ink forms mountains and waters", 16),
     },
     "image13.svg": {
         "第四章 建筑园林": SvgText("Chapter 4: Architecture and Gardens", 27),
-        "园林藏天地，砖瓦见诗意": SvgText("Gardens encompass a world; bricks and tiles reveal poetry", 16),
+        "园林藏天地，砖瓦见诗意": SvgText("Gardens contain worlds; bricks and tiles reveal poetry", 16),
     },
     "image18.svg": {
         "第五章 科技工艺": SvgText("Chapter 5: Science, Technology, and Craftsmanship", 25),
-        "器有匠心，物载文明": SvgText("Craftsmanship shapes each object; artifacts carry civilization", 16),
+        "器有匠心，物载文明": SvgText("Every object embodies craftsmanship; artifacts carry civilization", 16),
     },
     "image22.svg": {
         "第六章 戏曲曲艺": SvgText("Chapter 6: Opera and Folk Performing Arts", 26),
@@ -367,11 +381,13 @@ SVG_TRANSLATIONS: dict[str, dict[str, SvgText]] = {
     },
     "image29.svg": {
         "第九章 服饰衣冠": SvgText("Chapter 9: Traditional Dress and Adornment", 26),
-        "衣冠有礼，章服生辉": SvgText("Attire embodies ritual; ceremonial dress shines with distinction", 16),
+        "衣冠有礼，章服生辉": SvgText("Attire reflects ritual; ceremonial dress shines", 17),
     },
     "image31.svg": {
         "第十章 宗教文化": SvgText("Chapter 10: Religious Culture", 27),
-        "殊途同归，心向安宁": SvgText("Different paths lead to the same end: a heart at peace", 16),
+        "殊途同归，心向安宁": SvgText(
+            "Different paths lead to the same destination; the heart seeks peace", 15
+        ),
     },
 }
 
@@ -485,7 +501,96 @@ def local_name(tag: str) -> str:
     return tag.rsplit("}", 1)[-1]
 
 
-def translate_svg(svg_bytes: bytes, translations: dict[str, SvgText]) -> tuple[bytes, dict]:
+def ocr_image(image: Image.Image) -> list[dict]:
+    global _OCR_ENGINE
+    try:
+        import numpy as np
+        from rapidocr_onnxruntime import RapidOCR
+    except ImportError as error:
+        raise RuntimeError(
+            "Offline OCR requires rapidocr-onnxruntime; install requirements.txt before running"
+        ) from error
+    if _OCR_ENGINE is None:
+        _OCR_ENGINE = RapidOCR()
+    result, _ = _OCR_ENGINE(np.asarray(image.convert("RGB")))
+    if not result:
+        return []
+    return [
+        {
+            "text": str(item[1]),
+            "confidence": round(float(item[2]), 4),
+            "box": [[round(float(value), 2) for value in point] for point in item[0]],
+        }
+        for item in result
+    ]
+
+
+def render_svg_image(svg_bytes: bytes, width: int | None = None) -> Image.Image:
+    try:
+        import resvg_py
+    except ImportError as error:
+        raise RuntimeError("SVG rasterization requires resvg_py; install requirements.txt before running") from error
+    png = resvg_py.svg_to_bytes(svg_string=svg_bytes.decode("utf-8"), width=width)
+    with Image.open(io.BytesIO(png)) as rendered:
+        return rendered.convert("RGB")
+
+
+def png_image_as_svg(image: Image.Image) -> bytes:
+    stream = io.BytesIO()
+    image.save(stream, format="PNG", optimize=True)
+    encoded = base64.b64encode(stream.getvalue()).decode("ascii")
+    width, height = image.size
+    wrapper = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+        f'viewBox="0 0 {width} {height}"><image width="{width}" height="{height}" '
+        f'href="data:image/png;base64,{encoded}"/></svg>'
+    )
+    return wrapper.encode("utf-8")
+
+
+def translate_path_only_svg(svg_bytes: bytes, blocks: list[TextBlock], paths: int) -> tuple[bytes, dict]:
+    if not blocks:
+        raise ValueError("SVG has no editable CJK nodes and no reviewed OCR overlay specification")
+    image = render_svg_image(svg_bytes)
+    source_ocr = ocr_image(image)
+    detected_cjk = "".join(
+        item["text"]
+        for item in source_ocr
+        if item["confidence"] >= OCR_MIN_CONFIDENCE and CJK_RE.search(item["text"])
+    )
+    missing = [block.source for block in blocks if block.source.replace(" ", "") not in detected_cjk.replace(" ", "")]
+    if missing:
+        raise ValueError(f"Reviewed path-only SVG source text was not found by offline OCR: {missing}")
+
+    draw = ImageDraw.Draw(image)
+    for item in blocks:
+        draw_block(draw, item)
+    output_ocr = ocr_image(image)
+    leftovers = [
+        item
+        for item in output_ocr
+        if item["confidence"] >= OCR_MIN_CONFIDENCE and CJK_RE.search(item["text"])
+    ]
+    if leftovers:
+        raise ValueError(f"CJK text remains after path-only SVG fallback: {leftovers}")
+    translated = png_image_as_svg(image)
+    ET.fromstring(translated)
+    return translated, {
+        "mode": "render-ocr-reviewed-overlay",
+        "paths": paths,
+        "editable_nodes": 0,
+        "translated_nodes": len(blocks),
+        "source_ocr": source_ocr,
+        "output_ocr": output_ocr,
+        "pairs": {item.source: item.translation for item in blocks},
+    }
+
+
+def translate_svg(
+    svg_bytes: bytes,
+    translations: dict[str, SvgText],
+    path_only_blocks: list[TextBlock] | None = None,
+) -> tuple[bytes, dict]:
     ET.register_namespace("", "http://www.w3.org/2000/svg")
     ET.register_namespace("xlink", "http://www.w3.org/1999/xlink")
     root = ET.fromstring(svg_bytes)
@@ -495,7 +600,12 @@ def translate_svg(svg_bytes: bytes, translations: dict[str, SvgText]) -> tuple[b
     cjk_nodes = [node for node in editable if node.text and CJK_RE.search(node.text)]
     if not cjk_nodes:
         if paths:
-            raise ValueError("SVG contains paths but no editable CJK text nodes; render and OCR are required")
+            if path_only_blocks is not None:
+                return translate_path_only_svg(svg_bytes, path_only_blocks, paths)
+            raise ValueError(
+                "SVG contains paths but no editable CJK text nodes; add reviewed overlays to "
+                "PATH_ONLY_SVG_BLOCKS for automatic render, OCR, and fill-back"
+            )
         raise ValueError("SVG contains no editable CJK text nodes")
 
     found: dict[str, str] = {}
@@ -530,9 +640,10 @@ def translate_svg(svg_bytes: bytes, translations: dict[str, SvgText]) -> tuple[b
 def render_images(media_names: list[str]) -> dict[str, dict]:
     result: dict[str, dict] = {}
     expected_svg = {name for name in media_names if name.lower().endswith(".svg")}
-    if expected_svg != set(SVG_TRANSLATIONS):
+    reviewed_svg = set(SVG_TRANSLATIONS) | set(PATH_ONLY_SVG_BLOCKS)
+    if expected_svg != reviewed_svg:
         raise RuntimeError(
-            f"SVG manifest mismatch; DOCX={sorted(expected_svg)}, reviewed={sorted(SVG_TRANSLATIONS)}"
+            f"SVG manifest mismatch; DOCX={sorted(expected_svg)}, reviewed={sorted(reviewed_svg)}"
         )
 
     for name in media_names:
@@ -540,7 +651,11 @@ def render_images(media_names: list[str]) -> dict[str, dict]:
         target = TRANSLATED_IMAGES / name
         suffix = source.suffix.lower()
         if suffix == ".svg":
-            translated, details = translate_svg(source.read_bytes(), SVG_TRANSLATIONS[name])
+            translated, details = translate_svg(
+                source.read_bytes(),
+                SVG_TRANSLATIONS.get(name, {}),
+                PATH_ONLY_SVG_BLOCKS.get(name),
+            )
             target.write_bytes(translated)
             result[name] = {"type": "svg", **details}
             continue
@@ -554,6 +669,8 @@ def render_images(media_names: list[str]) -> dict[str, dict]:
         with Image.open(source) as original:
             image = original.convert("RGB")
         draw = ImageDraw.Draw(image)
+        for rect, fill in MASK_RECTS.get(name, []):
+            draw.rounded_rectangle(rect, radius=4, fill=fill)
         for text_block in blocks:
             draw_block(draw, text_block)
         if suffix in {".jpg", ".jpeg"}:
@@ -624,6 +741,25 @@ def write_manifest() -> None:
                     item.note,
                 ]
             )
+    for image_name, blocks in PATH_ONLY_SVG_BLOCKS.items():
+        for item in blocks:
+            x0, y0, x1, y1 = item.rect
+            ws.append(
+                [
+                    image_name,
+                    "svg_rendered_ocr",
+                    item.source,
+                    item.translation,
+                    x0,
+                    y0,
+                    x1,
+                    y1,
+                    "independently reviewed",
+                    REVIEWER,
+                    REVIEW_DATE,
+                    item.note,
+                ]
+            )
 
     header_fill = PatternFill("solid", fgColor="244062")
     for cell in ws[1]:
@@ -665,17 +801,20 @@ def build_docx(media_names: list[str]) -> None:
 
 
 def make_contact_sheet(media_names: list[str]) -> None:
-    raster_paths = [TRANSLATED_IMAGES / name for name in media_names if not name.lower().endswith(".svg")]
+    media_paths = [TRANSLATED_IMAGES / name for name in media_names]
     columns = 4
     tile_w, tile_h = 340, 230
     label_h = 30
-    rows = (len(raster_paths) + columns - 1) // columns
+    rows = (len(media_paths) + columns - 1) // columns
     sheet = Image.new("RGB", (columns * tile_w, rows * (tile_h + label_h)), (238, 238, 235))
     draw = ImageDraw.Draw(sheet)
     label_font = get_font(18, True)
-    for index, path in enumerate(raster_paths):
-        with Image.open(path) as source:
-            image = source.convert("RGB")
+    for index, path in enumerate(media_paths):
+        if path.suffix.lower() == ".svg":
+            image = render_svg_image(path.read_bytes(), width=tile_w - 12)
+        else:
+            with Image.open(path) as source:
+                image = source.convert("RGB")
         image.thumbnail((tile_w - 12, tile_h - 12), Image.Resampling.LANCZOS)
         col, row = index % columns, index // columns
         x = col * tile_w + (tile_w - image.width) // 2
@@ -715,16 +854,107 @@ def inspect_docx(path: Path) -> dict:
     }
 
 
-def path_only_negative_test() -> dict:
-    sample = b'<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0L10 10"/></svg>'
-    try:
-        translate_svg(sample, {})
-    except ValueError as error:
-        message = str(error)
-        if "render and OCR are required" not in message:
-            raise AssertionError(f"Unexpected path-only SVG error: {message}") from error
-        return {"passed": True, "message": message}
-    raise AssertionError("Path-only SVG did not raise the required explicit error")
+def path_only_fallback_test() -> dict:
+    font_path = Path(r"C:\Windows\Fonts\msyhbd.ttc")
+    if not font_path.exists():
+        font_path = Path(r"C:\Windows\Fonts\msyh.ttc")
+    if not font_path.exists():
+        raise RuntimeError("The controlled path-only SVG OCR test requires a Windows CJK font")
+
+    source_image = Image.new("RGB", (640, 240), (250, 248, 240))
+    draw = ImageDraw.Draw(source_image)
+    font = ImageFont.truetype(str(font_path), 72)
+    text = "中国文化"
+    box = draw.textbbox((0, 0), text, font=font)
+    draw.text(((640 - (box[2] - box[0])) / 2, 72), text, font=font, fill=(30, 30, 30))
+    source_stream = io.BytesIO()
+    source_image.save(source_stream, format="PNG")
+    encoded = base64.b64encode(source_stream.getvalue()).decode("ascii")
+    sample = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="240" viewBox="0 0 640 240">'
+        '<path d="M10 10H630V230H10Z" fill="none" stroke="#555"/>'
+        f'<image width="640" height="240" href="data:image/png;base64,{encoded}"/></svg>'
+    ).encode("utf-8")
+    reviewed = [
+        block(
+            "中国文化",
+            "Chinese Culture",
+            (70, 55, 570, 190),
+            52,
+            fill=(250, 248, 240),
+            outline=(110, 110, 100),
+            note="Controlled no-editable-text SVG fallback test",
+        )
+    ]
+    translated, details = translate_svg(sample, {}, reviewed)
+    rendered = render_svg_image(translated)
+    if rendered.size != (640, 240):
+        raise AssertionError(f"Unexpected path-only fallback size: {rendered.size}")
+    residual = [
+        item
+        for item in ocr_image(rendered)
+        if item["confidence"] >= OCR_MIN_CONFIDENCE and CJK_RE.search(item["text"])
+    ]
+    if residual:
+        raise AssertionError(f"Controlled path-only fallback retained CJK: {residual}")
+    return {
+        "passed": True,
+        "mode": details["mode"],
+        "source_text": "中国文化",
+        "translation": "Chinese Culture",
+        "output_size": list(rendered.size),
+    }
+
+
+def validate_raster_ocr(media_names: list[str]) -> dict:
+    scanned = []
+    residual: dict[str, list[dict]] = {}
+    for name in media_names:
+        if name.lower().endswith(".svg") or name == "image1.jpeg":
+            continue
+        with Image.open(TRANSLATED_IMAGES / name) as source:
+            image = source.convert("RGB")
+        detections = ocr_image(image)
+        cjk = [
+            item
+            for item in detections
+            if item["confidence"] >= OCR_MIN_CONFIDENCE and CJK_RE.search(item["text"])
+        ]
+        scanned.append(name)
+        if cjk:
+            residual[name] = cjk
+    if residual:
+        raise AssertionError(f"High-confidence CJK remains in translated raster media: {residual}")
+    return {
+        "scanned_count": len(scanned),
+        "skipped_qr_media": "image1.jpeg",
+        "minimum_confidence": OCR_MIN_CONFIDENCE,
+        "high_confidence_cjk_remaining": 0,
+    }
+
+
+def validate_svg_renders(media_names: list[str]) -> dict:
+    details = {}
+    for name in media_names:
+        if not name.lower().endswith(".svg"):
+            continue
+        image = render_svg_image((TRANSLATED_IMAGES / name).read_bytes(), width=800)
+        extrema = image.getextrema()
+        if all(low == high for low, high in extrema):
+            raise AssertionError(f"Rendered SVG is blank: {name}")
+        residual = [
+            item
+            for item in ocr_image(image)
+            if item["confidence"] >= OCR_MIN_CONFIDENCE and CJK_RE.search(item["text"])
+        ]
+        if residual:
+            raise AssertionError(f"Rendered SVG retained CJK: {name}: {residual}")
+        details[name] = {
+            "render_size": list(image.size),
+            "nonblank": True,
+            "high_confidence_cjk_remaining": 0,
+        }
+    return {"rendered_count": len(details), "details": details}
 
 
 def validate(media_names: list[str], render_details: dict[str, dict]) -> dict:
@@ -736,7 +966,7 @@ def validate(media_names: list[str], render_details: dict[str, dict]) -> dict:
         raise AssertionError(f"Output DOCX has a corrupt member: {output['zip_test']}")
     if output["media_count"] != len(media_names):
         raise AssertionError("Output DOCX media count mismatch")
-    if output["svg_count"] != len(SVG_TRANSLATIONS):
+    if output["svg_count"] != len(SVG_TRANSLATIONS) + len(PATH_ONLY_SVG_BLOCKS):
         raise AssertionError("Output DOCX SVG count mismatch")
 
     original_hashes = {path.name: sha256(path) for path in ORIGINAL_IMAGES.iterdir() if path.is_file()}
@@ -754,14 +984,20 @@ def validate(media_names: list[str], render_details: dict[str, dict]) -> dict:
         "manifest": {
             "sha256": sha256(MANIFEST_XLSX),
             "reviewed_rows": sum(len(items) for items in RASTER_BLOCKS.values())
-            + sum(len(items) for items in SVG_TRANSLATIONS.values()),
+            + sum(len(items) for items in SVG_TRANSLATIONS.values())
+            + sum(len(items) for items in PATH_ONLY_SVG_BLOCKS.values()),
         },
         "media": {
             "changed": changed,
             "unchanged": unchanged,
             "details": render_details,
+            "nonsemantic_masks": {
+                name: [list(rect) for rect, _ in masks] for name, masks in MASK_RECTS.items()
+            },
         },
-        "path_only_svg_negative_test": path_only_negative_test(),
+        "raster_ocr_validation": validate_raster_ocr(media_names),
+        "svg_render_validation": validate_svg_renders(media_names),
+        "path_only_svg_fallback_test": path_only_fallback_test(),
         "contact_sheet": {"sha256": sha256(CONTACT_SHEET)},
     }
     VALIDATION_JSON.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

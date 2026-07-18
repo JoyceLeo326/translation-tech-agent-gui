@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 PDF_PATH = PACKAGE_ROOT / "validation" / "final_render.pdf"
+PREVIEW_PDF = PACKAGE_ROOT / "validation" / "final_render_preview.pdf"
 PAGES_DIR = PACKAGE_ROOT / "validation" / "rendered_pages"
 CONTACT_SHEET = PACKAGE_ROOT / "previews" / "final_docx_pages_contact_sheet.jpg"
 VALIDATION_JSON = PACKAGE_ROOT / "validation" / "validation_report.json"
@@ -69,17 +70,22 @@ def main() -> None:
             fill=(20, 20, 20),
         )
     sheet.save(CONTACT_SHEET, quality=90)
+    shutil.copy2(PDF_PATH, PREVIEW_PDF)
 
     report = json.loads(VALIDATION_JSON.read_text(encoding="utf-8"))
     report["word_render"] = {
         "application": "Microsoft Word 16.0",
+        "export_succeeded": True,
         "pdf_sha256": sha256(PDF_PATH),
+        "preview_pdf_sha256": sha256(PREVIEW_PDF),
         "page_count": len(pages),
+        "rendered_pages_count": len(pages),
         "pages_contact_sheet_sha256": sha256(CONTACT_SHEET),
     }
     VALIDATION_JSON.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Rendered pages: {len(pages)}")
     print(f"PDF: {PDF_PATH}")
+    print(f"Preview PDF: {PREVIEW_PDF}")
     print(f"Contact sheet: {CONTACT_SHEET}")
 
 

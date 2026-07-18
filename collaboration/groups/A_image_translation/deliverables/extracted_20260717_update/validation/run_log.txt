@@ -1,17 +1,24 @@
-A-group image translation update validation
-Review date: 2026-07-17
-Reviewer: Codex independent technical review
+A-group image translation final validation
+Review date: 2026-07-18
+Reviewer: Codex independent technical and linguistic review
 
 Generation result: PASS
 Python syntax compilation: PASS
 Source DOCX ZIP integrity: PASS
 Output DOCX ZIP integrity: PASS
-Microsoft Word 16.0 PDF export: PASS
+Microsoft Word 16.0 automated PDF export: PASS
 Rendered Word pages: 17
 DOCX media: 31
 Editable SVG media: 10
 Reviewed text items: 71
 Changed media: 30
 Byte-identical unchanged media: image1.jpeg (QR code only)
-Path-only SVG explicit-error test: PASS
+Offline OCR scan of 20 translated raster media: PASS (0 high-confidence CJK remnants)
+Independent rendering of 10 translated SVG media: PASS
+No-editable-text SVG render/OCR/fill-back test: PASS
 Credential value scan of corrected package: PASS
+
+Output DOCX SHA-256: D7AF08F7B1941F5AAC209682BEC54960E3399A377C148B362E08EBE38B337B0D
+Manifest SHA-256: 1941A2A8F9978DB9CDFF76CC145C3169E3EE16B60DAFE6F0D015124C6AE2A169
+Word PDF SHA-256: E2BAE781C2DC23F30D69937D24B90BDAD782D3EE4D96846ED8C82971A84ACA8A
+All-media contact sheet SHA-256: B76A9D7FA9F494BC4C34C29403DC181124B7DCB8CAE3F8FCEC3CC7EED73F71B2
