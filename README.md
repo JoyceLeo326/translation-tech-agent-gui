@@ -14,6 +14,10 @@ Windows 发布包建议解压到较短路径（例如 `D:\Yishu`），避免 Win
 Yishu\Yishu.exe
 ```
 
+- [观看 2 分 25 秒完整功能演示（MP4）](https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.3.0/Yishu-v1.3.0-demo.mp4)
+
+演示视频依次展示首页、多模态文件翻译、Word 审校回填、音视频外译、扣子多模型精译、文化术语库、批量流程、成果总览和最终文件导出，并配有中文讲解。
+
 打开程序后只需要按三步操作：
 
 1. 把图片、Word、音频或视频拖到“开始”页，也可以点击“从电脑选择”。
