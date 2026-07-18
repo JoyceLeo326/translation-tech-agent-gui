@@ -2,11 +2,11 @@ $ErrorActionPreference = "Stop"
 
 $ProjectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $VenvPython = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
-$ExePath = Join-Path $ProjectRoot "dist\CultureTranslationWorkbench\CultureTranslationWorkbench.exe"
-$SerifFontPath = Join-Path $ProjectRoot "dist\CultureTranslationWorkbench\_internal\assets\fonts\NotoSerifSC-VF.ttf"
-$LucideIconPath = Join-Path $ProjectRoot "dist\CultureTranslationWorkbench\_internal\assets\icons\lucide\play.svg"
-$ChannelIconPath = Join-Path $ProjectRoot "dist\CultureTranslationWorkbench\_internal\assets\icons\lucide\scan-text.svg"
-$LucideLicensePath = Join-Path $ProjectRoot "dist\CultureTranslationWorkbench\_internal\assets\icons\lucide\LICENSE"
+$ExePath = Join-Path $ProjectRoot "dist\Wenlan\Wenlan.exe"
+$SerifFontPath = Join-Path $ProjectRoot "dist\Wenlan\_internal\assets\fonts\NotoSerifSC-VF.ttf"
+$LucideIconPath = Join-Path $ProjectRoot "dist\Wenlan\_internal\assets\icons\lucide\play.svg"
+$ChannelIconPath = Join-Path $ProjectRoot "dist\Wenlan\_internal\assets\icons\lucide\scan-text.svg"
+$LucideLicensePath = Join-Path $ProjectRoot "dist\Wenlan\_internal\assets\icons\lucide\LICENSE"
 
 if (-not (Test-Path $VenvPython)) {
     throw "Missing virtual environment. Run scripts\setup_env.ps1 first."

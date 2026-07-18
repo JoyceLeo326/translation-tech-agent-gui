@@ -55,5 +55,5 @@ jobs:
       - name: Upload executable artifact
         uses: actions/upload-artifact@v7
         with:
-          name: CultureTranslationWorkbench-windows
-          path: dist/CultureTranslationWorkbench
+          name: Wenlan-windows
+          path: dist/Wenlan

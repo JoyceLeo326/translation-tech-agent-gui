@@ -52,7 +52,7 @@ class IntegrationTests(unittest.TestCase):
         scan = scan_collaboration(self.root)
         self.assertEqual(len(scan.groups), 3)
         self.assertEqual(scan.terminology.count, 1)
-        self.assertIn("A 组", format_dashboard_markdown(scan))
+        self.assertIn("统一资源报告", format_dashboard_markdown(scan))
 
     def test_term_search_and_markdown(self) -> None:
         matches = search_terms("孔子", self.root)

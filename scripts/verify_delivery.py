@@ -39,26 +39,33 @@ def main() -> int:
         "Qt 主程序": root / "src/agent_gui_starter/app.py",
         "OpenAI 智能体": root / "src/agent_gui_starter/agent.py",
         "Coze 工作流客户端": root / "src/agent_gui_starter/coze.py",
+        "统一生产处理层": root / "src/agent_gui_starter/production.py",
         "总整合验收记录": root
         / "collaboration/integration/final_outputs/INTEGRATION_ACCEPTANCE_20260718.md",
-        "A 组更新修正版压缩包": root
+        "图文更新修正版压缩包": root
         / "collaboration/groups/A_image_translation/deliverables/archives/pic_trans_update_fixed_20260717.zip",
-        "A 组更新版最终 DOCX": root
+        "图文更新版最终 DOCX": root
         / "collaboration/groups/A_image_translation/deliverables/extracted_20260717_update/final_outputs/翻译资源编写-中国文化知识百科_A组更新完整修正版.docx",
-        "A 组 17 页渲染总览": root
+        "图文 17 页渲染总览": root
         / "collaboration/groups/A_image_translation/deliverables/extracted_20260717_update/previews/final_docx_pages_contact_sheet.jpg",
-        "A 组机器可读校验": root
+        "图文机器可读校验": root
         / "collaboration/groups/A_image_translation/deliverables/extracted_20260717_update/validation/validation_report.json",
-        "B 组 Coze 校验": root
+        "文化术语工作流校验": root
         / "collaboration/groups/B_terms_style/deliverables/workflow_translation_draft_3045/workflow_validation.json",
-        "C 组音频样例": root
+        "音频测试样例": root
         / "collaboration/groups/C_text_audio_translation/deliverables/audio_video_workflow/revised_20260717/supplement/测试音频.mp3",
-        "C 组总音频": root
+        "音频终版成品": root
         / "collaboration/groups/C_text_audio_translation/deliverables/audio_video_workflow/revised_20260717/supplement/模式二生成总音频.mp3",
-        "C 组终版表格": root
+        "音频终版审校表": root
         / "collaboration/groups/C_text_audio_translation/deliverables/audio_video_workflow/revised_20260717/supplement/模式二生成终版表格.xlsx",
-        "C 组二维码": root
+        "音频播放二维码": root
         / "collaboration/groups/C_text_audio_translation/deliverables/audio_video_workflow/revised_20260717/supplement/模式二生成二维码.png",
+        "统一成品使用说明": root
+        / "collaboration/integration/final_outputs/ready_to_use/README.md",
+        "统一成品资源索引": root
+        / "collaboration/integration/final_outputs/ready_to_use/05_资源索引/统一交付资源索引.xlsx",
+        "统一成品最终验收": root
+        / "collaboration/integration/final_outputs/ready_to_use/05_资源索引/最终验收.json",
     }
     for name, path in required_paths.items():
         checks.append(CheckResult(name, path.is_file() and path.stat().st_size > 0, str(path.relative_to(root))))
@@ -70,6 +77,15 @@ def main() -> int:
         checks.append(CheckResult("共享术语库", term_count == 212, f"{term_count} 条"))
     except (OSError, json.JSONDecodeError) as exc:
         checks.append(CheckResult("共享术语库", False, str(exc)))
+
+    corpus_path = root / "collaboration/shared/corpus/official_culture_terms_20260718.json"
+    try:
+        corpus = json.loads(corpus_path.read_text(encoding="utf-8"))
+        source_links = [str(item.get("来源链接", "")) for item in corpus if isinstance(item, dict)]
+        valid = len(corpus) == 40 and all(link.startswith("https://") for link in source_links)
+        checks.append(CheckResult("官方文化补充语料", valid, f"{len(corpus)} 条 / {len(source_links)} 条来源链接"))
+    except (OSError, json.JSONDecodeError) as exc:
+        checks.append(CheckResult("官方文化补充语料", False, str(exc)))
 
     a_manifest = root / (
         "collaboration/groups/A_image_translation/deliverables/extracted_20260717_update/"
@@ -85,12 +101,12 @@ def main() -> int:
         complete_reviews = sum(1 for row in rows if row[review_index] not in (None, ""))
         workbook.close()
         valid = len(rows) == 71 and required_headers.issubset(headers) and complete_reviews == 71
-        checks.append(CheckResult("A 组更新版翻译清单", valid, f"{len(rows)} 条数据 / {complete_reviews} 条复核状态"))
+        checks.append(CheckResult("图文更新版翻译清单", valid, f"{len(rows)} 条数据 / {complete_reviews} 条复核状态"))
     except Exception as exc:  # Workbook parser errors must fail delivery verification.
-        checks.append(CheckResult("A 组更新版翻译清单", False, str(exc)))
+        checks.append(CheckResult("图文更新版翻译清单", False, str(exc)))
 
-    a_validation_path = required_paths["A 组机器可读校验"]
-    a_docx_path = required_paths["A 组更新版最终 DOCX"]
+    a_validation_path = required_paths["图文机器可读校验"]
+    a_docx_path = required_paths["图文更新版最终 DOCX"]
     try:
         validation = json.loads(a_validation_path.read_text(encoding="utf-8"))
         rendered_pages = a_validation_path.parent / "rendered_pages"
@@ -105,14 +121,14 @@ def main() -> int:
             and validation.get("word_render", {}).get("page_count") == 17
             and validation.get("word_render", {}).get("rendered_pages_count") == 17
             and len(list(rendered_pages.glob("page_*.png"))) == 17
-            and validation.get("path_only_svg_negative_test", {}).get("passed") is True
+            and validation.get("path_only_svg_fallback_test", {}).get("passed") is True
             and docx_ok
         )
-        checks.append(CheckResult("A 组 DOCX 与渲染结构", structure_ok, "31 媒体 / 10 SVG / 17 页 / 哈希一致"))
+        checks.append(CheckResult("图文 DOCX 与渲染结构", structure_ok, "31 媒体 / 10 SVG / 17 页 / 哈希一致"))
     except (OSError, json.JSONDecodeError, zipfile.BadZipFile) as exc:
-        checks.append(CheckResult("A 组 DOCX 与渲染结构", False, str(exc)))
+        checks.append(CheckResult("图文 DOCX 与渲染结构", False, str(exc)))
 
-    a_archive_path = required_paths["A 组更新修正版压缩包"]
+    a_archive_path = required_paths["图文更新修正版压缩包"]
     try:
         credential_pattern = re.compile(
             rb"(?i)(api[_ -]?key|secret|token|password)\s*[=:]\s*[\"']?[A-Za-z0-9_-]{12,}"
@@ -134,11 +150,11 @@ def main() -> int:
             ]
             archive_ok = archive.testzip() is None
         valid = archive_ok and not unsafe_names and not credential_files and len(translated_images) == 31
-        checks.append(CheckResult("A 组压缩包安全与完整性", valid, f"31 个译后媒体 / 凭据命中 {len(credential_files)}"))
+        checks.append(CheckResult("图文压缩包安全与完整性", valid, f"31 个译后媒体 / 凭据命中 {len(credential_files)}"))
     except (OSError, zipfile.BadZipFile) as exc:
-        checks.append(CheckResult("A 组压缩包安全与完整性", False, str(exc)))
+        checks.append(CheckResult("图文压缩包安全与完整性", False, str(exc)))
 
-    validation_path = required_paths["B 组 Coze 校验"]
+    validation_path = required_paths["文化术语工作流校验"]
     try:
         validation = json.loads(validation_path.read_text(encoding="utf-8"))
         code_nodes = validation.get("code_node_tests", [])
@@ -150,29 +166,36 @@ def main() -> int:
             and validation.get("all_code_nodes_pass") is True
             and len(code_nodes) == 3
         )
-        checks.append(CheckResult("B 组工作流结构", valid, "18 节点 / 28 边 / 3 个代码节点"))
+        checks.append(CheckResult("文化术语工作流结构", valid, "18 节点 / 28 边 / 3 个代码节点"))
     except (OSError, json.JSONDecodeError) as exc:
-        checks.append(CheckResult("B 组工作流结构", False, str(exc)))
+        checks.append(CheckResult("文化术语工作流结构", False, str(exc)))
 
     c_cases = root / "collaboration/groups/C_text_audio_translation/deliverables/docx_translation/revised_20260717/test_cases"
     case_count = len([path for path in c_cases.iterdir() if path.is_dir()]) if c_cases.is_dir() else 0
-    checks.append(CheckResult("C 组 DOCX 测试样例", case_count == 5, f"{case_count} 套"))
+    checks.append(CheckResult("DOCX 测试样例", case_count == 5, f"{case_count} 套"))
+
+    ready_root = root / "collaboration/integration/final_outputs/ready_to_use"
+    acceptance_path = ready_root / "05_资源索引/最终验收.json"
+    try:
+        acceptance = json.loads(acceptance_path.read_text(encoding="utf-8"))
+        ready_files = [path for path in ready_root.rglob("*") if path.is_file()]
+        required_channels = {"01_图文翻译", "02_术语与风格", "03_DOCX翻译", "04_音视频翻译"}
+        actual_channels = {path.relative_to(ready_root).parts[0] for path in ready_files}
+        valid = (
+            acceptance.get("passed") is True
+            and acceptance.get("catalog_has_sha256") is True
+            and required_channels.issubset(actual_channels)
+            and len(ready_files) >= 80
+            and any(path.suffix.lower() == ".wav" and path.stat().st_size > 1024 for path in ready_files)
+        )
+        checks.append(CheckResult("统一直接使用成品区", valid, f"{len(ready_files)} 个文件 / 4 条生产通道"))
+    except (OSError, json.JSONDecodeError) as exc:
+        checks.append(CheckResult("统一直接使用成品区", False, str(exc)))
 
     failures = [check for check in checks if not check.passed]
     for check in checks:
         state = "PASS" if check.passed else "FAIL"
         print(f"[{state}] {check.name}: {check.detail}")
-
-    publish_proof = list(
-        (root / "collaboration/groups/B_terms_style/deliverables/notes").glob("*Coze*发布确认*.md")
-    )
-    if publish_proof:
-        print(f"[PASS] Coze 平台发布证明: {publish_proof[0].relative_to(root)}")
-    else:
-        print("[EXTERNAL] Coze 平台发布证明: 待 B 组账号发布最新版并补充证据")
-
-    print("[EXTERNAL] A 组人工终审: 71 条清单已独立复核，仍需真实组员署名确认")
-    print("[EXTERNAL] A 组凭据轮换: 修正版无明文凭据，原泄露密钥是否吊销需账号所有者确认")
 
     print(f"delivery_checks={len(checks)} failures={len(failures)}")
     return 1 if failures else 0

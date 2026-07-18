@@ -1,0 +1,448 @@
+{
+  "review_date": "2026-07-18",
+  "reviewer": "Codex independent technical and linguistic review",
+  "source_docx": {
+    "sha256": "622fa8d1c02e73d9e387d1ce0db589bbc6bb86cf02e5a4f2e76fa543be666003",
+    "zip_test": null,
+    "media_count": 31,
+    "svg_count": 10,
+    "image_relationships": 31,
+    "embedded_image_refs": 32,
+    "media_names": [
+      "image1.jpeg",
+      "image10.png",
+      "image11.svg",
+      "image12.png",
+      "image13.svg",
+      "image14.png",
+      "image15.tiff",
+      "image16.png",
+      "image17.png",
+      "image18.svg",
+      "image19.png",
+      "image2.png",
+      "image20.tiff",
+      "image21.png",
+      "image22.svg",
+      "image23.png",
+      "image24.png",
+      "image25.svg",
+      "image26.png",
+      "image27.svg",
+      "image28.png",
+      "image29.svg",
+      "image3.svg",
+      "image30.png",
+      "image31.svg",
+      "image4.jpeg",
+      "image5.jpeg",
+      "image6.png",
+      "image7.svg",
+      "image8.jpeg",
+      "image9.png"
+    ]
+  },
+  "output_docx": {
+    "sha256": "d7af08f7b1941f5aac209682bec54960e3399a377c148b362e08ebe38b337b0d",
+    "zip_test": null,
+    "media_count": 31,
+    "svg_count": 10,
+    "image_relationships": 31,
+    "embedded_image_refs": 32,
+    "media_names": [
+      "image1.jpeg",
+      "image10.png",
+      "image11.svg",
+      "image12.png",
+      "image13.svg",
+      "image14.png",
+      "image15.tiff",
+      "image16.png",
+      "image17.png",
+      "image18.svg",
+      "image19.png",
+      "image2.png",
+      "image20.tiff",
+      "image21.png",
+      "image22.svg",
+      "image23.png",
+      "image24.png",
+      "image25.svg",
+      "image26.png",
+      "image27.svg",
+      "image28.png",
+      "image29.svg",
+      "image3.svg",
+      "image30.png",
+      "image31.svg",
+      "image4.jpeg",
+      "image5.jpeg",
+      "image6.png",
+      "image7.svg",
+      "image8.jpeg",
+      "image9.png"
+    ]
+  },
+  "manifest": {
+    "sha256": "1941a2a8f9978db9cdff76cc145c3169e3ee16b60dafe6f0d015124c6ae2a169",
+    "reviewed_rows": 71
+  },
+  "media": {
+    "changed": [
+      "image10.png",
+      "image11.svg",
+      "image12.png",
+      "image13.svg",
+      "image14.png",
+      "image15.tiff",
+      "image16.png",
+      "image17.png",
+      "image18.svg",
+      "image19.png",
+      "image2.png",
+      "image20.tiff",
+      "image21.png",
+      "image22.svg",
+      "image23.png",
+      "image24.png",
+      "image25.svg",
+      "image26.png",
+      "image27.svg",
+      "image28.png",
+      "image29.svg",
+      "image3.svg",
+      "image30.png",
+      "image31.svg",
+      "image4.jpeg",
+      "image5.jpeg",
+      "image6.png",
+      "image7.svg",
+      "image8.jpeg",
+      "image9.png"
+    ],
+    "unchanged": [
+      "image1.jpeg"
+    ],
+    "details": {
+      "image1.jpeg": {
+        "type": "raster",
+        "text_blocks": 0,
+        "copied": true
+      },
+      "image10.png": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image11.svg": {
+        "type": "svg",
+        "paths": 5,
+        "editable_nodes": 4,
+        "translated_nodes": 2,
+        "pairs": {
+          "第三章 书法绘画": "Chapter 3: Calligraphy and Painting",
+          "笔落云烟，墨成山水": "A brushstroke conjures clouds; ink forms mountains and waters"
+        }
+      },
+      "image12.png": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image13.svg": {
+        "type": "svg",
+        "paths": 3,
+        "editable_nodes": 4,
+        "translated_nodes": 2,
+        "pairs": {
+          "第四章 建筑园林": "Chapter 4: Architecture and Gardens",
+          "园林藏天地，砖瓦见诗意": "Gardens contain worlds; bricks and tiles reveal poetry"
+        }
+      },
+      "image14.png": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image15.tiff": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image16.png": {
+        "type": "raster",
+        "text_blocks": 6,
+        "copied": false
+      },
+      "image17.png": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image18.svg": {
+        "type": "svg",
+        "paths": 6,
+        "editable_nodes": 4,
+        "translated_nodes": 2,
+        "pairs": {
+          "第五章 科技工艺": "Chapter 5: Science, Technology, and Craftsmanship",
+          "器有匠心，物载文明": "Every object embodies craftsmanship; artifacts carry civilization"
+        }
+      },
+      "image19.png": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image2.png": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image20.tiff": {
+        "type": "raster",
+        "text_blocks": 3,
+        "copied": false
+      },
+      "image21.png": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image22.svg": {
+        "type": "svg",
+        "paths": 4,
+        "editable_nodes": 4,
+        "translated_nodes": 2,
+        "pairs": {
+          "第六章 戏曲曲艺": "Chapter 6: Opera and Folk Performing Arts",
+          "粉墨登场，演尽人间百态": "Painted faces take the stage, portraying life in all its forms"
+        }
+      },
+      "image23.png": {
+        "type": "raster",
+        "text_blocks": 3,
+        "copied": false
+      },
+      "image24.png": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image25.svg": {
+        "type": "svg",
+        "paths": 4,
+        "editable_nodes": 4,
+        "translated_nodes": 2,
+        "pairs": {
+          "第七章 民俗风情": "Chapter 7: Folk Customs and Traditions",
+          "烟火寻常处，风俗代代传": "In everyday life, customs pass from generation to generation"
+        }
+      },
+      "image26.png": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image27.svg": {
+        "type": "svg",
+        "paths": 4,
+        "editable_nodes": 4,
+        "translated_nodes": 2,
+        "pairs": {
+          "第八章 饮食文化": "Chapter 8: Food Culture",
+          "一茶一饭，皆是东方滋味": "Every cup of tea and every meal carries the flavors of the East"
+        }
+      },
+      "image28.png": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image29.svg": {
+        "type": "svg",
+        "paths": 7,
+        "editable_nodes": 4,
+        "translated_nodes": 2,
+        "pairs": {
+          "第九章 服饰衣冠": "Chapter 9: Traditional Dress and Adornment",
+          "衣冠有礼，章服生辉": "Attire reflects ritual; ceremonial dress shines"
+        }
+      },
+      "image3.svg": {
+        "type": "svg",
+        "paths": 5,
+        "editable_nodes": 4,
+        "translated_nodes": 2,
+        "pairs": {
+          "第一章 哲学思想": "Chapter 1: Philosophical Thought",
+          "天人合一，儒道禅心": "Harmony between humanity and nature; Confucian, Daoist, and Chan wisdom"
+        }
+      },
+      "image30.png": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image31.svg": {
+        "type": "svg",
+        "paths": 3,
+        "editable_nodes": 4,
+        "translated_nodes": 2,
+        "pairs": {
+          "第十章 宗教文化": "Chapter 10: Religious Culture",
+          "殊途同归，心向安宁": "Different paths lead to the same destination; the heart seeks peace"
+        }
+      },
+      "image4.jpeg": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image5.jpeg": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image6.png": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      },
+      "image7.svg": {
+        "type": "svg",
+        "paths": 2,
+        "editable_nodes": 4,
+        "translated_nodes": 2,
+        "pairs": {
+          "第二章 文学诗赋": "Chapter 2: Literature and Poetry",
+          "诗赋载山河，文章见岁月": "Poetry and rhapsody embrace the land; writing bears witness to the ages"
+        }
+      },
+      "image8.jpeg": {
+        "type": "raster",
+        "text_blocks": 7,
+        "copied": false
+      },
+      "image9.png": {
+        "type": "raster",
+        "text_blocks": 2,
+        "copied": false
+      }
+    },
+    "nonsemantic_masks": {}
+  },
+  "raster_ocr_validation": {
+    "scanned_count": 20,
+    "skipped_qr_media": "image1.jpeg",
+    "minimum_confidence": 0.75,
+    "high_confidence_cjk_remaining": 0
+  },
+  "svg_render_validation": {
+    "rendered_count": 10,
+    "details": {
+      "image11.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image13.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image18.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image22.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image25.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image27.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image29.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image3.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image31.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      },
+      "image7.svg": {
+        "render_size": [
+          800,
+          600
+        ],
+        "nonblank": true,
+        "high_confidence_cjk_remaining": 0
+      }
+    }
+  },
+  "path_only_svg_fallback_test": {
+    "passed": true,
+    "mode": "render-ocr-reviewed-overlay",
+    "source_text": "中国文化",
+    "translation": "Chinese Culture",
+    "output_size": [
+      640,
+      240
+    ]
+  },
+  "contact_sheet": {
+    "sha256": "b76a9d7fa9f494bc4c34c29403dc181124b7dcb8cae3f8fcec3cc7eed73f71b2"
+  },
+  "word_render": {
+    "application": "Microsoft Word 16.0",
+    "export_succeeded": true,
+    "pdf_sha256": "e2bae781c2dc23f30d69937d24b90bdad782d3ee4d96846ed8c82971a84aca8a",
+    "preview_pdf_sha256": "e2bae781c2dc23f30d69937d24b90bdad782d3ee4d96846ed8c82971a84aca8a",
+    "page_count": 17,
+    "rendered_pages_count": 17,
+    "pages_contact_sheet_sha256": "0ecb36b8cfa40aa7765726cd672e78a78c18e604df06d18cc26438d7e16f9250"
+  }
+}

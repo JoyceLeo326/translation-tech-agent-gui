@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-07-18T17:10:50",
+  "passed": true,
+  "file_count": 81,
+  "total_size_bytes": 116463063,
+  "channels": [
+    "01_图文翻译",
+    "02_术语与风格",
+    "03_DOCX翻译",
+    "04_音视频翻译"
+  ],
+  "required_channels": [
+    "01_图文翻译",
+    "02_术语与风格",
+    "03_DOCX翻译",
+    "04_音视频翻译"
+  ],
+  "generated_wav_count": 1,
+  "catalog_has_sha256": true
+}

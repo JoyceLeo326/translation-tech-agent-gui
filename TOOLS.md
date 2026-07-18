@@ -5,7 +5,7 @@
 - Virtual environment: `.venv`
 - Source code: `src\agent_gui_starter`
 - Development entry: `main.py`
-- Packaged executable: `dist\CultureTranslationWorkbench\CultureTranslationWorkbench.exe`
+- Packaged executable: `dist\Wenlan\Wenlan.exe`
 
 ## D-drive shared tools
 

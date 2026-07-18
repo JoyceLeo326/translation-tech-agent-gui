@@ -6,6 +6,7 @@ $ToolRoot = "D:\AI_GUI_DevTools"
 $PyInstallerCache = Join-Path $ToolRoot "pyinstaller-cache"
 $FontData = "$(Join-Path $ProjectRoot 'assets\fonts');assets\fonts"
 $IconData = "$(Join-Path $ProjectRoot 'assets\icons');assets\icons"
+$DistRoot = Join-Path $ProjectRoot "dist\Wenlan"
 
 New-Item -ItemType Directory -Force -Path $PyInstallerCache | Out-Null
 $env:PYINSTALLER_CONFIG_DIR = $PyInstallerCache
@@ -14,13 +15,39 @@ if (-not (Test-Path $VenvPython)) {
     & (Join-Path $PSScriptRoot "setup_env.ps1")
 }
 
+& $VenvPython (Join-Path $PSScriptRoot "build_unified_delivery.py")
+if ($LASTEXITCODE -ne 0) {
+    throw "Unified delivery build failed with exit code $LASTEXITCODE."
+}
+
+& $VenvPython (Join-Path $PSScriptRoot "verify_delivery.py")
+if ($LASTEXITCODE -ne 0) {
+    throw "Delivery verification failed with exit code $LASTEXITCODE."
+}
+
+if (Test-Path $DistRoot) {
+    $resolvedDist = (Resolve-Path $DistRoot).Path
+    $allowedDistRoot = [System.IO.Path]::GetFullPath((Join-Path $ProjectRoot "dist"))
+    if (-not $resolvedDist.StartsWith($allowedDistRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to clean unexpected build directory: $resolvedDist"
+    }
+    $emptyMirror = Join-Path $ToolRoot "empty-dist-mirror"
+    New-Item -ItemType Directory -Force -Path $emptyMirror | Out-Null
+    $null = & robocopy.exe $emptyMirror $resolvedDist /MIR /R:1 /W:1 /NFL /NDL /NJH /NJS /NP
+    $cleanExitCode = $LASTEXITCODE
+    if ($cleanExitCode -ge 8) {
+        throw "Build directory cleanup failed with robocopy exit code $cleanExitCode."
+    }
+    Remove-Item -LiteralPath $resolvedDist -Force
+}
+
 Push-Location $ProjectRoot
 try {
     & $VenvPython -m PyInstaller `
         --noconfirm `
         --clean `
         --windowed `
-        --name CultureTranslationWorkbench `
+        --name Wenlan `
         --icon (Join-Path $ProjectRoot "assets\app_icon.ico") `
         --add-data $FontData `
         --add-data $IconData `
@@ -34,12 +61,11 @@ finally {
     Pop-Location
 }
 
-$ExePath = Join-Path $ProjectRoot "dist\CultureTranslationWorkbench\CultureTranslationWorkbench.exe"
+$ExePath = Join-Path $ProjectRoot "dist\Wenlan\Wenlan.exe"
 if (-not (Test-Path $ExePath)) {
     throw "Build failed. Missing $ExePath"
 }
 
-$DistRoot = Split-Path $ExePath -Parent
 $SnapshotRoot = Join-Path $DistRoot "collaboration"
 
 if (Test-Path $SnapshotRoot) {
@@ -69,52 +95,25 @@ function Copy-DirIfExists {
     )
     if (Test-Path $Source) {
         New-Item -ItemType Directory -Force -Path $Destination | Out-Null
-        Get-ChildItem -LiteralPath $Source -Force | ForEach-Object {
-            Copy-Item -LiteralPath $_.FullName -Destination $Destination -Recurse -Force
+        $null = & robocopy.exe $Source $Destination /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /NFL /NDL /NJH /NJS /NP
+        $copyExitCode = $LASTEXITCODE
+        if ($copyExitCode -ge 8) {
+            throw "Directory snapshot copy failed with robocopy exit code $copyExitCode."
         }
     }
 }
 
-Copy-FileIfExists (Join-Path $ProjectRoot "collaboration\README.md") (Join-Path $SnapshotRoot "README.md")
 Copy-FileIfExists (Join-Path $ProjectRoot ".env.example") (Join-Path $DistRoot ".env.example")
-Copy-DirIfExists (Join-Path $ProjectRoot "collaboration\shared\terminology") (Join-Path $SnapshotRoot "shared\terminology")
-Copy-DirIfExists (Join-Path $ProjectRoot "collaboration\integration\manifests") (Join-Path $SnapshotRoot "integration\manifests")
-Copy-DirIfExists (Join-Path $ProjectRoot "collaboration\integration\adapters") (Join-Path $SnapshotRoot "integration\adapters")
-Copy-FileIfExists (Join-Path $ProjectRoot "collaboration\integration\README.md") (Join-Path $SnapshotRoot "integration\README.md")
-Copy-FileIfExists `
-    (Join-Path $ProjectRoot "collaboration\integration\final_outputs\INTEGRATION_ACCEPTANCE_20260718.md") `
-    (Join-Path $SnapshotRoot "integration\final_outputs\INTEGRATION_ACCEPTANCE_20260718.md")
+Copy-DirIfExists (Join-Path $ProjectRoot "collaboration") $SnapshotRoot
 
-foreach ($GroupDir in @("A_image_translation", "B_terms_style", "C_text_audio_translation")) {
-    Copy-FileIfExists `
-        (Join-Path $ProjectRoot "collaboration\groups\$GroupDir\README.md") `
-        (Join-Path $SnapshotRoot "groups\$GroupDir\README.md")
+$ReleaseRoot = Join-Path $ToolRoot "releases"
+$ReleaseArchive = Join-Path $ReleaseRoot "Wenlan-v1.0.0-windows-x64.zip"
+New-Item -ItemType Directory -Force -Path $ReleaseRoot | Out-Null
+& $VenvPython (Join-Path $PSScriptRoot "package_release.py") --source $DistRoot --output $ReleaseArchive
+if ($LASTEXITCODE -ne 0) {
+    throw "Release archive creation failed with exit code $LASTEXITCODE."
 }
-
-Copy-DirIfExists `
-    (Join-Path $ProjectRoot "collaboration\groups\A_image_translation\deliverables\notes") `
-    (Join-Path $SnapshotRoot "groups\A_image_translation\deliverables\notes")
-Copy-DirIfExists `
-    (Join-Path $ProjectRoot "collaboration\groups\A_image_translation\deliverables\extracted_20260717_update\manifests") `
-    (Join-Path $SnapshotRoot "groups\A_image_translation\deliverables\extracted_20260717_update\manifests")
-Copy-DirIfExists `
-    (Join-Path $ProjectRoot "collaboration\groups\A_image_translation\deliverables\extracted_20260717_update\validation") `
-    (Join-Path $SnapshotRoot "groups\A_image_translation\deliverables\extracted_20260717_update\validation")
-Copy-DirIfExists `
-    (Join-Path $ProjectRoot "collaboration\groups\B_terms_style\prompts") `
-    (Join-Path $SnapshotRoot "groups\B_terms_style\prompts")
-Copy-DirIfExists `
-    (Join-Path $ProjectRoot "collaboration\groups\B_terms_style\deliverables\notes") `
-    (Join-Path $SnapshotRoot "groups\B_terms_style\deliverables\notes")
-Copy-DirIfExists `
-    (Join-Path $ProjectRoot "collaboration\groups\C_text_audio_translation\deliverables\notes") `
-    (Join-Path $SnapshotRoot "groups\C_text_audio_translation\deliverables\notes")
-Copy-FileIfExists `
-    (Join-Path $ProjectRoot "collaboration\groups\C_text_audio_translation\deliverables\docx_translation\revised_20260717\README.md") `
-    (Join-Path $SnapshotRoot "groups\C_text_audio_translation\deliverables\docx_translation\revised_20260717\README.md")
-Copy-FileIfExists `
-    (Join-Path $ProjectRoot "collaboration\groups\C_text_audio_translation\deliverables\audio_video_workflow\revised_20260717\README.md") `
-    (Join-Path $SnapshotRoot "groups\C_text_audio_translation\deliverables\audio_video_workflow\revised_20260717\README.md")
 
 Write-Host "Build ready: $ExePath"
 Write-Host "Collaboration snapshot ready: $SnapshotRoot"
+Write-Host "Release archive ready: $ReleaseArchive"

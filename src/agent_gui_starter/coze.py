@@ -43,7 +43,7 @@ class CozeWorkflowClient:
                     f"- 工作流 ID：`{self._config.coze_workflow_id or '未配置'}`\n"
                     f"- 标题/来源：{title or '未填写'}\n"
                     f"- 正文预览：{_shorten(text, 500)}\n\n"
-                    "在 exe 同目录的 `.env` 中配置 `COZE_API_TOKEN`，并确认 B 组已发布最新版工作流后，"
+                    "在 exe 同目录的 `.env` 中配置 `COZE_API_TOKEN`，并确认最新版工作流已发布后，"
                     "此入口会直接执行真实扣子工作流。"
                 ),
                 source="coze-unconfigured",

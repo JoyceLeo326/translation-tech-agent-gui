@@ -1,0 +1,15 @@
+{
+  "source_docx": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\groups\\C_text_audio_translation\\deliverables\\docx_translation\\revised_20260717\\test_cases\\测试2\\小测试.docx",
+  "review_workbook": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\groups\\C_text_audio_translation\\deliverables\\docx_translation\\revised_20260717\\test_cases\\测试2\\11111.xlsx",
+  "output_docx": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\integration\\final_outputs\\generated\\DOCX样例_测试2_20260718_170905.docx",
+  "review_items": 35,
+  "matched_items": 35,
+  "unmatched_items": 0,
+  "replaced_xml_blocks": 11,
+  "failed_xml_files": [],
+  "chinese_residue_samples": [
+    "Time flows slowly, the lanes and alleys remain the same as before. This ordinary old alley harbors the tenderness of tim"
+  ],
+  "unmatched_samples": [],
+  "generated_at": "2026-07-18T17:09:05"
+}

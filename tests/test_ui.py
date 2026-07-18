@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QFrame, QPushButton, QScrollArea, QToolButton
 
 import agent_gui_starter.app as app_module
-from agent_gui_starter.app import MainWindow, make_brand_icon, make_icon
+from agent_gui_starter.app import MainWindow, StartDropZone, make_brand_icon, make_icon
 
 
 class WorkbenchUITests(unittest.TestCase):
@@ -28,24 +28,29 @@ class WorkbenchUITests(unittest.TestCase):
         self.app.processEvents()
 
     def test_primary_pages_and_brand_asset_are_available(self) -> None:
-        self.assertEqual(len(self.window._nav_buttons), 5)
-        self.assertEqual(set(self.window._group_cards), {"A", "B", "C"})
-        self.assertEqual(self.window._stack.count(), 6)
+        self.assertEqual(len(self.window._nav_buttons), 6)
+        self.assertEqual(self.window._group_cards, {})
+        self.assertEqual(self.window._stack.count(), 7)
         self.assertFalse(make_brand_icon().isNull())
         self.assertFalse(make_icon("layout-dashboard").isNull())
         self.assertFalse(make_icon("play").isNull())
         self.assertFalse(make_icon("scan-text").isNull())
         self.assertFalse(make_icon("audio-lines").isNull())
+        self.assertFalse(make_icon("clipboard-check").isNull())
         self.assertEqual(app_module.UI_FONT_FAMILY, "Noto Sans SC")
-        self.assertEqual(app_module.DISPLAY_FONT_FAMILY, "Noto Serif SC")
-        self.assertIsNotNone(self.window.findChild(QFrame, "ReadinessBand"))
+        self.assertEqual(app_module.DISPLAY_FONT_FAMILY, "Noto Sans SC")
+        self.assertIsNotNone(self.window.findChild(StartDropZone, "StartDropZone"))
+        self.assertIsNotNone(self.window.findChild(QFrame, "ShowcaseHero"))
         modes = {str(button.property("mode")) for button in self.window._agent_modes.buttons()}
         self.assertEqual(modes, {"agent", "default_workflow", "coze_workflow"})
-        icon_actions = self.window.findChildren(QToolButton, "TaskSecondaryIcon")
-        self.assertEqual(len(icon_actions), 4)
-        self.assertTrue(all(button.toolTip() for button in icon_actions))
+        quick_actions = self.window.findChildren(QPushButton, "QuickStartButton")
+        self.assertEqual(len(quick_actions), 4)
+        self.assertEqual(
+            {button.text() for button in quick_actions},
+            {"图片", "Word 文档", "音频或视频", "粘贴一段文字"},
+        )
 
-    def test_b_group_entry_opens_coze_workflow_mode(self) -> None:
+    def test_coze_entry_opens_coze_workflow_mode(self) -> None:
         self.window._handle_task_action("agent:coze")
         self.assertEqual(self.window._current_page_key, "agent")
         self.assertEqual(self.window._agent_modes.checkedButton().property("mode"), "coze_workflow")
@@ -57,20 +62,35 @@ class WorkbenchUITests(unittest.TestCase):
         self.assertTrue(all(control.cursor().shape() == Qt.CursorShape.PointingHandCursor for control in controls))
 
         self.window._set_busy(True)
-        self.assertEqual(self.window._top_run_button.text(), "整合运行中…")
+        self.assertEqual(self.window._top_run_button.text(), "处理中…")
         self.assertEqual(self.window._agent_run_button.text(), "生成中…")
         self.assertTrue(self.window._progress.isVisible())
         self.window._set_busy(False)
-        self.assertEqual(self.window._top_run_button.text(), "运行整合")
-        self.assertEqual(self.window._agent_run_button.text(), "开始生成")
+        self.assertEqual(self.window._top_run_button.text(), "选择文件")
+        self.assertEqual(self.window._agent_run_button.text(), "生成译文")
 
     def test_overview_reflows_without_horizontal_scrolling(self) -> None:
         self.window._switch_page("overview")
         self.app.processEvents()
         overview = self.window._pages["overview"]
         self.assertIsInstance(overview, QScrollArea)
-        self.assertEqual(self.window._overview_layout_mode, 22)
+        self.assertEqual(self.window._overview_layout_mode, 1)
         self.assertEqual(overview.horizontalScrollBar().maximum(), 0)
+
+    def test_beginner_example_populates_input_and_visible_result(self) -> None:
+        self.window._switch_page("agent")
+        self.window._insert_translation_example()
+        self.assertIn("端午节", self.window._agent_input.toPlainText())
+        self.assertIn("Dragon Boat Festival", self.window._agent_output.raw_text())
+
+    def test_showcase_exposes_real_verifiable_outputs(self) -> None:
+        self.window._switch_page("showcase")
+        self.app.processEvents()
+        self.assertEqual(self.window._current_page_key, "showcase")
+        buttons = {button.text() for button in self.window.findChildren(QPushButton)}
+        self.assertIn("开始现场演示", buttons)
+        self.assertIn("审校表", buttons)
+        self.assertIn("英文配音", buttons)
 
     def test_term_search_can_feed_agent_constraints(self) -> None:
         self.window._term_search.setText("孔子")
@@ -83,13 +103,23 @@ class WorkbenchUITests(unittest.TestCase):
         self.assertEqual(self.window._current_page_key, "agent")
 
     def test_status_pages_have_real_initial_content(self) -> None:
-        self.assertIn("19/19", self.window._delivery_output.raw_text())
-        self.assertIn("71 条审校清单", self.window._workflow_output.raw_text())
-        self.window._show_group("A")
-        self.assertIn("extracted_20260717_update", self.window._group_output.raw_text())
+        self.assertIn("已准备好的成品", self.window._delivery_output.raw_text())
+        self.assertIn("Word XML 回填", self.window._workflow_output.raw_text())
+        self.window._handle_task_action("production:resources")
+        self.assertEqual(self.window._current_page_key, "production")
+        self.assertEqual(self.window._production_tabs.currentIndex(), 3)
+        self.assertGreater(self.window._resource_table.rowCount(), 100)
+
+    def test_complete_example_connects_real_inputs(self) -> None:
+        self.window._load_production_example()
+        self.assertTrue(self.window._docx_source.text().endswith("童话故事2.docx"))
+        self.assertTrue(self.window._docx_review.text().endswith(".xlsx"))
+        self.assertTrue(self.window._audio_source.text().endswith("测试音频.mp3"))
+        self.assertTrue(self.window._audio_review.text().endswith("模式二生成终版表格.xlsx"))
+        self.assertIn("完整示例已载入", self.window._production_output.raw_text())
 
     def test_each_workspace_page_renders_nonblank(self) -> None:
-        for page_key in ("overview", "agent", "terms", "workflow", "outputs"):
+        for page_key in ("overview", "production", "agent", "terms", "workflow", "showcase", "outputs"):
             self.window._switch_page(page_key)
             self.app.processEvents()
             image = self.window.grab().toImage()

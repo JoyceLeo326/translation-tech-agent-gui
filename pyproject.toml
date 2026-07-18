@@ -1,7 +1,7 @@
 [project]
 name = "agent-gui-starter"
-version = "0.6.0"
-description = "Modern Qt workbench for multimodal Chinese culture translation workflows."
+version = "1.0.0"
+description = "Wenlan desktop workbench for multimodal Chinese culture translation workflows."
 requires-python = ">=3.11"
 dependencies = [
   "PySide6>=6.7,<7",
@@ -9,7 +9,9 @@ dependencies = [
   "python-dotenv>=1.0,<2",
   "pydantic>=2.7,<3",
   "openpyxl>=3.1,<4",
+  "python-docx>=1.1,<2",
+  "qrcode[pil]>=7.4,<9",
 ]
 
 [tool.pyinstaller]
-name = "CultureTranslationWorkbench"
+name = "Wenlan"
