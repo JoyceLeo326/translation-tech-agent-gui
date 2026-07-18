@@ -188,7 +188,7 @@ def _write_readme(records: list[dict[str, object]]) -> None:
         channel = str(record["任务通道"])
         counts[channel] = counts.get(channel, 0) + 1
     lines = [
-        "# 中华文化智译 · 多模态外译统一交付",
+        "# 译述 YISHU · 多模态外译统一交付",
         "",
         "这里是最终用户入口，内容按实际任务流程归类，不按原协作分组区分。",
         "",

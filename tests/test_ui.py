@@ -56,7 +56,7 @@ class WorkbenchUITests(unittest.TestCase):
         )
         self.assertEqual(
             {button.property("accent") for button in quick_actions},
-            {"coral", "blue", "jade", "violet"},
+            {"coral", "blue", "jade", "gold"},
         )
 
     def test_coze_entry_opens_coze_workflow_mode(self) -> None:
@@ -77,7 +77,7 @@ class WorkbenchUITests(unittest.TestCase):
         self.assertEqual(self.window._agent_run_button.text(), "生成中…")
         self.assertTrue(self.window._progress.isVisible())
         self.window._set_busy(False)
-        self.assertEqual(self.window._top_run_button.text(), "导入文件")
+        self.assertEqual(self.window._top_run_button.text(), "导入素材")
         self.assertEqual(self.window._agent_run_button.text(), "生成译文")
 
     def test_overview_reflows_without_horizontal_scrolling(self) -> None:

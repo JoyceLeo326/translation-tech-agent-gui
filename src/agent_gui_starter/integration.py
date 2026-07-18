@@ -266,7 +266,7 @@ def format_dashboard_markdown(scan: CollaborationScan) -> str:
     ready_root = scan.project_root / "collaboration" / "integration" / "final_outputs" / "ready_to_use"
     ready_files = list(_iter_files(ready_root)) if ready_root.exists() else []
     lines = [
-        "# 中华文化智译 · 多模态外译统一资源报告",
+        "# 译述 YISHU · 多模态外译统一资源报告",
         "",
         f"- 扫描时间：{scan.scanned_at}",
         f"- 已连接资源：{len(scan.assets)} 个，总大小 {format_size(total_size)}",

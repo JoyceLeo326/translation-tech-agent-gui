@@ -14,4 +14,4 @@ dependencies = [
 ]
 
 [tool.pyinstaller]
-name = "CultureTranslate"
+name = "Yishu"
