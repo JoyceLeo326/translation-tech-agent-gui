@@ -1,7 +1,7 @@
 {
   "source_docx": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\groups\\C_text_audio_translation\\deliverables\\docx_translation\\revised_20260717\\test_cases\\测试1\\翻译资源编写-中国文化知识百科（图文有声版）1.docx",
   "review_workbook": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\groups\\C_text_audio_translation\\deliverables\\docx_translation\\revised_20260717\\test_cases\\测试1\\人工校队完毕.xlsx",
-  "output_docx": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\integration\\final_outputs\\generated\\DOCX样例_测试1_20260718_194336.docx",
+  "output_docx": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\integration\\final_outputs\\generated\\DOCX样例_测试1_20260718_201706.docx",
   "review_items": 135,
   "matched_items": 133,
   "unmatched_items": 2,
@@ -12,5 +12,5 @@
     "从孔子仁者爱人的呼唤， 到孟子性善论的阐发， 再到朱熹存天理， 灭人欲的推演， 儒家始终关注人与社会的秩序。",
     "[页眉]中国文化知识"
   ],
-  "generated_at": "2026-07-18T19:43:36"
+  "generated_at": "2026-07-18T20:17:06"
 }

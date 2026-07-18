@@ -1,7 +1,7 @@
 {
   "source_docx": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\groups\\C_text_audio_translation\\deliverables\\docx_translation\\revised_20260717\\test_cases\\测试4\\童话故事2.docx",
   "review_workbook": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\groups\\C_text_audio_translation\\deliverables\\docx_translation\\revised_20260717\\test_cases\\测试4\\translation_excel_00ef5c52-d082-4a39-aac5-6fbdb70ccaa5_f51cb68a (2).xlsx",
-  "output_docx": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\integration\\final_outputs\\generated\\DOCX样例_测试4_20260718_194336.docx",
+  "output_docx": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\integration\\final_outputs\\generated\\DOCX样例_测试4_20260718_201706.docx",
   "review_items": 20,
   "matched_items": 20,
   "unmatched_items": 0,
@@ -9,5 +9,5 @@
   "failed_xml_files": [],
   "chinese_residue_samples": [],
   "unmatched_samples": [],
-  "generated_at": "2026-07-18T19:43:36"
+  "generated_at": "2026-07-18T20:17:06"
 }

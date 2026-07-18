@@ -107,7 +107,7 @@ Copy-FileIfExists (Join-Path $ProjectRoot ".env.example") (Join-Path $DistRoot "
 Copy-DirIfExists (Join-Path $ProjectRoot "collaboration") $SnapshotRoot
 
 $ReleaseRoot = Join-Path $ToolRoot "releases"
-$ReleaseArchive = Join-Path $ReleaseRoot "Yishu-v1.2.0-windows-x64.zip"
+$ReleaseArchive = Join-Path $ReleaseRoot "Yishu-v1.3.0-windows-x64.zip"
 New-Item -ItemType Directory -Force -Path $ReleaseRoot | Out-Null
 & $VenvPython (Join-Path $PSScriptRoot "package_release.py") --source $DistRoot --output $ReleaseArchive
 if ($LASTEXITCODE -ne 0) {

@@ -38,8 +38,14 @@ class WorkbenchUITests(unittest.TestCase):
         self.assertFalse(make_icon("audio-lines").isNull())
         self.assertFalse(make_icon("clipboard-check").isNull())
         self.assertEqual(app_module.UI_FONT_FAMILY, "Noto Sans SC")
-        self.assertEqual(app_module.DISPLAY_FONT_FAMILY, "Noto Sans SC")
+        self.assertEqual(app_module.DISPLAY_FONT_FAMILY, "Noto Serif SC")
+        self.assertEqual(self.window.findChild(QFrame, "Sidebar").width(), 112)
         self.assertIsNotNone(self.window.findChild(StartDropZone, "StartDropZone"))
+        self.assertIsNotNone(self.window.findChild(QFrame, "StudioSample"))
+        self.assertIsNotNone(self.window.findChild(QFrame, "StudioProofBand"))
+        self.assertIsNotNone(self.window.findChild(QFrame, "WorkflowCommandPanel"))
+        self.assertIsNotNone(self.window.findChild(QFrame, "WorkflowDeliveryPanel"))
+        self.assertIsNotNone(self.window.findChild(QFrame, "OutputsSummaryBand"))
         self.assertIsNotNone(self.window.findChild(QFrame, "ShowcaseHero"))
         modes = {str(button.property("mode")) for button in self.window._agent_modes.buttons()}
         self.assertEqual(modes, {"agent", "default_workflow", "coze_workflow"})
@@ -77,7 +83,7 @@ class WorkbenchUITests(unittest.TestCase):
         self.assertEqual(self.window._agent_run_button.text(), "生成中…")
         self.assertTrue(self.window._progress.isVisible())
         self.window._set_busy(False)
-        self.assertEqual(self.window._top_run_button.text(), "导入素材")
+        self.assertEqual(self.window._top_run_button.text(), "新建翻译")
         self.assertEqual(self.window._agent_run_button.text(), "生成译文")
 
     def test_overview_reflows_without_horizontal_scrolling(self) -> None:
