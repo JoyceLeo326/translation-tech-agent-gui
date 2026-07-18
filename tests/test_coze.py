@@ -87,7 +87,7 @@ class CozeWorkflowTests(unittest.TestCase):
 
         response = CozeWorkflowClient(_config(token=None), opener=fail_if_called).run("仁者爱人")
         self.assertEqual(response.source, "coze-unconfigured")
-        self.assertIn("未配置扣子访问令牌", response.text)
+        self.assertIn("未配置 Coze 访问令牌", response.text)
         self.assertIn("仁者爱人", response.text)
 
     def test_api_error_is_reported_as_workflow_error(self) -> None:

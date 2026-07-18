@@ -98,7 +98,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_timings(path: Path | None) -> list[float]:
-    defaults = [0.0, 8.0, 18.0, 27.0, 37.0, 53.0, 64.0, 75.0, 86.0, 97.0]
+    defaults = [0.0, 8.0, 19.0, 29.0, 39.0, 54.0, 67.0, 78.0, 89.0, 100.0, 111.0]
     if path is None or not path.exists():
         return defaults
     data = json.loads(path.read_text(encoding="utf-8-sig"))
@@ -153,23 +153,31 @@ def main() -> int:
         )
 
     def production_image() -> None:
-        overlay.show_step("01 / 多模态入口", "翻译文件，一处完成", "无需理解技术名词，选择图片、Word 或音视频即可开始")
+        overlay.show_step("02 / 多模态入口", "翻译文件，一处完成", "无需理解技术名词，选择图片、Word 或音视频即可开始")
         click_nav("production", window._open_beginner_example)
 
+    def settings_demo() -> None:
+        overlay.show_step(
+            "01 / 在线模型接口",
+            "连接自己的模型，开启真实在线处理",
+            "支持 OpenAI、Ollama、LM Studio、兼容服务与 Coze；密钥只保存在本机",
+        )
+        click_nav("settings")
+
     def production_docx() -> None:
-        overlay.show_step("02 / Word 审校回填", "先提取审校，再保持版式回填", "正文、表格、页眉页脚统一进入 Excel 人工审校链路")
+        overlay.show_step("03 / Word 审校回填", "先提取审校，再保持版式回填", "正文、表格、页眉页脚统一进入 Excel 人工审校链路")
         click_tab(1)
 
     def production_audio() -> None:
-        overlay.show_step("03 / 音视频外译", "识别、翻译、审核与英文配音", "真实测试样例和审核表已接入，可直接生成语音成果")
+        overlay.show_step("04 / 音视频外译", "识别、翻译、审核与英文配音", "真实测试样例和审核表已接入，可直接生成语音成果")
         click_tab(2)
 
     def agent_demo() -> None:
-        overlay.show_step("04 / 智能体亮点", "扣子多模型精译，不止一句提示词", "术语提取、三路初译、交叉评价，再由模型融合为可审校终稿")
+        overlay.show_step("05 / 核心精译能力", "Coze 多模型精译，让重要译文经过讨论", "术语提取、三路独立初译、交叉评价，再由 GLM 融合为可审校终稿")
         click_nav("agent", lambda: (window._switch_page("agent"), window._show_coze_demo()))
 
     def terms_demo() -> None:
-        overlay.show_step("05 / 文化术语库", "统一文化概念的英文表达", "按关键词即时检索中英译法、出处页码和上下文证据")
+        overlay.show_step("06 / 文化术语库", "统一文化概念的英文表达", "按关键词即时检索中英译法、出处页码和上下文证据")
 
         def action() -> None:
             window._switch_page("terms")
@@ -180,7 +188,7 @@ def main() -> int:
         click_nav("terms", action)
 
     def workflow_demo() -> None:
-        overlay.show_step("06 / 批量流程", "所有环节可追踪、可检查", "从资源扫描到审校回填，状态、证据和输出文件集中呈现")
+        overlay.show_step("07 / 批量流程", "所有环节可追踪、可检查", "从资源扫描到审校回填，状态、证据和输出文件集中呈现")
 
         def action() -> None:
             window._switch_page("workflow")
@@ -190,11 +198,11 @@ def main() -> int:
         click_nav("workflow", action)
 
     def showcase_demo() -> None:
-        overlay.show_step("07 / 成果总览", "不是空壳界面，而是真实成果", "71 条图文审校、251 条术语、5 份 Word 实测与 219 句英文配音")
+        overlay.show_step("08 / 交付实证", "真实文件、人工审校与验收记录", "71 条图文审校、251 条术语、5 份 Word 实测与 219 句英文配音")
         click_nav("showcase")
 
     def outputs_demo() -> None:
-        overlay.show_step("08 / 最终交付", "成品文件集中导出", "老师或审核人员可直接打开文档、表格、配音与整合报告")
+        overlay.show_step("09 / 最终交付", "成品文件集中导出", "老师或审核人员可直接打开文档、表格、配音与整合报告")
         click_nav("outputs")
 
     def outro() -> None:
@@ -208,6 +216,7 @@ def main() -> int:
 
     steps = [
         intro,
+        settings_demo,
         production_image,
         production_docx,
         production_audio,

@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f5f1e8" />
     <meta
       name="description"
-      content="译述 YISHU：中国文化多模态外译工作台。整合图文、Word、音视频、文化术语和扣子多模型精译流程。"
+      content="译述 YISHU：中国文化多模态外译工作台。连接自己的模型 API，完成图文、Word、音视频、文化术语和 Coze 多模型精译。"
     />
     <meta property="og:title" content="译述 YISHU｜中国文化多模态外译工作台" />
     <meta
@@ -32,13 +32,13 @@
       </a>
       <nav aria-label="主要导航">
         <a href="#demo">演示</a>
-        <a href="#capabilities">功能</a>
-        <a href="#workflow">流程</a>
-        <a href="#results">成果</a>
+        <a href="#playground">玩法</a>
+        <a href="#workflow">Coze 精译</a>
+        <a href="#results">交付实证</a>
       </nav>
       <a
         class="header-download"
-        href="https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.3.0/Yishu-v1.3.0-windows-x64.zip"
+        href="https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.4.0/Yishu-v1.4.0-windows-x64.zip"
       >
         <i data-lucide="download" aria-hidden="true"></i>
         下载 Windows 版
@@ -54,8 +54,8 @@
           <h1 id="hero-title">译述 <span>YISHU</span></h1>
           <p class="hero-tagline">译文字，也译语境。</p>
           <p class="hero-detail">
-            把图片、Word、音视频、文化术语与智能工作流放进同一条可审校链路，
-            从素材到成品清楚、可控、可追溯。
+            离线即可演示完整生产链；连接你自己的模型 API 后，文字、图片、Word、
+            音视频与 Coze 多模型精译都能进入真实在线处理。
           </p>
           <div class="hero-actions">
             <button class="primary-action" type="button" data-play-demo>
@@ -69,7 +69,8 @@
           </div>
           <div class="hero-proof" aria-label="项目状态">
             <span><i data-lucide="monitor-check" aria-hidden="true"></i> Windows 成品可用</span>
-            <span><i data-lucide="shield-check" aria-hidden="true"></i> 密钥不进入仓库</span>
+            <span><i data-lucide="plug" aria-hidden="true"></i> 支持自己的模型 API</span>
+            <span><i data-lucide="shield-check" aria-hidden="true"></i> 密钥只保存在本机</span>
             <span><i data-lucide="git-branch" aria-hidden="true"></i> GitHub 公开开源</span>
           </div>
         </div>
@@ -82,11 +83,11 @@
       <section class="demo-section section" id="demo" aria-labelledby="demo-title">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">PRODUCT TOUR · 02:25</p>
+            <p class="eyebrow">PRODUCT TOUR · 02:40</p>
             <h2 id="demo-title">先看它如何完成一次外译</h2>
           </div>
           <p>
-            从首页开始，依次进入多模态文件、扣子多模型精译、术语库、批量流程与最终导出。
+            从首页开始，依次进入多模态文件、Coze 多模型精译、术语库、批量流程与最终导出。
             讲解与画面均来自真实软件。
           </p>
         </div>
@@ -98,14 +99,14 @@
             preload="metadata"
             poster="./assets/workbench-showcase.png"
           >
-            <source src="./assets/Yishu-v1.3.0-demo.mp4" type="video/mp4" />
+            <source src="./assets/Yishu-v1.4.0-demo.mp4" type="video/mp4" />
             当前浏览器不支持视频播放，请使用下方链接下载。
           </video>
           <button class="video-cover" type="button" data-play-demo aria-label="播放完整演示">
             <span class="play-symbol"><i data-lucide="play" aria-hidden="true"></i></span>
             <span>
               <strong>播放完整功能演示</strong>
-              <small>中文讲解 · 1920 × 1200 · 2 分 25 秒</small>
+              <small>新版中文讲解 · 1920 × 1200 · 2 分 40 秒</small>
             </span>
           </button>
         </div>
@@ -116,9 +117,9 @@
           <div class="section-heading compact">
             <div>
               <p class="eyebrow">START WITH THE MATERIAL</p>
-              <h2 id="capabilities-title">小白打开，也知道下一步做什么</h2>
+              <h2 id="capabilities-title">从手边的素材开始，不必先学技术</h2>
             </div>
-            <p>按真实任务命名入口，不要求使用者理解模型、脚本或项目目录。</p>
+            <p>每个入口都说明当前步骤、在线能力和最后能拿到的文件。</p>
           </div>
 
           <div class="task-grid">
@@ -154,13 +155,77 @@
         </div>
       </section>
 
+      <section class="playground-section section" id="playground" aria-labelledby="playground-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CHOOSE A REAL TASK</p>
+            <h2 id="playground-title">选一种素材，看译述怎样接手</h2>
+          </div>
+          <p>这是桌面端真实操作逻辑的交互导览。切换任务即可看到模型在哪里工作、人工在哪里确认，以及最后导出什么。</p>
+        </div>
+
+        <div class="playground-shell">
+          <div class="playground-menu" role="tablist" aria-label="选择演示任务">
+            <button class="is-active" type="button" role="tab" aria-selected="true" data-playground="text">
+              <i data-lucide="languages" aria-hidden="true"></i>
+              <span><strong>精译一段文字</strong><small>快速 / 三步 / Coze 三种模式</small></span>
+            </button>
+            <button type="button" role="tab" aria-selected="false" data-playground="image">
+              <i data-lucide="scan-text" aria-hidden="true"></i>
+              <span><strong>翻译图片文字</strong><small>视觉识别、术语约束与人工确认</small></span>
+            </button>
+            <button type="button" role="tab" aria-selected="false" data-playground="docx">
+              <i data-lucide="file-text" aria-hidden="true"></i>
+              <span><strong>翻译 Word</strong><small>审校表、批量翻译与版式回填</small></span>
+            </button>
+            <button type="button" role="tab" aria-selected="false" data-playground="audio">
+              <i data-lucide="audio-waveform" aria-hidden="true"></i>
+              <span><strong>翻译音视频</strong><small>转写、逐句审校与英文配音</small></span>
+            </button>
+          </div>
+
+          <div class="playground-stage" aria-live="polite">
+            <div class="window-bar">
+              <span class="window-mark"><img src="./assets/app-icon.png" alt="" width="22" height="22" />译述工作台</span>
+              <span class="connection-state"><i data-lucide="wifi" aria-hidden="true"></i> 接入 API 后在线运行</span>
+            </div>
+            <div class="playground-content">
+              <div class="playground-input">
+                <span class="stage-label">你提供</span>
+                <i data-playground-icon data-lucide="languages" aria-hidden="true"></i>
+                <h3 data-playground-title>一段需要精译的中文</h3>
+                <p data-playground-input>可补充标题、读者年龄、语气和使用场景。</p>
+              </div>
+              <div class="playground-route" data-playground-route>
+                <span>文化术语</span><i data-lucide="arrow-right" aria-hidden="true"></i>
+                <span>Coze 多模型</span><i data-lucide="arrow-right" aria-hidden="true"></i>
+                <span>人工确认</span>
+              </div>
+              <div class="playground-output">
+                <span class="stage-label">你得到</span>
+                <h3 data-playground-output-title>可审校的融合终稿</h3>
+                <ul data-playground-output>
+                  <li>术语与儿童文学风格已经约束</li>
+                  <li>三路初译和交叉评议过程可解释</li>
+                  <li>终稿仍可由人工修改后入库</li>
+                </ul>
+              </div>
+            </div>
+            <div class="playground-footer">
+              <span><i data-lucide="shield-check" aria-hidden="true"></i> API Key 只写入 Windows 本机配置</span>
+              <a href="#gallery-title">查看高清主程序界面 <i data-lucide="arrow-down-right" aria-hidden="true"></i></a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="gallery-section section" aria-labelledby="gallery-title">
         <div class="section-heading">
           <div>
             <p class="eyebrow">REAL PRODUCT · REAL DATA</p>
             <h2 id="gallery-title">每一步都在同一套工作台里</h2>
           </div>
-          <p>切换标签查看真实界面。图片未经过概念化重绘，展示的就是可下载版本。</p>
+          <p>切换标签查看新版高清实机截图。界面、数据和按钮都来自当前可下载的 Windows 程序。</p>
         </div>
 
         <div class="gallery-tabs" role="tablist" aria-label="软件界面预览">
@@ -182,6 +247,9 @@
           <button type="button" role="tab" aria-selected="false" data-gallery="outputs">
             <i data-lucide="package-check" aria-hidden="true"></i>导出文件
           </button>
+          <button type="button" role="tab" aria-selected="false" data-gallery="settings">
+            <i data-lucide="plug" aria-hidden="true"></i>模型接口
+          </button>
         </div>
 
         <figure class="product-frame">
@@ -198,10 +266,11 @@
         <div class="section inner workflow-layout">
           <div class="workflow-copy">
             <p class="eyebrow">COZE MULTI-MODEL WORKFLOW</p>
-            <h2 id="workflow-title">扣子工作流不是装饰，<br />而是一套可检查的精译流程</h2>
+            <span class="core-badge"><i data-lucide="sparkles" aria-hidden="true"></i> 核心精译能力</span>
+            <h2 id="workflow-title">Coze 多模型精译，<br />让重要译文经过真正的讨论</h2>
             <p>
-              先识别文化术语和目标文体，再让 Kimi、DeepSeek、豆包分别初译与互评，
-              最后由 GLM 融合终稿。离线可看完整流程证据，配置安全令牌后可运行线上工作流。
+              它先识别文化术语和目标文体，再让 Kimi、DeepSeek、豆包分别初译与互评，
+              最后由 GLM 融合终稿。无 Token 时可完整演示，连接 Coze 后就在同一入口真实在线运行。
             </p>
             <div class="workflow-proof">
               <span><strong>18</strong> 个节点</span>
@@ -223,9 +292,9 @@
         <div class="section-heading">
           <div>
             <p class="eyebrow">VERIFIED DELIVERY</p>
-            <h2 id="results-title">不是功能清单，是已经完成的成果</h2>
+            <h2 id="results-title">从可操作流程，到可核验交付</h2>
           </div>
-          <p>所有资源统一进入成品区，保留人工审校与技术回填记录，可继续修改和追溯。</p>
+          <p>每种能力都对应真实文件、人工审校记录和自动验收证据，老师可以直接打开检查。</p>
         </div>
 
         <div class="metrics" aria-label="项目成果数据">
@@ -253,20 +322,20 @@
       <section class="final-cta" aria-labelledby="cta-title">
         <div>
           <p class="eyebrow">OPEN SOURCE · WINDOWS READY</p>
-          <h2 id="cta-title">现在就可以打开、演示与交付</h2>
-          <p>下载 Windows 完整包，解压后双击 Yishu.exe；也可以前往 GitHub 查看全部源码和交付说明。</p>
+          <h2 id="cta-title">离线演示，或连接自己的模型开始在线处理</h2>
+          <p>下载 Windows 完整包，解压后双击 Yishu.exe；左下角“模型接口”可连接 OpenAI、Ollama、LM Studio 或其他兼容服务。</p>
         </div>
         <div class="cta-actions">
           <a
             class="primary-action"
-            href="https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.3.0/Yishu-v1.3.0-windows-x64.zip"
+            href="https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.4.0/Yishu-v1.4.0-windows-x64.zip"
           >
             <i data-lucide="download" aria-hidden="true"></i>
             下载 Windows 完整版
           </a>
-          <a class="secondary-action light" href="https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/tag/v1.3.0">
+          <a class="secondary-action light" href="https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/tag/v1.4.0">
             <i data-lucide="external-link" aria-hidden="true"></i>
-            查看 v1.3.0 发布页
+            查看 v1.4.0 发布页
           </a>
         </div>
       </section>

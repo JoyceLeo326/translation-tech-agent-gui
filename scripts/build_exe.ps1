@@ -38,7 +38,7 @@ if (Test-Path $DistRoot) {
     if ($cleanExitCode -ge 8) {
         throw "Build directory cleanup failed with robocopy exit code $cleanExitCode."
     }
-    Remove-Item -LiteralPath $resolvedDist -Force
+    [System.IO.Directory]::Delete($resolvedDist, $true)
 }
 
 Push-Location $ProjectRoot
@@ -105,9 +105,10 @@ function Copy-DirIfExists {
 
 Copy-FileIfExists (Join-Path $ProjectRoot ".env.example") (Join-Path $DistRoot ".env.example")
 Copy-DirIfExists (Join-Path $ProjectRoot "collaboration") $SnapshotRoot
+Copy-DirIfExists (Join-Path $ProjectRoot "docs\architecture") (Join-Path $DistRoot "docs\architecture")
 
 $ReleaseRoot = Join-Path $ToolRoot "releases"
-$ReleaseArchive = Join-Path $ReleaseRoot "Yishu-v1.3.0-windows-x64.zip"
+$ReleaseArchive = Join-Path $ReleaseRoot "Yishu-v1.4.0-windows-x64.zip"
 New-Item -ItemType Directory -Force -Path $ReleaseRoot | Out-Null
 & $VenvPython (Join-Path $PSScriptRoot "package_release.py") --source $DistRoot --output $ReleaseArchive
 if ($LASTEXITCODE -ne 0) {

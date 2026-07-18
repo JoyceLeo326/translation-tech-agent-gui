@@ -28,6 +28,13 @@ async function verifyViewport(browser, name, viewport) {
   if (!gallerySrc?.includes("workbench-agent.png")) {
     throw new Error(`${name}: gallery did not switch to the agent screen`);
   }
+  await page.locator("[data-playground='audio']").click();
+  const playgroundTitle = await page.locator("[data-playground-output-title]").textContent();
+  if (!playgroundTitle?.includes("英文配音")) throw new Error(`${name}: playground did not switch to audio`);
+  await page.locator("[data-gallery='settings']").click();
+  await page.waitForTimeout(220);
+  const settingsSrc = await page.locator("[data-gallery-image]").getAttribute("src");
+  if (!settingsSrc?.includes("workbench-settings.png")) throw new Error(`${name}: settings screen missing`);
 
   const dimensions = await page.evaluate(() => ({
     innerWidth: window.innerWidth,
@@ -44,9 +51,11 @@ async function verifyViewport(browser, name, viewport) {
     throw new Error(`${name}: horizontal overflow ${dimensions.scrollWidth} > ${dimensions.innerWidth}`);
   }
   if (brokenImages.length) throw new Error(`${name}: ${brokenImages.length} image(s) failed to load`);
+  const productImages = dimensions.images.filter((image) => image.src.includes("workbench-"));
+  if (productImages.some((image) => image.width < 2000)) throw new Error(`${name}: product screenshot is not high resolution`);
   if (dimensions.iconCount < 20) throw new Error(`${name}: Lucide icons did not render`);
-  if (!dimensions.videoSource?.includes("Yishu-v1.3.0-demo.mp4")) throw new Error(`${name}: video source missing`);
-  if (!dimensions.downloadHref?.includes("Yishu-v1.3.0-windows-x64.zip")) throw new Error(`${name}: download link missing`);
+  if (!dimensions.videoSource?.includes("Yishu-v1.4.0-demo.mp4")) throw new Error(`${name}: video source missing`);
+  if (!dimensions.downloadHref?.includes("Yishu-v1.4.0-windows-x64.zip")) throw new Error(`${name}: download link missing`);
 
   await page.screenshot({ path: path.join(outputDir, `${name}.png`), fullPage: true });
   await page.locator(".video-cover").click();

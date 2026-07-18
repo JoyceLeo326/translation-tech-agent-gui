@@ -28,9 +28,9 @@ class WorkbenchUITests(unittest.TestCase):
         self.app.processEvents()
 
     def test_primary_pages_and_brand_asset_are_available(self) -> None:
-        self.assertEqual(len(self.window._nav_buttons), 7)
+        self.assertEqual(len(self.window._nav_buttons), 8)
         self.assertEqual(self.window._group_cards, {})
-        self.assertEqual(self.window._stack.count(), 7)
+        self.assertEqual(self.window._stack.count(), 8)
         self.assertFalse(make_brand_icon().isNull())
         self.assertFalse(make_icon("layout-dashboard").isNull())
         self.assertFalse(make_icon("play").isNull())
@@ -47,6 +47,8 @@ class WorkbenchUITests(unittest.TestCase):
         self.assertIsNotNone(self.window.findChild(QFrame, "WorkflowDeliveryPanel"))
         self.assertIsNotNone(self.window.findChild(QFrame, "OutputsSummaryBand"))
         self.assertIsNotNone(self.window.findChild(QFrame, "ShowcaseHero"))
+        self.assertIsNotNone(self.window.findChild(QFrame, "ApiHeroPanel"))
+        self.assertIsNotNone(self.window.findChild(QFrame, "ApiActionBand"))
         modes = {str(button.property("mode")) for button in self.window._agent_modes.buttons()}
         self.assertEqual(modes, {"agent", "default_workflow", "coze_workflow"})
         quick_actions = self.window.findChildren(QPushButton, "QuickStartButton")
@@ -69,7 +71,7 @@ class WorkbenchUITests(unittest.TestCase):
         self.window._handle_task_action("agent:coze")
         self.assertEqual(self.window._current_page_key, "agent")
         self.assertEqual(self.window._agent_modes.checkedButton().property("mode"), "coze_workflow")
-        self.assertEqual(self.window._agent_mode_title.text(), "多模型精译（扣子）")
+        self.assertEqual(self.window._agent_mode_title.text(), "Coze 多模型精译工作流")
         self.assertIn("18 个节点", self.window._agent_mode_proof.text())
         self.assertTrue(self.window._agent_title.placeholderText())
 
@@ -146,7 +148,7 @@ class WorkbenchUITests(unittest.TestCase):
         self.assertIn("完整示例已载入", self.window._production_output.raw_text())
 
     def test_each_workspace_page_renders_nonblank(self) -> None:
-        for page_key in ("overview", "production", "agent", "terms", "workflow", "showcase", "outputs"):
+        for page_key in ("overview", "production", "agent", "terms", "workflow", "showcase", "outputs", "settings"):
             self.window._switch_page(page_key)
             self.app.processEvents()
             image = self.window.grab().toImage()

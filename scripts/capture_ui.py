@@ -18,7 +18,7 @@ def capture_all(output_dir: Path) -> None:
     app = QApplication.instance() or QApplication(sys.argv)
     configure_application_fonts(app)
     window = MainWindow()
-    window.resize(1440, 900)
+    window.resize(2560, 1600)
     window.show()
     app.processEvents()
     QTest.qWait(700)
@@ -31,6 +31,7 @@ def capture_all(output_dir: Path) -> None:
         "workflow": lambda: None,
         "showcase": lambda: None,
         "outputs": window._refresh_outputs_table,
+        "settings": lambda: None,
     }
 
     for page_key, setup in page_setups.items():

@@ -233,6 +233,7 @@ def create_audio_review_from_transcript(
 def synthesize_audio_from_review(
     review_workbook: Path | str,
     output_path: Path | str | None = None,
+    synthesizer: Callable[[str, Path], object] | None = None,
 ) -> ProductionResult:
     review = _require_file(review_workbook, ".xlsx")
     rows = load_review_rows(review)
@@ -244,7 +245,16 @@ def synthesize_audio_from_review(
     transcript_path = output.with_suffix(".txt")
     qr_path = output.with_suffix(".二维码.png")
     transcript_path.write_text("\n".join(final_lines), encoding="utf-8")
-    _synthesize_with_windows_sapi(transcript_path, output)
+    if synthesizer is None:
+        _synthesize_with_windows_sapi(transcript_path, output)
+        synthesis_channel = "Windows 本机语音"
+    else:
+        try:
+            synthesizer("\n".join(final_lines), output)
+            synthesis_channel = "在线模型语音"
+        except Exception as exc:
+            _synthesize_with_windows_sapi(transcript_path, output)
+            synthesis_channel = f"Windows 本机语音（在线 TTS 不可用：{type(exc).__name__}）"
     _generate_local_qr(output, qr_path)
     if not output.exists() or output.stat().st_size < 1024:
         raise RuntimeError("系统语音合成没有生成有效 WAV 文件。")
@@ -252,7 +262,12 @@ def synthesize_audio_from_review(
         title="英文语音已生成",
         summary="优先采用人工审核译文，空白审核行自动沿用机器译文；同时输出朗读文本和本机播放二维码。",
         artifacts=(output, transcript_path, qr_path),
-        metrics={"合成句数": len(final_lines), "音频大小": output.stat().st_size, "格式": "WAV"},
+        metrics={
+            "合成句数": len(final_lines),
+            "音频大小": output.stat().st_size,
+            "格式": "WAV",
+            "合成方式": synthesis_channel,
+        },
     )
 
 

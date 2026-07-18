@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
     QButtonGroup,
+    QComboBox,
     QFileDialog,
     QFrame,
     QGraphicsDropShadowEffect,
@@ -54,7 +55,7 @@ from PySide6.QtWidgets import (
 )
 
 from .agent import AgentClient
-from .config import load_config
+from .config import load_config, user_env_path, write_user_config
 from .coze import CozeWorkflowClient, CozeWorkflowError
 from .integration import (
     GROUPS,
@@ -103,6 +104,7 @@ PAGE_META = {
     "workflow": ("批量处理", "一次处理多个素材"),
     "showcase": ("看完整成果", "查看完整能力与真实成品"),
     "outputs": ("找成品", "查看已生成的文件"),
+    "settings": ("模型接口", "连接在线模型或本机模型服务"),
 }
 
 
@@ -305,11 +307,11 @@ class JobWorker(QObject):
             config = load_config()
 
             if self._mode == "coze_workflow":
-                self.progress.emit("正在执行扣子翻译工作流")
+                self.progress.emit("正在执行 Coze 多模型精译工作流")
                 response = CozeWorkflowClient(config).run(self._prompt, self._title)
                 output = response.text
                 if response.debug_url:
-                    output += f"\n\n---\n扣子运行调试页：{response.debug_url}"
+                    output += f"\n\n---\nCoze 运行调试页：{response.debug_url}"
                 self.finished.emit(output)
                 return
 
@@ -317,7 +319,13 @@ class JobWorker(QObject):
 
             if self._mode == "production:image-translate":
                 self.progress.emit("正在识别图片文字并生成中英对照")
-                translation = client.translate_image(self._prompt)
+                terms = load_terms(self._project_root)
+                glossary = [
+                    (str(item.get("术语", "")), str(item.get("英文翻译", "")))
+                    for item in terms
+                    if item.get("术语") and item.get("英文翻译")
+                ]
+                translation = client.translate_image(self._prompt, glossary)
                 self.finished.emit(
                     json.dumps(
                         {
@@ -367,9 +375,27 @@ class JobWorker(QObject):
                 return
 
             if self._mode == "production:audio-synthesize":
-                self.progress.emit("正在使用人工审核译文生成英文语音")
-                result = synthesize_audio_from_review(self._prompt)
+                self.progress.emit(
+                    "正在调用在线语音模型生成英文配音"
+                    if client.online
+                    else "正在使用本机语音生成英文配音"
+                )
+                result = synthesize_audio_from_review(
+                    self._prompt,
+                    synthesizer=client.synthesize_speech if client.online else None,
+                )
                 self.finished.emit(result.to_payload("audio-output"))
+                return
+
+            if self._mode == "api-test":
+                if not client.online:
+                    raise RuntimeError("当前配置还不能建立模型连接，请检查接口地址与 API Key。")
+                self.progress.emit("正在验证模型连接与文本生成能力")
+                response = client.run(
+                    "你是连接检查助手。",
+                    "只回复“连接成功”，不要添加其他内容。",
+                )
+                self.finished.emit(response.text)
                 return
 
             if self._mode == "integration_workflow":
@@ -900,6 +926,21 @@ class MainWindow(QMainWindow):
 
         self._nav_buttons["overview"].setChecked(True)
         layout.addStretch(1)
+
+        api_button = QToolButton()
+        api_button.setText("模型接口")
+        api_button.setObjectName("ApiConfigNavButton")
+        api_button.setCheckable(True)
+        api_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        api_button.setIcon(make_icon("plug", "#557886", selected_color="#B9563B"))
+        api_button.setIconSize(QSize(20, 20))
+        api_button.setFixedHeight(52)
+        api_button.setToolTip("连接自己的在线或本机模型")
+        api_button.clicked.connect(lambda checked=False: self._switch_page("settings"))
+        self._nav_group.addButton(api_button)
+        self._nav_buttons["settings"] = api_button
+        layout.addWidget(api_button)
+
         connection = QFrame()
         connection.setObjectName("ConnectionPanel")
         connection_layout = QVBoxLayout(connection)
@@ -953,6 +994,7 @@ class MainWindow(QMainWindow):
             "workflow": self._build_workflow_page(),
             "showcase": self._build_showcase_page(),
             "outputs": self._build_outputs_page(),
+            "settings": self._build_api_settings_page(),
         }
         for page in self._pages.values():
             self._stack.addWidget(page)
@@ -962,7 +1004,7 @@ class MainWindow(QMainWindow):
     def _build_topbar(self) -> QWidget:
         topbar = QFrame()
         topbar.setObjectName("TopBar")
-        topbar.setFixedHeight(68)
+        topbar.setFixedHeight(84)
 
         self._page_title = QLabel(PAGE_META["overview"][0])
         self._page_title.setObjectName("TopContext")
@@ -970,7 +1012,7 @@ class MainWindow(QMainWindow):
         self._page_subtitle.setObjectName("PageSubtitle")
         context = QVBoxLayout()
         context.setContentsMargins(0, 0, 0, 0)
-        context.setSpacing(1)
+        context.setSpacing(3)
         context.addWidget(self._page_title)
         context.addWidget(self._page_subtitle)
 
@@ -1001,7 +1043,7 @@ class MainWindow(QMainWindow):
         actions.addWidget(self._top_run_button)
 
         layout = QHBoxLayout(topbar)
-        layout.setContentsMargins(28, 0, 28, 0)
+        layout.setContentsMargins(34, 9, 34, 8)
         layout.addLayout(context)
         layout.addStretch(1)
         layout.addLayout(actions)
@@ -1563,7 +1605,7 @@ class MainWindow(QMainWindow):
     def _build_studio_overview_page(self) -> QWidget:
         content = QWidget()
         content.setObjectName("StudioStartContent")
-        content.setMaximumWidth(1210)
+        content.setMaximumWidth(2050)
         layout = QVBoxLayout(content)
         layout.setContentsMargins(34, 28, 34, 34)
         layout.setSpacing(18)
@@ -1591,10 +1633,10 @@ class MainWindow(QMainWindow):
         status_layout.setSpacing(7)
         status_dot = QLabel("●")
         status_dot.setObjectName("StudioStatusDot")
-        status_text = QLabel("本机流程已就绪")
-        status_text.setObjectName("StudioStatusText")
+        self._studio_status_text = QLabel("本机流程已就绪")
+        self._studio_status_text.setObjectName("StudioStatusText")
         status_layout.addWidget(status_dot)
-        status_layout.addWidget(status_text)
+        status_layout.addWidget(self._studio_status_text)
         masthead.addWidget(status, 0, Qt.AlignmentFlag.AlignTop)
         layout.addLayout(masthead)
         self._hero_reveal_widgets = (eyebrow, title, subtitle)
@@ -1602,7 +1644,8 @@ class MainWindow(QMainWindow):
         hero = QHBoxLayout()
         hero.setSpacing(14)
         self._start_drop_zone = StartDropZone()
-        self._start_drop_zone.setMinimumHeight(326)
+        self._start_drop_zone.setMinimumHeight(420)
+        self._start_drop_zone.setMaximumHeight(600)
         self._start_drop_zone.select_requested.connect(self._choose_start_file)
         self._start_drop_zone.files_dropped.connect(self._handle_start_drop)
         add_surface_shadow(self._start_drop_zone, blur=32, y_offset=9, alpha=18)
@@ -1610,7 +1653,8 @@ class MainWindow(QMainWindow):
 
         sample = QFrame()
         sample.setObjectName("StudioSample")
-        sample.setMinimumHeight(326)
+        sample.setMinimumHeight(420)
+        sample.setMaximumHeight(600)
         sample_layout = QVBoxLayout(sample)
         sample_layout.setContentsMargins(22, 20, 22, 20)
         sample_layout.setSpacing(8)
@@ -1643,13 +1687,13 @@ class MainWindow(QMainWindow):
             preview = QLabel()
             preview.setObjectName("StudioPreviewPage")
             preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            preview.setFixedSize(96, 122)
+            preview.setFixedSize(108, 136)
             pixmap = QPixmap(str(pages_root / f"page_{page_no:02d}.png"))
             if not pixmap.isNull():
                 preview.setPixmap(
                     pixmap.scaled(
-                        90,
-                        116,
+                        102,
+                        130,
                         Qt.AspectRatioMode.KeepAspectRatio,
                         Qt.TransformationMode.SmoothTransformation,
                     )
@@ -1714,6 +1758,107 @@ class MainWindow(QMainWindow):
         commands.addWidget(text_button, 1)
         layout.addLayout(commands)
 
+        journey = QFrame()
+        journey.setObjectName("StudioJourneyBand")
+        journey_layout = QHBoxLayout(journey)
+        journey_layout.setContentsMargins(18, 13, 18, 13)
+        journey_layout.setSpacing(10)
+        journey_intro = QVBoxLayout()
+        journey_intro.setSpacing(1)
+        journey_title = QLabel("从素材到成品，只需要三步")
+        journey_title.setObjectName("StudioJourneyTitle")
+        journey_detail = QLabel("系统负责整理复杂流程，你只在关键结果上做确认。")
+        journey_detail.setObjectName("StudioJourneyDetail")
+        journey_intro.addWidget(journey_title)
+        journey_intro.addWidget(journey_detail)
+        journey_layout.addLayout(journey_intro, 2)
+        for index, (title_text, detail_text) in enumerate(
+            (
+                ("交给译述", "选择图片、Word、文字或音视频"),
+                ("确认译文", "检查术语、语气与机器生成结果"),
+                ("拿到成品", "导出 Word、Excel、图片或英文配音"),
+            ),
+            start=1,
+        ):
+            step = QWidget()
+            step_layout = QHBoxLayout(step)
+            step_layout.setContentsMargins(8, 0, 8, 0)
+            step_layout.setSpacing(8)
+            number = QLabel(str(index))
+            number.setObjectName("StudioJourneyNumber")
+            number.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            number.setFixedSize(24, 24)
+            copy = QVBoxLayout()
+            copy.setSpacing(0)
+            step_title = QLabel(title_text)
+            step_title.setObjectName("StudioJourneyStepTitle")
+            step_detail = QLabel(detail_text)
+            step_detail.setObjectName("StudioJourneyStepDetail")
+            step_detail.setWordWrap(True)
+            copy.addWidget(step_title)
+            copy.addWidget(step_detail)
+            step_layout.addWidget(number)
+            step_layout.addLayout(copy, 1)
+            journey_layout.addWidget(step, 2)
+            if index < 3:
+                arrow = QLabel()
+                arrow.setPixmap(make_icon("arrow-right", "#A5998B", 15).pixmap(15, 15))
+                journey_layout.addWidget(arrow)
+        layout.addWidget(journey)
+
+        online_band = QFrame()
+        online_band.setObjectName("StudioOnlineBand")
+        online_layout = QHBoxLayout(online_band)
+        online_layout.setContentsMargins(20, 16, 20, 16)
+        online_layout.setSpacing(0)
+        online_intro = QVBoxLayout()
+        online_intro.setSpacing(2)
+        online_kicker = QLabel("两种运行方式，一套成品链路")
+        online_kicker.setObjectName("StudioOnlineKicker")
+        online_title = QLabel("先离线演示，再连接自己的模型真实处理")
+        online_title.setObjectName("StudioOnlineTitle")
+        online_detail = QLabel("模型只负责智能处理，人工审校与文件回填始终保留。")
+        online_detail.setObjectName("StudioOnlineDetail")
+        online_intro.addWidget(online_kicker)
+        online_intro.addWidget(online_title)
+        online_intro.addWidget(online_detail)
+        online_layout.addLayout(online_intro, 3)
+        for icon_name, title_text, detail_text, color in (
+            ("circle-check", "不接 API", "打开完整成品、提取和回填 Word、检索术语、本机配音", "#496F82"),
+            ("plug", "连接模型 API", "真实翻译文字与 Word，识别图片，转写音频并优先在线配音", "#B9563B"),
+            ("route", "连接 Coze", "运行 18 节点多模型精译，让重要译文经过独立初译和互评", "#2F7567"),
+        ):
+            item = QWidget()
+            item_layout = QHBoxLayout(item)
+            item_layout.setContentsMargins(14, 0, 14, 0)
+            item_layout.setSpacing(9)
+            icon = QLabel()
+            icon.setObjectName("StudioOnlineIcon")
+            icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            icon.setFixedSize(34, 34)
+            icon.setPixmap(make_icon(icon_name, color, 17).pixmap(17, 17))
+            copy = QVBoxLayout()
+            copy.setSpacing(1)
+            item_title = QLabel(title_text)
+            item_title.setObjectName("StudioOnlineItemTitle")
+            item_detail = QLabel(detail_text)
+            item_detail.setObjectName("StudioOnlineItemDetail")
+            item_detail.setWordWrap(True)
+            copy.addWidget(item_title)
+            copy.addWidget(item_detail)
+            item_layout.addWidget(icon)
+            item_layout.addLayout(copy, 1)
+            online_layout.addWidget(item, 2)
+        configure_button = QToolButton()
+        configure_button.setObjectName("StudioOnlineAction")
+        configure_button.setIcon(make_icon("arrow-right", "#B9563B", 17))
+        configure_button.setIconSize(QSize(17, 17))
+        configure_button.setFixedSize(38, 38)
+        configure_button.setToolTip("打开模型接口")
+        configure_button.clicked.connect(lambda: self._switch_page("settings"))
+        online_layout.addWidget(configure_button)
+        layout.addWidget(online_band)
+
         proof_band = QFrame()
         proof_band.setObjectName("StudioProofBand")
         proof_layout = QHBoxLayout(proof_band)
@@ -1760,7 +1905,6 @@ class MainWindow(QMainWindow):
         showcase_button.clicked.connect(lambda: self._switch_page("showcase"))
         proof_layout.addWidget(showcase_button)
         layout.addWidget(proof_band)
-        layout.addStretch(1)
 
         self._group_cards = {}
         self._overview_layout_mode = 1
@@ -2141,13 +2285,15 @@ class MainWindow(QMainWindow):
         self._agent_modes.setExclusive(True)
         for mode, text in (
             ("agent", "快速翻译"),
-            ("default_workflow", "精译模式"),
-            ("coze_workflow", "多模型精译（扣子）"),
+            ("coze_workflow", "Coze 多模型精译"),
+            ("default_workflow", "三步精译"),
         ):
             button = QPushButton(text)
             button.setObjectName("SegmentButton")
             button.setCheckable(True)
             button.setProperty("mode", mode)
+            button.setProperty("featured", mode == "coze_workflow")
+            button.setMinimumHeight(44 if mode == "coze_workflow" else 38)
             button.clicked.connect(
                 lambda checked=False, selected=mode: self._update_agent_mode_guide(selected)
             )
@@ -2602,7 +2748,7 @@ class MainWindow(QMainWindow):
         coze_icon.setPixmap(make_icon("route", "#4D8E7C", 19).pixmap(19, 19))
         coze_copy = QVBoxLayout()
         coze_copy.setSpacing(2)
-        coze_title = QLabel("多模型不是一句提示词，而是一套可检查的翻译流程")
+        coze_title = QLabel("Coze 让重要译文经过多模型初译、互评与融合")
         coze_title.setObjectName("CozeHighlightTitle")
         coze_detail = QLabel(
             "术语提取 → 风格提炼 → Kimi / DeepSeek / 豆包三路初译与互评 → GLM 融合终稿"
@@ -2611,7 +2757,7 @@ class MainWindow(QMainWindow):
         coze_detail.setWordWrap(True)
         coze_copy.addWidget(coze_title)
         coze_copy.addWidget(coze_detail)
-        coze_badge = QLabel("扣子真实配置  ·  18 个节点  ·  28 条连接  ·  图结构校验通过")
+        coze_badge = QLabel("Coze 真实配置  ·  18 个节点  ·  28 条连接  ·  图结构校验通过")
         coze_badge.setObjectName("CozeHighlightBadge")
         coze_action = QPushButton("查看流程演示")
         coze_action.setObjectName("CozeHighlightAction")
@@ -2733,6 +2879,460 @@ class MainWindow(QMainWindow):
         scroll.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
         scroll.setWidget(content)
         return scroll
+
+    def _build_api_settings_page(self) -> QWidget:
+        content = QWidget()
+        content.setObjectName("ApiSettingsContent")
+        content.setMaximumWidth(1680)
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(34, 28, 34, 38)
+        layout.setSpacing(16)
+
+        hero = QFrame()
+        hero.setObjectName("ApiHeroPanel")
+        hero_layout = QHBoxLayout(hero)
+        hero_layout.setContentsMargins(24, 21, 24, 21)
+        hero_layout.setSpacing(20)
+        hero_icon = QLabel()
+        hero_icon.setObjectName("ApiHeroIcon")
+        hero_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        hero_icon.setFixedSize(48, 48)
+        hero_icon.setPixmap(make_icon("plug", "#2F7567", 22).pixmap(22, 22))
+        hero_copy = QVBoxLayout()
+        hero_copy.setSpacing(4)
+        hero_kicker = QLabel("YOUR MODEL  /  YOUR DATA")
+        hero_kicker.setObjectName("ApiHeroKicker")
+        hero_title = QLabel("连接你自己的模型，开启真实在线处理")
+        hero_title.setObjectName("ApiHeroTitle")
+        hero_body = QLabel(
+            "配置只保存在这台电脑。连接后，文字精译、图片识别、Word 批量翻译、"
+            "音频转写与配音会直接使用你的服务；本地提取、回填和验收仍可离线运行。"
+        )
+        hero_body.setObjectName("ApiHeroBody")
+        hero_body.setWordWrap(True)
+        hero_copy.addWidget(hero_kicker)
+        hero_copy.addWidget(hero_title)
+        hero_copy.addWidget(hero_body)
+        self._api_hero_status = QLabel()
+        self._api_hero_status.setObjectName("ApiHeroStatus")
+        self._api_hero_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._api_hero_status.setMinimumWidth(126)
+        hero_layout.addWidget(hero_icon)
+        hero_layout.addLayout(hero_copy, 1)
+        hero_layout.addWidget(self._api_hero_status, 0, Qt.AlignmentFlag.AlignTop)
+        layout.addWidget(hero)
+
+        capability_band = QFrame()
+        capability_band.setObjectName("ApiCapabilityBand")
+        capability_layout = QHBoxLayout(capability_band)
+        capability_layout.setContentsMargins(18, 13, 18, 13)
+        capability_layout.setSpacing(0)
+        self._api_capability_values: list[QLabel] = []
+        capabilities = (
+            ("languages", "文字与 Word", "真实翻译与精译", "#B9563B"),
+            ("image", "图片理解", "识别图中文字", "#496F82"),
+            ("audio-lines", "音频能力", "转写与英文配音", "#98723D"),
+            ("route", "Coze 工作流", "多模型交叉评议", "#2F7567"),
+        )
+        for index, (icon_name, title_text, detail_text, color) in enumerate(capabilities):
+            item = QWidget()
+            item_layout = QHBoxLayout(item)
+            item_layout.setContentsMargins(12, 1, 12, 1)
+            item_layout.setSpacing(9)
+            icon = QLabel()
+            icon.setPixmap(make_icon(icon_name, color, 18).pixmap(18, 18))
+            copy = QVBoxLayout()
+            copy.setSpacing(0)
+            title = QLabel(title_text)
+            title.setObjectName("ApiCapabilityTitle")
+            value = QLabel(detail_text)
+            value.setObjectName("ApiCapabilityValue")
+            copy.addWidget(title)
+            copy.addWidget(value)
+            item_layout.addWidget(icon)
+            item_layout.addLayout(copy, 1)
+            capability_layout.addWidget(item, 1)
+            self._api_capability_values.append(value)
+            if index < len(capabilities) - 1:
+                divider = QFrame()
+                divider.setObjectName("ApiCapabilityDivider")
+                divider.setFixedWidth(1)
+                capability_layout.addWidget(divider)
+        layout.addWidget(capability_band)
+
+        cards = QGridLayout()
+        cards.setHorizontalSpacing(14)
+        cards.setVerticalSpacing(14)
+        cards.setColumnStretch(0, 3)
+        cards.setColumnStretch(1, 2)
+
+        model_card = QFrame()
+        model_card.setObjectName("ApiConfigCard")
+        model_layout = QVBoxLayout(model_card)
+        model_layout.setContentsMargins(20, 18, 20, 20)
+        model_layout.setSpacing(11)
+        model_layout.addWidget(self._api_card_kicker("01  通用模型接口"))
+        model_layout.addWidget(self._api_card_title("选择服务并填写连接信息"))
+        model_intro = QLabel("支持 OpenAI 官方、Ollama、LM Studio，以及采用 OpenAI 兼容格式的其他服务。")
+        model_intro.setObjectName("ApiCardDescription")
+        model_intro.setWordWrap(True)
+        model_layout.addWidget(model_intro)
+
+        self._api_preset_combo = QComboBox()
+        self._api_preset_combo.setObjectName("ApiCombo")
+        self._api_preset_combo.addItem("OpenAI 官方", "openai")
+        self._api_preset_combo.addItem("Ollama 本机服务", "ollama")
+        self._api_preset_combo.addItem("LM Studio 本机服务", "lmstudio")
+        self._api_preset_combo.addItem("其他 OpenAI 兼容服务", "compatible")
+        model_layout.addLayout(self._api_field("服务类型", self._api_preset_combo, "选择预设会自动填写常用地址与协议"))
+
+        self._api_base_input = QLineEdit()
+        self._api_base_input.setObjectName("ApiInput")
+        self._api_base_input.setPlaceholderText("https://api.openai.com/v1")
+        model_layout.addLayout(self._api_field("接口地址", self._api_base_input, "必须以 http:// 或 https:// 开头"))
+
+        model_grid = QGridLayout()
+        model_grid.setHorizontalSpacing(10)
+        model_grid.setVerticalSpacing(0)
+        self._api_model_input = QLineEdit()
+        self._api_model_input.setObjectName("ApiInput")
+        self._api_model_input.setPlaceholderText("例如 gpt-4.1-mini")
+        self._api_protocol_combo = QComboBox()
+        self._api_protocol_combo.setObjectName("ApiCombo")
+        self._api_protocol_combo.addItem("Responses API", "responses")
+        self._api_protocol_combo.addItem("Chat Completions", "chat_completions")
+        model_grid.addLayout(self._api_field("文本 / 视觉模型", self._api_model_input, "模型名需与服务端一致"), 0, 0)
+        model_grid.addLayout(self._api_field("调用协议", self._api_protocol_combo, "兼容服务通常使用 Chat Completions"), 0, 1)
+        model_grid.setColumnStretch(0, 1)
+        model_grid.setColumnStretch(1, 1)
+        model_layout.addLayout(model_grid)
+
+        self._api_key_input = QLineEdit()
+        self._api_key_input.setObjectName("ApiInput")
+        self._api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self._api_key_input.setPlaceholderText("本机服务通常可以留空")
+        model_layout.addLayout(self._api_field("API Key", self._api_key_input, "仅写入本机 .env，不会上传到 GitHub 或 Vercel"))
+
+        audio_grid = QGridLayout()
+        audio_grid.setHorizontalSpacing(10)
+        audio_grid.setVerticalSpacing(0)
+        self._transcription_model_input = QLineEdit()
+        self._transcription_model_input.setObjectName("ApiInput")
+        self._speech_model_input = QLineEdit()
+        self._speech_model_input.setObjectName("ApiInput")
+        self._speech_voice_input = QLineEdit()
+        self._speech_voice_input.setObjectName("ApiInput")
+        audio_grid.addLayout(self._api_field("转写模型", self._transcription_model_input, "默认 whisper-1"), 0, 0)
+        audio_grid.addLayout(self._api_field("语音模型", self._speech_model_input, "默认 gpt-4o-mini-tts"), 0, 1)
+        audio_grid.addLayout(self._api_field("英文音色", self._speech_voice_input, "默认 alloy"), 0, 2)
+        for column in range(3):
+            audio_grid.setColumnStretch(column, 1)
+        model_layout.addLayout(audio_grid)
+        cards.addWidget(model_card, 0, 0)
+
+        coze_card = QFrame()
+        coze_card.setObjectName("ApiConfigCard")
+        coze_layout = QVBoxLayout(coze_card)
+        coze_layout.setContentsMargins(20, 18, 20, 20)
+        coze_layout.setSpacing(11)
+        coze_layout.addWidget(self._api_card_kicker("02  多模型工作流"))
+        coze_layout.addWidget(self._api_card_title("接入 Coze 多模型精译工作流"))
+        coze_intro = QLabel(
+            "接入后会在线运行术语识别、三路模型初译、交叉评议与终稿融合。"
+            "不配置也能查看完整离线演示。"
+        )
+        coze_intro.setObjectName("ApiCardDescription")
+        coze_intro.setWordWrap(True)
+        coze_layout.addWidget(coze_intro)
+        self._coze_base_input = QLineEdit()
+        self._coze_base_input.setObjectName("ApiInput")
+        self._coze_workflow_input = QLineEdit()
+        self._coze_workflow_input.setObjectName("ApiInput")
+        self._coze_token_input = QLineEdit()
+        self._coze_token_input.setObjectName("ApiInput")
+        self._coze_token_input.setEchoMode(QLineEdit.EchoMode.Password)
+        coze_layout.addLayout(self._api_field("Coze API 地址", self._coze_base_input, "中国区默认 https://api.coze.cn"))
+        coze_layout.addLayout(self._api_field("工作流 ID", self._coze_workflow_input, "当前项目已内置经过校验的工作流 ID"))
+        coze_layout.addLayout(self._api_field("Coze Personal Access Token", self._coze_token_input, "只保存在本机，不写入公开仓库"))
+
+        flow_note = QFrame()
+        flow_note.setObjectName("ApiFlowNote")
+        flow_layout = QVBoxLayout(flow_note)
+        flow_layout.setContentsMargins(13, 11, 13, 11)
+        flow_layout.setSpacing(3)
+        flow_title = QLabel("在线能力如何进入现有流程")
+        flow_title.setObjectName("ApiFlowTitle")
+        flow_text = QLabel("选择素材  →  模型处理  →  术语约束  →  人工审校  →  Word / Excel / 音频成品")
+        flow_text.setObjectName("ApiFlowText")
+        flow_text.setWordWrap(True)
+        flow_layout.addWidget(flow_title)
+        flow_layout.addWidget(flow_text)
+        coze_layout.addWidget(flow_note)
+        coze_layout.addStretch(1)
+        cards.addWidget(coze_card, 0, 1)
+        layout.addLayout(cards)
+
+        action_band = QFrame()
+        action_band.setObjectName("ApiActionBand")
+        action_layout = QHBoxLayout(action_band)
+        action_layout.setContentsMargins(18, 14, 18, 14)
+        action_layout.setSpacing(9)
+        action_copy = QVBoxLayout()
+        action_copy.setSpacing(2)
+        self._api_config_result = QLabel("填写后先保存并测试；测试只发送一句连接检查文本。")
+        self._api_config_result.setObjectName("ApiConfigResult")
+        self._api_config_result.setWordWrap(True)
+        self._api_config_path_label = QLabel(str(user_env_path()))
+        self._api_config_path_label.setObjectName("ApiConfigPath")
+        self._api_config_path_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        action_copy.addWidget(self._api_config_result)
+        action_copy.addWidget(self._api_config_path_label)
+        clear_button = QPushButton("清除本机密钥")
+        clear_button.setObjectName("SecondaryButton")
+        clear_button.setIcon(make_icon("shield-check", "#8E6256", 16))
+        clear_button.clicked.connect(self._clear_api_secrets)
+        save_button = QPushButton("仅保存")
+        save_button.setObjectName("SecondaryButton")
+        save_button.setIcon(make_icon("save", "#4F8274", 16))
+        save_button.clicked.connect(lambda: self._save_api_settings(False))
+        self._api_test_button = QPushButton("保存并测试")
+        self._api_test_button.setObjectName("PrimaryButton")
+        self._api_test_button.setIcon(make_icon("plug", "#FFFFFF", 16))
+        self._api_test_button.clicked.connect(lambda: self._save_api_settings(True))
+        self._busy_controls.extend([clear_button, save_button, self._api_test_button])
+        action_layout.addLayout(action_copy, 1)
+        action_layout.addWidget(clear_button)
+        action_layout.addWidget(save_button)
+        action_layout.addWidget(self._api_test_button)
+        layout.addWidget(action_band)
+
+        usage_panel = QFrame()
+        usage_panel.setObjectName("ApiUsagePanel")
+        usage_panel.setMinimumHeight(218)
+        usage_layout = QHBoxLayout(usage_panel)
+        usage_layout.setContentsMargins(22, 18, 22, 18)
+        usage_layout.setSpacing(0)
+        usage_intro = QVBoxLayout()
+        usage_intro.setSpacing(3)
+        usage_kicker = QLabel("连接成功后")
+        usage_kicker.setObjectName("ApiCardKicker")
+        usage_title = QLabel("同一个接口，进入四条真实生产链")
+        usage_title.setObjectName("ApiUsageTitle")
+        usage_detail = QLabel(
+            "无需在每个页面重复选择模型。新任务会自动读取这里的配置，"
+            "并继续使用项目术语、人工审校和统一成品目录。"
+        )
+        usage_detail.setObjectName("ApiUsageDetail")
+        usage_detail.setWordWrap(True)
+        usage_intro.addWidget(usage_kicker)
+        usage_intro.addWidget(usage_title)
+        usage_intro.addWidget(usage_detail)
+        usage_intro.addStretch(1)
+        architecture_button = QPushButton("查看架构说明")
+        architecture_button.setObjectName("TextButton")
+        architecture_button.setIcon(make_icon("external-link", "#2F7567", 15))
+        architecture_button.clicked.connect(
+            lambda: self._open_known_path(self._project_root / "docs/architecture/README.md")
+        )
+        usage_intro.addWidget(architecture_button, 0, Qt.AlignmentFlag.AlignLeft)
+        usage_layout.addLayout(usage_intro, 3)
+
+        for icon_name, title_text, path_text, output_text, color in (
+            ("languages", "文字精译", "术语 → 多模型 → 人工确认", "界面终稿", "#B9563B"),
+            ("image", "图片翻译", "视觉识别 → 对照翻译 → 模糊项", "中英表格", "#496F82"),
+            ("file-text", "Word 翻译", "提取 → 批量翻译 → XML 回填", "英文 DOCX", "#2F7567"),
+            ("audio-lines", "音视频", "转写 → 逐句审校 → TTS", "WAV + 文本", "#98723D"),
+        ):
+            item = QWidget()
+            item_layout = QVBoxLayout(item)
+            item_layout.setContentsMargins(18, 2, 18, 2)
+            item_layout.setSpacing(7)
+            icon = QLabel()
+            icon.setObjectName("ApiUsageIcon")
+            icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            icon.setFixedSize(36, 36)
+            icon.setPixmap(make_icon(icon_name, color, 18).pixmap(18, 18))
+            title = QLabel(title_text)
+            title.setObjectName("ApiUsageItemTitle")
+            path_label = QLabel(path_text)
+            path_label.setObjectName("ApiUsagePath")
+            path_label.setWordWrap(True)
+            output_label = QLabel(output_text)
+            output_label.setObjectName("ApiUsageOutput")
+            item_layout.addWidget(icon)
+            item_layout.addWidget(title)
+            item_layout.addWidget(path_label)
+            item_layout.addStretch(1)
+            item_layout.addWidget(output_label)
+            usage_layout.addWidget(item, 2)
+        layout.addWidget(usage_panel)
+
+        next_row = QHBoxLayout()
+        next_hint = QLabel("连接完成后无需重复设置，直接进入对应任务即可使用在线能力。")
+        next_hint.setObjectName("ApiNextHint")
+        text_action = QPushButton("去翻译文字")
+        text_action.setObjectName("TextButton")
+        text_action.setIcon(make_icon("languages", "#2F7567", 16))
+        text_action.clicked.connect(lambda: self._switch_page("agent"))
+        file_action = QPushButton("去处理文件")
+        file_action.setObjectName("TextButton")
+        file_action.setIcon(make_icon("arrow-right", "#2F7567", 16))
+        file_action.clicked.connect(lambda: self._switch_page("production"))
+        next_row.addWidget(next_hint)
+        next_row.addStretch(1)
+        next_row.addWidget(text_action)
+        next_row.addWidget(file_action)
+        layout.addLayout(next_row)
+        layout.addStretch(1)
+
+        self._api_preset_combo.currentIndexChanged.connect(self._apply_api_preset)
+        self._load_api_settings_fields()
+
+        scroll = QScrollArea()
+        scroll.setObjectName("PageScroll")
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        scroll.setWidget(content)
+        return scroll
+
+    def _api_card_kicker(self, text: str) -> QLabel:
+        label = QLabel(text)
+        label.setObjectName("ApiCardKicker")
+        return label
+
+    def _api_card_title(self, text: str) -> QLabel:
+        label = QLabel(text)
+        label.setObjectName("ApiCardTitle")
+        return label
+
+    def _api_field(self, title: str, control: QWidget, hint: str) -> QVBoxLayout:
+        field = QVBoxLayout()
+        field.setSpacing(4)
+        label = QLabel(title)
+        label.setObjectName("ApiFieldLabel")
+        hint_label = QLabel(hint)
+        hint_label.setObjectName("ApiFieldHint")
+        hint_label.setWordWrap(True)
+        field.addWidget(label)
+        field.addWidget(control)
+        field.addWidget(hint_label)
+        return field
+
+    def _load_api_settings_fields(self) -> None:
+        config = self._config
+        self._api_base_input.setText(config.openai_base_url)
+        self._api_model_input.setText(config.openai_model)
+        self._api_key_input.setText(config.openai_api_key or "")
+        protocol_index = self._api_protocol_combo.findData(config.model_api_protocol)
+        self._api_protocol_combo.setCurrentIndex(max(0, protocol_index))
+        self._transcription_model_input.setText(config.transcription_model)
+        self._speech_model_input.setText(config.speech_model)
+        self._speech_voice_input.setText(config.speech_voice)
+        self._coze_base_input.setText(config.coze_api_base)
+        self._coze_workflow_input.setText(config.coze_workflow_id or "")
+        self._coze_token_input.setText(config.coze_api_token or "")
+
+        preset = "compatible"
+        if config.openai_base_url == "https://api.openai.com/v1":
+            preset = "openai"
+        elif "127.0.0.1:11434" in config.openai_base_url or "localhost:11434" in config.openai_base_url:
+            preset = "ollama"
+        elif "127.0.0.1:1234" in config.openai_base_url or "localhost:1234" in config.openai_base_url:
+            preset = "lmstudio"
+        self._api_preset_combo.blockSignals(True)
+        self._api_preset_combo.setCurrentIndex(max(0, self._api_preset_combo.findData(preset)))
+        self._api_preset_combo.blockSignals(False)
+        self._update_api_settings_status()
+
+    def _apply_api_preset(self, index: int) -> None:
+        preset = self._api_preset_combo.itemData(index)
+        values = {
+            "openai": ("https://api.openai.com/v1", "gpt-4.1-mini", "responses"),
+            "ollama": ("http://127.0.0.1:11434/v1", "qwen2.5:7b", "chat_completions"),
+            "lmstudio": ("http://127.0.0.1:1234/v1", "local-model", "chat_completions"),
+        }
+        if preset not in values:
+            return
+        base_url, model, protocol = values[preset]
+        self._api_base_input.setText(base_url)
+        self._api_model_input.setText(model)
+        self._api_protocol_combo.setCurrentIndex(self._api_protocol_combo.findData(protocol))
+        if preset in {"ollama", "lmstudio"}:
+            self._api_key_input.clear()
+
+    def _save_api_settings(self, test_connection: bool) -> None:
+        base_url = self._api_base_input.text().strip().rstrip("/")
+        model = self._api_model_input.text().strip()
+        if not base_url.startswith(("http://", "https://")):
+            QMessageBox.warning(self, "接口地址有误", "接口地址需要以 http:// 或 https:// 开头。")
+            return
+        if not model:
+            QMessageBox.warning(self, "缺少模型名称", "请填写服务端实际可用的文本或视觉模型名称。")
+            return
+        try:
+            path = write_user_config(
+                {
+                    "OPENAI_BASE_URL": base_url,
+                    "OPENAI_API_KEY": self._api_key_input.text(),
+                    "OPENAI_MODEL": model,
+                    "MODEL_API_PROTOCOL": str(self._api_protocol_combo.currentData()),
+                    "TRANSCRIPTION_MODEL": self._transcription_model_input.text() or "whisper-1",
+                    "SPEECH_MODEL": self._speech_model_input.text() or "gpt-4o-mini-tts",
+                    "SPEECH_VOICE": self._speech_voice_input.text() or "alloy",
+                    "COZE_API_BASE": self._coze_base_input.text() or "https://api.coze.cn",
+                    "COZE_WORKFLOW_ID": self._coze_workflow_input.text(),
+                    "COZE_API_TOKEN": self._coze_token_input.text(),
+                }
+            )
+        except OSError as exc:
+            QMessageBox.critical(self, "保存失败", f"无法写入本机配置：\n{exc}")
+            return
+        self._config = load_config()
+        self._api_config_path_label.setText(str(path))
+        self._api_config_result.setText("配置已安全保存在本机。" + (" 正在测试文本模型…" if test_connection else ""))
+        self._api_config_result.setProperty("success", not test_connection)
+        self._api_config_result.style().unpolish(self._api_config_result)
+        self._api_config_result.style().polish(self._api_config_result)
+        self._refresh_from_scan()
+        if test_connection:
+            self._start_job("api-test", "connection-check", allow_empty=True)
+        else:
+            self.statusBar().showMessage("模型接口配置已保存", 5000)
+
+    def _clear_api_secrets(self) -> None:
+        answer = QMessageBox.question(
+            self,
+            "清除本机密钥",
+            "确定清除模型 API Key 和 Coze Token 吗？接口地址与模型名称会保留。",
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        write_user_config({"OPENAI_API_KEY": None, "COZE_API_TOKEN": None})
+        self._config = load_config()
+        self._api_key_input.clear()
+        self._coze_token_input.clear()
+        self._api_config_result.setText("本机密钥已清除。离线提取、回填与演示仍可继续使用。")
+        self._refresh_from_scan()
+
+    def _update_api_settings_status(self) -> None:
+        if not hasattr(self, "_api_hero_status"):
+            return
+        model_online = self._config.has_model_api
+        coze_online = self._config.has_coze_workflow
+        self._api_hero_status.setText("模型已配置" if model_online else "等待连接")
+        self._api_hero_status.setProperty("connected", model_online)
+        self._api_hero_status.style().unpolish(self._api_hero_status)
+        self._api_hero_status.style().polish(self._api_hero_status)
+        values = (
+            "已启用真实调用" if model_online else "连接后启用",
+            "按所选模型能力" if model_online else "连接视觉模型后启用",
+            "在线优先 / 本机回退" if model_online else "本机配音可用",
+            "已连接" if coze_online else "离线演示可用",
+        )
+        for label, value in zip(self._api_capability_values, values):
+            label.setText(value)
 
     def _build_outputs_page(self) -> QWidget:
         page = QWidget()
@@ -3234,6 +3834,8 @@ class MainWindow(QMainWindow):
             button.setChecked(True)
         if page_key == "outputs":
             self._refresh_outputs_table()
+        elif page_key == "settings":
+            self._load_api_settings_fields()
 
     @Slot(str)
     def _show_group(self, group_key: str) -> None:
@@ -3371,22 +3973,31 @@ class MainWindow(QMainWindow):
             label.setText(text)
 
         providers: list[str] = []
-        if self._config.has_api_key:
-            providers.append("OpenAI")
+        if self._config.has_model_api:
+            providers.append(
+                "本机模型"
+                if self._config.openai_base_url.startswith(("http://127.0.0.1", "http://localhost"))
+                else "模型 API"
+            )
         if self._config.has_coze_workflow:
-            providers.append("扣子")
+            providers.append("Coze")
         online = bool(providers)
-        api_text = f"{' + '.join(providers)} 已连接" if online else "本地模式"
         self._api_state.setText("在线翻译可用" if online else "本地功能可用")
         self._api_state.setProperty("connected", online)
         self._api_state.style().unpolish(self._api_state)
         self._api_state.style().polish(self._api_state)
-        channel_details = [f"OpenAI {self._config.openai_model}", "Coze workflow"]
+        channel_details = [self._config.openai_model]
+        if self._config.has_coze_workflow:
+            channel_details.append("Coze")
         self._model_label.setText(" · ".join(channel_details))
         self._model_label.setToolTip(
-            f"OpenAI model: {self._config.openai_model}\n"
+            f"Model API: {self._config.openai_base_url}\n"
+            f"Model: {self._config.openai_model}\n"
+            f"Protocol: {self._config.model_api_protocol}\n"
             f"Coze workflow ID: {self._config.coze_workflow_id or 'not configured'}"
         )
+        if hasattr(self, "_studio_status_text"):
+            self._studio_status_text.setText("在线模型与本机流程已就绪" if online else "本机流程已就绪")
         if online:
             self._agent_state_text.setText(
                 f"{'、'.join(providers)} 已连接。粘贴中文后即可生成真实译文。"
@@ -3394,11 +4005,12 @@ class MainWindow(QMainWindow):
         else:
             self._agent_state_text.setText(
                 "还没有配置在线密钥。Word 回填和英文配音照常可用；"
-                "想先了解多模型精译，可以直接打开扣子的离线演示。"
+                "想先了解多模型精译，可以直接打开 Coze 工作流的完整离线演示。"
             )
         self._agent_state_dot.setProperty("connected", online)
         self._agent_state_dot.style().unpolish(self._agent_state_dot)
         self._agent_state_dot.style().polish(self._agent_state_dot)
+        self._update_api_settings_status()
 
         output_path = output_dir_for(self._project_root)
         self._output_path_label.setText("双击下方文件即可打开；完整成品可从右侧文件夹进入")
@@ -3449,7 +4061,7 @@ class MainWindow(QMainWindow):
             "coze_workflow": (
                 "route",
                 "#E69063",
-                "多模型精译（扣子）",
+                "Coze 多模型精译工作流",
                 "它会先找出文化术语和文体要求，再让 Kimi、DeepSeek、豆包分别翻译、互相评议，最后由 GLM 合成终稿。",
                 "真实工作流 · 18 个节点 · 28 条连接 · 图结构校验通过",
             ),
@@ -3460,6 +4072,9 @@ class MainWindow(QMainWindow):
         self._agent_mode_detail.setText(detail)
         self._agent_mode_proof.setText(proof)
         is_coze = mode == "coze_workflow"
+        self._agent_mode_guide.setProperty("featured", is_coze)
+        self._agent_mode_guide.style().unpolish(self._agent_mode_guide)
+        self._agent_mode_guide.style().polish(self._agent_mode_guide)
         self._coze_demo_button.setVisible(is_coze)
         if is_coze:
             self._agent_run_button.setText(
@@ -3483,7 +4098,7 @@ class MainWindow(QMainWindow):
         )
         self._agent_output.set_output(
             "# 多模型精译流程演示\n\n"
-            "**演示状态**：根据仓库中的真实扣子工作流配置离线还原，未发起网络请求。\n\n"
+            "**演示状态**：根据仓库中的真实 Coze 工作流配置离线还原，未发起网络请求。\n\n"
             "## 这套流程做了什么\n\n"
             "1. **文化术语提取**：识别“端午节、香囊、龙舟”，优先采用术语库中的统一译法。\n"
             "2. **读者与风格判断**：目标读者是儿童，要求句子短、画面感清楚、适合朗读。\n"
@@ -3498,9 +4113,9 @@ class MainWindow(QMainWindow):
             "- 结构：18 个节点、28 条连接、3 个代码聚合节点\n"
             "- 校验：起点与终点连通，代码节点样例全部通过\n"
             "- 知识库：已接入中国文化术语库\n\n"
-            "> 配置扣子 Token 后，“查看离线演示”会变为“运行多模型精译”，直接执行线上工作流。"
+            "> 配置 Coze Token 后，“查看离线演示”会变为“运行多模型精译”，直接执行线上工作流。"
         )
-        self.statusBar().showMessage("已打开扣子多模型精译离线演示", 5000)
+        self.statusBar().showMessage("已打开 Coze 多模型精译工作流离线演示", 5000)
 
     def _open_coze_showcase(self) -> None:
         self._switch_page("agent")
@@ -3593,6 +4208,12 @@ class MainWindow(QMainWindow):
         elif self._active_mode == "integration_workflow":
             self._workflow_output.set_output(text)
             self._switch_page("workflow")
+        elif self._active_mode == "api-test":
+            self._api_config_result.setText(f"连接成功。模型返回：{text.strip()}")
+            self._api_config_result.setProperty("success", True)
+            self._api_config_result.style().unpolish(self._api_config_result)
+            self._api_config_result.style().polish(self._api_config_result)
+            self._switch_page("settings")
         else:
             self._agent_output.set_output(text)
             self._switch_page("agent")
@@ -3606,6 +4227,11 @@ class MainWindow(QMainWindow):
     def _handle_failed(self, message: str) -> None:
         self.statusBar().showMessage("任务执行失败")
         self._append_log(f"任务失败：{message}")
+        if self._active_mode == "api-test" and hasattr(self, "_api_config_result"):
+            self._api_config_result.setText(f"连接未通过：{message}")
+            self._api_config_result.setProperty("success", False)
+            self._api_config_result.style().unpolish(self._api_config_result)
+            self._api_config_result.style().polish(self._api_config_result)
         QMessageBox.critical(self, "执行失败", message)
 
     @Slot()
@@ -3630,6 +4256,8 @@ class MainWindow(QMainWindow):
             self._report_button.setToolTip("报告生成中…" if busy else "生成整合报告")
         if hasattr(self, "_group_run_button"):
             self._group_run_button.setText("处理中…" if busy else "运行")
+        if hasattr(self, "_api_test_button"):
+            self._api_test_button.setText("正在测试…" if busy else "保存并测试")
         if busy:
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         else:
@@ -6163,7 +6791,7 @@ class MainWindow(QMainWindow):
             }
             QMainWindow, QWidget#Root, QWidget#Workspace, QStackedWidget#PageStack,
             QScrollArea#PageScroll, QWidget#StudioStartContent, QWidget#StartContent,
-            QWidget#OverviewContent, QWidget#ShowcaseContent {
+            QWidget#OverviewContent, QWidget#ShowcaseContent, QWidget#ApiSettingsContent {
                 background: #F3F0E9;
             }
 
@@ -6213,6 +6841,27 @@ class MainWindow(QMainWindow):
                 border-bottom: 3px solid #B9563B;
                 font-weight: 750;
             }
+            QToolButton#ApiConfigNavButton {
+                background: #E7ECE8;
+                color: #55706A;
+                border: 1px solid #CDD8D2;
+                border-radius: 6px;
+                padding: 4px 2px;
+                font-size: 10px;
+                font-weight: 650;
+            }
+            QToolButton#ApiConfigNavButton:hover {
+                background: #F8F4EC;
+                color: #31413B;
+                border-color: #B9CBC2;
+            }
+            QToolButton#ApiConfigNavButton:checked {
+                background: #FFF9EF;
+                color: #9E4B34;
+                border: 1px solid #DCCDC0;
+                border-bottom: 3px solid #B9563B;
+                font-weight: 750;
+            }
             QFrame#ConnectionPanel {
                 background: transparent;
                 border: 0;
@@ -6232,10 +6881,10 @@ class MainWindow(QMainWindow):
             QLabel#TopContext {
                 color: #25312C;
                 font-family: "Noto Serif SC", "SimSun";
-                font-size: 18px;
-                font-weight: 700;
+                font-size: 23px;
+                font-weight: 730;
             }
-            QLabel#PageSubtitle { color: #8C918D; font-size: 10px; }
+            QLabel#PageSubtitle { color: #7E8782; font-size: 12px; }
             QToolButton#TopIconButton {
                 background: transparent;
                 border: 1px solid transparent;
@@ -6267,10 +6916,10 @@ class MainWindow(QMainWindow):
             QLabel#StudioTitle {
                 color: #203B34;
                 font-family: "Noto Serif SC", "SimSun";
-                font-size: 36px;
+                font-size: 40px;
                 font-weight: 760;
             }
-            QLabel#StudioSubtitle { color: #6E7772; font-size: 13px; }
+            QLabel#StudioSubtitle { color: #65706A; font-size: 14px; }
             QFrame#StudioStatus {
                 background: #E7EEE9;
                 border: 1px solid #CDDCD4;
@@ -6336,10 +6985,10 @@ class MainWindow(QMainWindow):
             QLabel#StudioSampleTitle {
                 color: #25483F;
                 font-family: "Noto Serif SC", "SimSun";
-                font-size: 21px;
+                font-size: 23px;
                 font-weight: 740;
             }
-            QLabel#StudioSampleDescription { color: #61726B; font-size: 11px; }
+            QLabel#StudioSampleDescription { color: #61726B; font-size: 12px; }
             QLabel#StudioPreviewPage {
                 background: #FFFDF8;
                 border: 1px solid #C9CFC9;
@@ -6369,19 +7018,19 @@ class MainWindow(QMainWindow):
             QLabel#StudioSectionTitle {
                 color: #26332E;
                 font-family: "Noto Serif SC", "SimSun";
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: 720;
             }
-            QLabel#StudioSectionHint { color: #8C918D; font-size: 10px; }
+            QLabel#StudioSectionHint { color: #7E8782; font-size: 11px; }
             QPushButton#QuickStartButton {
                 background: #FFFDF8;
                 color: #33403A;
                 border: 1px solid #D9D2C7;
                 border-radius: 6px;
-                min-height: 74px;
+                min-height: 82px;
                 padding: 11px 12px;
                 text-align: left;
-                font-size: 11px;
+                font-size: 12px;
                 font-weight: 680;
             }
             QPushButton#QuickStartButton:hover { background: #FFFFFF; border-color: #AFA69A; }
@@ -6390,13 +7039,63 @@ class MainWindow(QMainWindow):
             QPushButton#QuickStartButton[accent="jade"] { border-top: 3px solid #2F7567; }
             QPushButton#QuickStartButton[accent="gold"] { border-top: 3px solid #98723D; }
 
+            QFrame#StudioJourneyBand {
+                background: #F8F5EE;
+                border: 1px solid #D9D2C7;
+                border-radius: 6px;
+            }
+            QLabel#StudioJourneyTitle {
+                color: #2E3B35;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 14px;
+                font-weight: 750;
+            }
+            QLabel#StudioJourneyDetail { color: #7A817D; font-size: 10px; }
+            QLabel#StudioJourneyNumber {
+                background: #E4ECE7;
+                color: #2F7567;
+                border: 1px solid #C9D8D1;
+                border-radius: 6px;
+                font-size: 10px;
+                font-weight: 800;
+            }
+            QLabel#StudioJourneyStepTitle { color: #394740; font-size: 11px; font-weight: 750; }
+            QLabel#StudioJourneyStepDetail { color: #858B87; font-size: 9px; }
+
+            QFrame#StudioOnlineBand {
+                background: #E5ECE8;
+                border: 1px solid #CBD8D1;
+                border-radius: 6px;
+            }
+            QLabel#StudioOnlineKicker { color: #A9543B; font-size: 9px; font-weight: 800; }
+            QLabel#StudioOnlineTitle {
+                color: #29483F;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 14px;
+                font-weight: 750;
+            }
+            QLabel#StudioOnlineDetail { color: #75817B; font-size: 9px; }
+            QLabel#StudioOnlineIcon {
+                background: #FFFDF8;
+                border: 1px solid #CFD8D3;
+                border-radius: 6px;
+            }
+            QLabel#StudioOnlineItemTitle { color: #354B43; font-size: 11px; font-weight: 750; }
+            QLabel#StudioOnlineItemDetail { color: #738079; font-size: 9px; }
+            QToolButton#StudioOnlineAction {
+                background: #FFFDF8;
+                border: 1px solid #C6D1CB;
+                border-radius: 6px;
+            }
+            QToolButton#StudioOnlineAction:hover { background: #FFFFFF; border-color: #9FB3AA; }
+
             QFrame#StudioProofBand {
                 background: #E9E4DB;
                 border: 1px solid #D4CCC0;
                 border-radius: 6px;
             }
-            QLabel#StudioProofTitle { color: #303C36; font-size: 12px; font-weight: 750; }
-            QLabel#StudioProofDetail { color: #7C817D; font-size: 9px; }
+            QLabel#StudioProofTitle { color: #303C36; font-size: 13px; font-weight: 750; }
+            QLabel#StudioProofDetail { color: #7C817D; font-size: 10px; }
             QFrame#StudioMetric { border-left: 1px solid #CFC6B9; }
             QLabel#StudioMetricValue {
                 color: #2D6659;
@@ -6409,10 +7108,10 @@ class MainWindow(QMainWindow):
             QLabel#SectionTitle {
                 color: #26322D;
                 font-family: "Noto Serif SC", "SimSun";
-                font-size: 17px;
+                font-size: 19px;
                 font-weight: 720;
             }
-            QLabel#SectionSubtitle, QLabel#PathLabel { color: #828A85; font-size: 10px; }
+            QLabel#SectionSubtitle, QLabel#PathLabel { color: #78827C; font-size: 11px; }
             QFrame#SectionPanel, QFrame#ToolPanel, QFrame#WorkflowNode, QFrame#TaskEntryCard,
             QFrame#StatCard, QFrame#GroupCard {
                 background: #FFFDF8;
@@ -6510,9 +7209,9 @@ class MainWindow(QMainWindow):
                 border: 1px solid #D3DBD6;
                 border-radius: 6px;
             }
-            QLabel#AgentModeTitle { color: #2D6659; font-size: 12px; font-weight: 760; }
-            QLabel#AgentModeDetail { color: #61716A; font-size: 10px; }
-            QLabel#AgentModeProof { color: #687F8A; font-size: 9px; font-weight: 650; }
+            QLabel#AgentModeTitle { color: #2D6659; font-size: 14px; font-weight: 760; }
+            QLabel#AgentModeDetail { color: #61716A; font-size: 11px; }
+            QLabel#AgentModeProof { color: #687F8A; font-size: 10px; font-weight: 650; }
             QPushButton#GuideAction, QPushButton#CozeHighlightAction {
                 background: #FFFDF8;
                 color: #2F7567;
@@ -6536,6 +7235,32 @@ class MainWindow(QMainWindow):
                 font-weight: 750;
             }
             QPushButton#SegmentButton:hover { background: #F8F4EC; color: #35423D; }
+            QPushButton#SegmentButton[featured="true"] {
+                background: #E2EAE5;
+                color: #315E55;
+                border: 1px solid #BFD0C7;
+                border-top: 3px solid #2F7567;
+                padding: 9px 16px;
+                margin: 0 4px;
+                font-size: 12px;
+                font-weight: 760;
+            }
+            QPushButton#SegmentButton[featured="true"]:hover {
+                background: #D9E6DF;
+                color: #254E45;
+                border-color: #9EBBAE;
+            }
+            QPushButton#SegmentButton[featured="true"]:checked {
+                background: #2F6658;
+                color: #FFFFFF;
+                border-color: #2F6658;
+                border-top: 3px solid #B9563B;
+            }
+            QFrame#AgentModeGuide[featured="true"] {
+                background: #E4ECE7;
+                border-color: #BFD0C7;
+                border-left: 4px solid #2F7567;
+            }
 
             QPlainTextEdit#InputEditor, QPlainTextEdit#WorkflowInput, QLineEdit#SearchInput,
             QTextBrowser#OutputView, QPlainTextEdit#LogView {
@@ -6614,10 +7339,10 @@ class MainWindow(QMainWindow):
             QLabel#WorkflowPanelTitle {
                 color: #2A3A34;
                 font-family: "Noto Serif SC", "SimSun";
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: 730;
             }
-            QLabel#WorkflowPanelHint { color: #7E8681; font-size: 10px; }
+            QLabel#WorkflowPanelHint { color: #747E78; font-size: 11px; }
             QLabel#WorkflowScopeIcon {
                 background: #FFFDF8;
                 border: 1px solid #D0D8D2;
@@ -6635,8 +7360,8 @@ class MainWindow(QMainWindow):
                 border: 1px solid #DBD4C9;
                 border-radius: 5px;
             }
-            QLabel#WorkflowDeliveryTitle { color: #33413B; font-size: 10px; font-weight: 720; }
-            QLabel#WorkflowDeliveryDetail { color: #888E8A; font-size: 8px; }
+            QLabel#WorkflowDeliveryTitle { color: #33413B; font-size: 11px; font-weight: 720; }
+            QLabel#WorkflowDeliveryDetail { color: #808783; font-size: 9px; }
 
             QFrame#ShowcaseHero {
                 background: #E1E9E3;
@@ -6647,10 +7372,10 @@ class MainWindow(QMainWindow):
             QLabel#ShowcaseTitle {
                 color: #25483F;
                 font-family: "Noto Serif SC", "SimSun";
-                font-size: 27px;
+                font-size: 30px;
                 font-weight: 760;
             }
-            QLabel#ShowcaseSubtitle { color: #62726B; font-size: 11px; }
+            QLabel#ShowcaseSubtitle { color: #62726B; font-size: 12px; }
             QFrame#ShowcasePreviewStage {
                 background: #FFFDF8;
                 border: 1px solid #CCD6CF;
@@ -6679,7 +7404,7 @@ class MainWindow(QMainWindow):
                 border-radius: 7px;
             }
 
-            QLabel#DetailTitle { color: #27332E; font-size: 18px; font-weight: 750; }
+            QLabel#DetailTitle { color: #27332E; font-size: 20px; font-weight: 750; }
             QLabel#InfoLabel { color: #858C88; font-size: 10px; }
             QLabel#InfoValue { color: #33413B; font-weight: 700; }
             QFrame#OutputsSummaryBand {
@@ -6690,28 +7415,135 @@ class MainWindow(QMainWindow):
             QLabel#OutputsSummaryTitle {
                 color: #33413B;
                 font-family: "Noto Serif SC", "SimSun";
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: 730;
             }
             QFrame#OutputsMetric { border-left: 1px solid #D0C7BB; }
             QLabel#OutputsMetricValue {
                 color: #2F6658;
                 font-family: "Noto Serif SC", "SimSun";
-                font-size: 17px;
+                font-size: 19px;
                 font-weight: 750;
             }
             QLabel#OutputsMetricLabel { color: #737C77; font-size: 9px; }
             QLabel#TaskKicker { color: #8B918D; font-size: 10px; font-weight: 650; }
-            QLabel#TaskTitle { color: #27342E; font-size: 16px; font-weight: 750; }
-            QLabel#TaskBody { color: #66716B; font-size: 11px; }
+            QLabel#TaskTitle { color: #27342E; font-size: 18px; font-weight: 750; }
+            QLabel#TaskBody { color: #66716B; font-size: 12px; }
             QLabel#StatLabel { color: #707A75; font-size: 11px; font-weight: 650; }
             QLabel#StatValue {
                 color: #2D6659;
                 font-family: "Noto Serif SC", "SimSun";
-                font-size: 25px;
+                font-size: 27px;
                 font-weight: 750;
             }
             QLabel#StatDetail { color: #969C98; font-size: 9px; }
+
+            QFrame#ApiHeroPanel {
+                background: #E4ECE7;
+                border: 1px solid #C9D8D1;
+                border-radius: 7px;
+            }
+            QLabel#ApiHeroIcon {
+                background: #FFFDF8;
+                border: 1px solid #C7D5CE;
+                border-radius: 7px;
+            }
+            QLabel#ApiHeroKicker { color: #2F7567; font-size: 9px; font-weight: 800; }
+            QLabel#ApiHeroTitle {
+                color: #24483F;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 24px;
+                font-weight: 760;
+            }
+            QLabel#ApiHeroBody { color: #5E7169; font-size: 12px; }
+            QLabel#ApiHeroStatus {
+                background: #FFF7EC;
+                color: #9E5A3D;
+                border: 1px solid #DFC8B8;
+                border-radius: 6px;
+                padding: 7px 11px;
+                font-size: 10px;
+                font-weight: 750;
+            }
+            QLabel#ApiHeroStatus[connected="true"] {
+                background: #F8FBF8;
+                color: #2F7567;
+                border-color: #BFD3C9;
+            }
+            QFrame#ApiCapabilityBand, QFrame#ApiActionBand {
+                background: #EEEAE2;
+                border: 1px solid #D8D0C4;
+                border-radius: 6px;
+            }
+            QLabel#ApiCapabilityTitle { color: #35443D; font-size: 11px; font-weight: 740; }
+            QLabel#ApiCapabilityValue { color: #7A837E; font-size: 9px; }
+            QFrame#ApiCapabilityDivider { background: #D4CCC0; border: 0; }
+            QFrame#ApiConfigCard {
+                background: #FFFDF8;
+                border: 1px solid #DCD5CA;
+                border-radius: 7px;
+            }
+            QLabel#ApiCardKicker { color: #A9543B; font-size: 9px; font-weight: 800; }
+            QLabel#ApiCardTitle {
+                color: #293831;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 19px;
+                font-weight: 740;
+            }
+            QLabel#ApiCardDescription { color: #68736D; font-size: 11px; }
+            QLabel#ApiFieldLabel { color: #48564F; font-size: 10px; font-weight: 720; }
+            QLabel#ApiFieldHint { color: #959A97; font-size: 8px; }
+            QLineEdit#ApiInput, QComboBox#ApiCombo {
+                background: #FAF8F3;
+                color: #29342F;
+                border: 1px solid #D7D0C5;
+                border-radius: 6px;
+                min-height: 35px;
+                padding: 0 10px;
+                selection-background-color: #DCEBE5;
+            }
+            QLineEdit#ApiInput:focus, QComboBox#ApiCombo:focus {
+                background: #FFFDF8;
+                border-color: #6E9C8D;
+            }
+            QComboBox#ApiCombo::drop-down { border: 0; width: 28px; }
+            QFrame#ApiFlowNote {
+                background: #E9F0EC;
+                border: 1px solid #CFDDD5;
+                border-radius: 6px;
+            }
+            QLabel#ApiFlowTitle { color: #315E55; font-size: 11px; font-weight: 750; }
+            QLabel#ApiFlowText { color: #65766E; font-size: 10px; }
+            QLabel#ApiConfigResult { color: #7B6255; font-size: 11px; font-weight: 700; }
+            QLabel#ApiConfigResult[success="true"] { color: #2F7567; }
+            QLabel#ApiConfigPath { color: #949995; font-size: 8px; }
+            QLabel#ApiNextHint { color: #737D77; font-size: 10px; }
+            QFrame#ApiUsagePanel {
+                background: #F8F5EE;
+                border: 1px solid #D9D2C7;
+                border-radius: 7px;
+            }
+            QLabel#ApiUsageTitle {
+                color: #2A3B34;
+                font-family: "Noto Serif SC", "SimSun";
+                font-size: 18px;
+                font-weight: 750;
+            }
+            QLabel#ApiUsageDetail { color: #747E78; font-size: 10px; }
+            QLabel#ApiUsageIcon {
+                background: #FFFDF8;
+                border: 1px solid #D3D4CE;
+                border-radius: 6px;
+            }
+            QLabel#ApiUsageItemTitle { color: #34443D; font-size: 12px; font-weight: 750; }
+            QLabel#ApiUsagePath { color: #7D8581; font-size: 9px; }
+            QLabel#ApiUsageOutput {
+                color: #2F7567;
+                border-top: 1px solid #DCD5CA;
+                padding-top: 7px;
+                font-size: 9px;
+                font-weight: 750;
+            }
 
             QProgressBar#TaskProgress { background: #DFD9CF; border: 0; }
             QProgressBar#TaskProgress::chunk { background: #B9563B; }
@@ -6751,6 +7583,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"app={config.app_name}")
         print(f"model={config.openai_model}")
         print(f"api_key={'yes' if config.has_api_key else 'no'}")
+        print(f"model_api={'yes' if config.has_model_api else 'no'}")
+        print(f"model_api_base={config.openai_base_url}")
+        print(f"model_api_protocol={config.model_api_protocol}")
         print(f"coze_workflow={'yes' if config.has_coze_workflow else 'no'}")
         print(f"coze_workflow_id={config.coze_workflow_id or 'none'}")
         print(f"project_root={scan.project_root}")
