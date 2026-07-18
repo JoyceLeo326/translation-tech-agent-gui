@@ -6,7 +6,7 @@ $ToolRoot = "D:\AI_GUI_DevTools"
 $PyInstallerCache = Join-Path $ToolRoot "pyinstaller-cache"
 $FontData = "$(Join-Path $ProjectRoot 'assets\fonts');assets\fonts"
 $IconData = "$(Join-Path $ProjectRoot 'assets\icons');assets\icons"
-$DistRoot = Join-Path $ProjectRoot "dist\Wenlan"
+$DistRoot = Join-Path $ProjectRoot "dist\CultureTranslate"
 
 New-Item -ItemType Directory -Force -Path $PyInstallerCache | Out-Null
 $env:PYINSTALLER_CONFIG_DIR = $PyInstallerCache
@@ -47,7 +47,7 @@ try {
         --noconfirm `
         --clean `
         --windowed `
-        --name Wenlan `
+        --name CultureTranslate `
         --icon (Join-Path $ProjectRoot "assets\app_icon.ico") `
         --add-data $FontData `
         --add-data $IconData `
@@ -61,7 +61,7 @@ finally {
     Pop-Location
 }
 
-$ExePath = Join-Path $ProjectRoot "dist\Wenlan\Wenlan.exe"
+$ExePath = Join-Path $ProjectRoot "dist\CultureTranslate\CultureTranslate.exe"
 if (-not (Test-Path $ExePath)) {
     throw "Build failed. Missing $ExePath"
 }
@@ -107,7 +107,7 @@ Copy-FileIfExists (Join-Path $ProjectRoot ".env.example") (Join-Path $DistRoot "
 Copy-DirIfExists (Join-Path $ProjectRoot "collaboration") $SnapshotRoot
 
 $ReleaseRoot = Join-Path $ToolRoot "releases"
-$ReleaseArchive = Join-Path $ReleaseRoot "Wenlan-v1.0.0-windows-x64.zip"
+$ReleaseArchive = Join-Path $ReleaseRoot "CultureTranslate-v1.1.0-windows-x64.zip"
 New-Item -ItemType Directory -Force -Path $ReleaseRoot | Out-Null
 & $VenvPython (Join-Path $PSScriptRoot "package_release.py") --source $DistRoot --output $ReleaseArchive
 if ($LASTEXITCODE -ne 0) {

@@ -1,0 +1,42 @@
+[
+  {
+    "case": "测试1",
+    "passed": true,
+    "review_rows": 135,
+    "matched_items": 133,
+    "replaced_xml_blocks": 79,
+    "output": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\integration\\final_outputs\\generated\\DOCX样例_测试1_20260718_174545.docx"
+  },
+  {
+    "case": "测试2",
+    "passed": true,
+    "review_rows": 35,
+    "matched_items": 35,
+    "replaced_xml_blocks": 11,
+    "output": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\integration\\final_outputs\\generated\\DOCX样例_测试2_20260718_174546.docx"
+  },
+  {
+    "case": "测试3",
+    "passed": true,
+    "review_rows": 18,
+    "matched_items": 18,
+    "replaced_xml_blocks": 6,
+    "output": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\integration\\final_outputs\\generated\\DOCX样例_测试3_20260718_174546.docx"
+  },
+  {
+    "case": "测试4",
+    "passed": true,
+    "review_rows": 20,
+    "matched_items": 20,
+    "replaced_xml_blocks": 7,
+    "output": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\integration\\final_outputs\\generated\\DOCX样例_测试4_20260718_174546.docx"
+  },
+  {
+    "case": "测试5",
+    "passed": true,
+    "review_rows": 19,
+    "matched_items": 19,
+    "replaced_xml_blocks": 8,
+    "output": "D:\\整理后的文件_2026-05-24\\04_比赛活动资料\\翻译技术大赛\\agent_gui_starter\\collaboration\\integration\\final_outputs\\generated\\DOCX样例_测试5_20260718_174546.docx"
+  }
+]

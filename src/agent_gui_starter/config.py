@@ -36,7 +36,7 @@ def load_config() -> AppConfig:
             load_dotenv(env_file, override=False)
 
     return AppConfig(
-        app_name="文澜 · 中国文化多模态外译",
+        app_name="中华文化智译 · 多模态外译工作台",
         openai_api_key=_blank_to_none(os.getenv("OPENAI_API_KEY")),
         openai_model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
         openai_organization=_blank_to_none(os.getenv("OPENAI_ORGANIZATION")),

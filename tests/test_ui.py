@@ -28,7 +28,7 @@ class WorkbenchUITests(unittest.TestCase):
         self.app.processEvents()
 
     def test_primary_pages_and_brand_asset_are_available(self) -> None:
-        self.assertEqual(len(self.window._nav_buttons), 6)
+        self.assertEqual(len(self.window._nav_buttons), 7)
         self.assertEqual(self.window._group_cards, {})
         self.assertEqual(self.window._stack.count(), 7)
         self.assertFalse(make_brand_icon().isNull())
@@ -47,13 +47,24 @@ class WorkbenchUITests(unittest.TestCase):
         self.assertEqual(len(quick_actions), 4)
         self.assertEqual(
             {button.text() for button in quick_actions},
-            {"图片", "Word 文档", "音频或视频", "粘贴一段文字"},
+            {
+                "翻译图片\n识别图中文字并生成英文",
+                "翻译 Word\n保留原版式导出英文文档",
+                "翻译音视频\n生成审校表与英文配音",
+                "翻译文字\n粘贴内容直接得到英文",
+            },
+        )
+        self.assertEqual(
+            {button.property("accent") for button in quick_actions},
+            {"coral", "blue", "jade", "violet"},
         )
 
     def test_coze_entry_opens_coze_workflow_mode(self) -> None:
         self.window._handle_task_action("agent:coze")
         self.assertEqual(self.window._current_page_key, "agent")
         self.assertEqual(self.window._agent_modes.checkedButton().property("mode"), "coze_workflow")
+        self.assertEqual(self.window._agent_mode_title.text(), "多模型精译（扣子）")
+        self.assertIn("18 个节点", self.window._agent_mode_proof.text())
         self.assertTrue(self.window._agent_title.placeholderText())
 
     def test_action_controls_have_pointer_and_busy_feedback(self) -> None:
@@ -66,7 +77,7 @@ class WorkbenchUITests(unittest.TestCase):
         self.assertEqual(self.window._agent_run_button.text(), "生成中…")
         self.assertTrue(self.window._progress.isVisible())
         self.window._set_busy(False)
-        self.assertEqual(self.window._top_run_button.text(), "选择文件")
+        self.assertEqual(self.window._top_run_button.text(), "导入文件")
         self.assertEqual(self.window._agent_run_button.text(), "生成译文")
 
     def test_overview_reflows_without_horizontal_scrolling(self) -> None:
@@ -91,6 +102,16 @@ class WorkbenchUITests(unittest.TestCase):
         self.assertIn("开始现场演示", buttons)
         self.assertIn("审校表", buttons)
         self.assertIn("英文配音", buttons)
+        self.assertIn("查看流程演示", buttons)
+
+    def test_coze_mode_has_a_token_free_explainable_demo(self) -> None:
+        self.window._switch_page("agent")
+        self.window._show_coze_demo()
+        output = self.window._agent_output.raw_text()
+        self.assertIn("多模型精译流程演示", output)
+        self.assertIn("18 个节点", output)
+        self.assertIn("未发起网络请求", output)
+        self.assertIn("Dragon Boat Festival", output)
 
     def test_term_search_can_feed_agent_constraints(self) -> None:
         self.window._term_search.setText("孔子")

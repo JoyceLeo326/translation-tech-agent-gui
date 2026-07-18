@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-07-18T17:10:50",
+  "generated_at": "2026-07-18T17:59:23",
   "passed": true,
   "file_count": 81,
-  "total_size_bytes": 116463063,
+  "total_size_bytes": 116463047,
   "channels": [
     "01_图文翻译",
     "02_术语与风格",

@@ -1,20 +1,20 @@
-# 文澜｜中国文化多模态外译工作台
+# 中华文化智译｜多模态外译工作台
 
-![文澜品牌标识](assets/brand_lockup.png)
+![中华文化智译品牌标识](assets/brand_lockup.png)
 
-“文澜”是一款面向中国文化图文、文字、Word 与音视频资源的 Windows 桌面工具。第一次使用不需要了解项目结构，也不需要先配置复杂参数：把文件拖进首页，程序会自动判断素材类型，并带用户完成内容提取、译文确认和成品导出。
+“中华文化智译”是一款面向中国文化图文、文字、Word 与音视频资源的 Windows 桌面工具。第一次使用不需要了解项目结构，也不需要先配置复杂参数：把文件拖进首页，程序会自动判断素材类型，并带用户完成内容提取、译文确认和成品导出。
 
 ## 直接使用
 
-Windows 发布包建议解压到较短路径（例如 `D:\CultureWorkbench`），避免 Windows 对深层素材目录的传统路径长度限制。解压后运行：
+Windows 发布包建议解压到较短路径（例如 `D:\CultureTranslate`），避免 Windows 对深层素材目录的传统路径长度限制。解压后运行：
 
 ```text
-Wenlan\Wenlan.exe
+CultureTranslate\CultureTranslate.exe
 ```
 
 打开程序后只需要按三步操作：
 
-1. 把图片、Word、音频或视频拖到“开始”页，也可以点击“选择文件”。
+1. 把图片、Word、音频或视频拖到“开始”页，也可以点击“从电脑选择”。
 2. 按页面上从左到右的编号按钮处理并确认译文；不满足条件的按钮会自动保持不可点击。
 3. 在“我的成品”双击打开最终 Word、表格、英文音频和验收记录。
 
@@ -25,7 +25,7 @@ Wenlan\Wenlan.exe
 3. **音视频**：识别内容并生成逐句确认表；确认后使用 Windows 本地英文语音生成 WAV、朗读文本和二维码。
 4. **查看全部文件**：检索并双击打开完整整合资源；原协作来源只保留在内部路径中用于追溯。
 
-首页的“打开完整示例”会连接真实 Word、译文确认表、测试音频与终版音频表格，可以直接运行回填和语音生成。“作品展示”集中呈现真实翻译页面、核心成果数字和可现场打开的审校表、配音及验收记录，便于比赛演示。
+首页的“一键体验完整示例”会连接真实 Word、译文确认表、测试音频与终版音频表格，可以直接运行回填和语音生成。“看成果”集中呈现真实翻译页面、核心成果数字和可现场打开的审校表、配音及验收记录，便于比赛演示。
 
 ## 已完成内容
 
@@ -33,7 +33,7 @@ Wenlan\Wenlan.exe
 - 术语与风格：212 条基础文化术语，另有 40 条带官方来源链接的文化补充语料；加载时按中文术语去重，共 251 条可检索约束。
 - DOCX：正文、表格、页眉和页脚提取；标准审校表；人工审核优先、机器译文兜底；XML 级回填与覆盖报告。
 - 音视频：在线语音识别入口、逐句审校表、智能翻译、本地 Windows 英文语音合成、朗读文本与二维码。
-- 智能翻译：OpenAI 单次调用、三步翻译流程和扣子工作流入口。
+- 智能翻译：OpenAI 快速翻译、三步精译，以及可解释的扣子多模型精译流程。
 - 交付：完整资源随 EXE 分发，统一成品区按任务通道整理，并提供 Excel/JSON 资源索引与 SHA256。
 
 ## 统一成品区
@@ -55,13 +55,13 @@ collaboration\integration\final_outputs\ready_to_use\
 
 ![小白友好的开始页](docs/screenshots/workbench-overview.png)
 
-![比赛作品展示](docs/screenshots/workbench-showcase.png)
+![完整成果与扣子工作流亮点](docs/screenshots/workbench-showcase.png)
 
 ![文件翻译](docs/screenshots/workbench-production.png)
 
 其他页面：
 
-- [文字翻译与扣子工作流](docs/screenshots/workbench-agent.png)
+- [文字翻译与扣子多模型精译演示](docs/screenshots/workbench-agent.png)
 - [文化术语库](docs/screenshots/workbench-terms.png)
 - [统一工作流](docs/screenshots/workbench-workflow.png)
 - [我的成品](docs/screenshots/workbench-outputs.png)
@@ -78,6 +78,10 @@ COZE_WORKFLOW_ID=7661678571702747178
 ```
 
 密钥只从本机环境读取，不写入仓库和发布包。未配置在线通道时，本地生产功能仍可直接使用；需要联网的按钮会明确提示缺少配置，不会伪造模型结果。
+
+### 扣子多模型精译是什么
+
+“多模型精译（扣子）”不是单次提示词调用，而是一套已校验的 18 节点、28 连接工作流：先提取文化术语和目标文体，再由 Kimi、DeepSeek、豆包分别初译并交叉评估，最后由 GLM 融合终稿。未配置 Token 时，界面会基于仓库中的真实工作流结构展示离线演示；配置后同一按钮直接运行线上流程。
 
 ## 本地开发
 
@@ -104,7 +108,7 @@ Windows EXE 打包：
 打包结果：
 
 ```text
-dist\Wenlan\Wenlan.exe
+dist\CultureTranslate\CultureTranslate.exe
 ```
 
 打包脚本会复制完整 `collaboration\`，不会再只带说明文件或空目录。
@@ -124,7 +128,7 @@ dist\Wenlan\Wenlan.exe
 ## 当前验收基线
 
 - 25 项交付与数据完整性检查全部通过。
-- 21 项单元、工作流、界面与本地语音合成测试全部通过。
+- 22 项单元、工作流、界面与本地语音合成测试全部通过。
 - 五套 DOCX 样例已重新执行回填，失败 XML 为 0。
 - 219 句终版审校文本已在本机生成完整 WAV、朗读文本和二维码。
 - 图文终版的媒体数量、SVG 数量、17 页渲染和 SHA256 均已校验。

@@ -96,13 +96,13 @@ DISPLAY_FONT_FAMILY = "Noto Sans SC"
 SIDEBAR_WIDTH = 256
 _FONTS_CONFIGURED = False
 PAGE_META = {
-    "overview": ("开始", "选择文件，开始一次翻译"),
-    "production": ("文件翻译", "图片、Word 和音视频"),
-    "agent": ("文字翻译", "粘贴文字并生成自然英文"),
-    "terms": ("术语库", "统一文化术语译法"),
+    "overview": ("开始", "拖入素材，系统自动选择处理流程"),
+    "production": ("翻译文件", "图片、Word 和音视频"),
+    "agent": ("翻译文字", "快速翻译、精译与多模型精译"),
+    "terms": ("查文化术语", "统一文化术语译法"),
     "workflow": ("批量处理", "一次处理多个素材"),
-    "showcase": ("作品展示", "查看完整能力与真实成品"),
-    "outputs": ("我的成品", "查看已生成的文件"),
+    "showcase": ("看完整成果", "查看完整能力与真实成品"),
+    "outputs": ("找成品", "查看已生成的文件"),
 }
 
 
@@ -159,8 +159,10 @@ def make_brand_icon(size: int = 64) -> QIcon:
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     padding = max(1, int(size * 0.04))
-    painter.setBrush(QColor("#20312B"))
-    painter.setPen(Qt.PenStyle.NoPen)
+    border_pen = QPen(QColor("#C6DDD4"), max(1.0, size * 0.018))
+    border_pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+    painter.setPen(border_pen)
+    painter.setBrush(QColor("#FFF9EF"))
     painter.drawRoundedRect(
         padding,
         padding,
@@ -172,13 +174,13 @@ def make_brand_icon(size: int = 64) -> QIcon:
     painter.setBrush(Qt.BrushStyle.NoBrush)
     stroke = max(1.6, size * 0.055)
 
-    # Two joined pages form a flowing bridge: source on the left, translation on the right.
+    # Two joined pages and a forward flow keep the mark legible without a dark tile.
     left_page = QPainterPath()
     left_page.moveTo(size * 0.50, size * 0.73)
     left_page.cubicTo(size * 0.43, size * 0.66, size * 0.34, size * 0.64, size * 0.23, size * 0.68)
     left_page.lineTo(size * 0.23, size * 0.32)
     left_page.cubicTo(size * 0.34, size * 0.28, size * 0.43, size * 0.31, size * 0.50, size * 0.40)
-    left_pen = QPen(QColor("#7FC2AC"), stroke)
+    left_pen = QPen(QColor("#4BA58E"), stroke)
     left_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
     left_pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
     painter.setPen(left_pen)
@@ -189,7 +191,7 @@ def make_brand_icon(size: int = 64) -> QIcon:
     right_page.cubicTo(size * 0.57, size * 0.66, size * 0.66, size * 0.64, size * 0.77, size * 0.68)
     right_page.lineTo(size * 0.77, size * 0.32)
     right_page.cubicTo(size * 0.66, size * 0.28, size * 0.57, size * 0.31, size * 0.50, size * 0.40)
-    right_pen = QPen(QColor("#FFF9ED"), stroke)
+    right_pen = QPen(QColor("#F09B73"), stroke)
     right_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
     right_pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
     painter.setPen(right_pen)
@@ -198,22 +200,12 @@ def make_brand_icon(size: int = 64) -> QIcon:
     flow = QPainterPath()
     flow.moveTo(size * 0.34, size * 0.50)
     flow.cubicTo(size * 0.43, size * 0.45, size * 0.56, size * 0.56, size * 0.67, size * 0.49)
-    flow_pen = QPen(QColor("#E9A15F"), max(1.2, size * 0.035))
+    flow_pen = QPen(QColor("#6D9FB2"), max(1.2, size * 0.035))
     flow_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
     painter.setPen(flow_pen)
     painter.drawPath(flow)
-
-    painter.setPen(Qt.PenStyle.NoPen)
-    painter.setBrush(QColor("#E9A15F"))
-    seal_size = max(3, int(size * 0.095))
-    painter.drawRoundedRect(
-        int(size * 0.70),
-        int(size * 0.19),
-        seal_size,
-        seal_size,
-        max(1, int(size * 0.018)),
-        max(1, int(size * 0.018)),
-    )
+    painter.drawLine(int(size * 0.60), int(size * 0.43), int(size * 0.67), int(size * 0.49))
+    painter.drawLine(int(size * 0.60), int(size * 0.55), int(size * 0.67), int(size * 0.49))
     painter.end()
     return QIcon(pixmap)
 
@@ -713,16 +705,16 @@ class StartDropZone(QFrame):
         icon.setObjectName("DropIcon")
         icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon.setFixedSize(58, 58)
-        icon.setPixmap(make_icon("folder-open", "#2F6658", 27).pixmap(27, 27))
+        icon.setPixmap(make_icon("folder-open", "#5D8FA4", 27).pixmap(27, 27))
 
-        title = QLabel("把文件拖到这里")
+        title = QLabel("把文件放进来，系统会自动选择处理方式")
         title.setObjectName("DropTitle")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitle = QLabel("图片、Word、音频和视频都可以")
+        subtitle = QLabel("支持图片、Word、音频和视频")
         subtitle.setObjectName("DropSubtitle")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        browse = QPushButton("选择文件")
+        browse = QPushButton("从电脑选择")
         browse.setObjectName("DropBrowseButton")
         browse.setIcon(make_icon("plus", "#FFFFFF", 17))
         browse.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -826,7 +818,7 @@ class MainWindow(QMainWindow):
         logo = QLabel()
         logo.setPixmap(make_brand_icon(46).pixmap(46, 46))
         logo.setFixedSize(46, 46)
-        brand_title = QLabel("文澜")
+        brand_title = QLabel("中华文化智译")
         brand_title.setObjectName("BrandTitle")
         brand_subtitle = QLabel("中国文化多模态外译")
         brand_subtitle.setObjectName("BrandSubtitle")
@@ -855,18 +847,18 @@ class MainWindow(QMainWindow):
         self._nav_group = QButtonGroup(self)
         self._nav_group.setExclusive(True)
         nav_items = [
-            ("overview", "工作台", "layout-dashboard"),
-            ("production", "新建翻译", "clipboard-check"),
-            ("agent", "智能翻译", "bot"),
-            ("terms", "术语库", "book-open"),
+            ("overview", "开始", "layout-dashboard"),
+            ("production", "翻译文件", "clipboard-check"),
+            ("agent", "翻译文字", "bot"),
+            ("terms", "查术语", "book-open"),
             ("workflow", "批量处理", "route"),
-            ("outputs", "成品中心", "package-check"),
+            ("outputs", "找成品", "package-check"),
         ]
         for key, text, icon_name in nav_items:
             button = QPushButton(text)
             button.setObjectName("NavButton")
             button.setCheckable(True)
-            button.setIcon(make_icon(icon_name, "#8D96A8", selected_color="#72A4FF"))
+            button.setIcon(make_icon(icon_name, "#6F8F85", selected_color="#2F7D69"))
             button.setIconSize(QSize(18, 18))
             button.clicked.connect(lambda checked=False, page=key: self._switch_page(page))
             self._nav_group.addButton(button)
@@ -938,7 +930,7 @@ class MainWindow(QMainWindow):
         logo = QLabel()
         logo.setPixmap(make_brand_icon(36).pixmap(36, 36))
         logo.setFixedSize(36, 36)
-        product_name = QLabel("文澜")
+        product_name = QLabel("中华文化智译")
         product_name.setObjectName("TopBrand")
         self._page_title = QLabel(PAGE_META["overview"][0])
         self._page_title.setObjectName("TopContext")
@@ -960,11 +952,12 @@ class MainWindow(QMainWindow):
         self._nav_group.setExclusive(True)
         nav_items = (
             ("overview", "开始"),
-            ("production", "文件翻译"),
-            ("agent", "文字翻译"),
-            ("terms", "术语库"),
-            ("showcase", "作品展示"),
-            ("outputs", "我的成品"),
+            ("production", "翻译文件"),
+            ("agent", "翻译文字"),
+            ("terms", "查术语"),
+            ("workflow", "批量处理"),
+            ("showcase", "看成果"),
+            ("outputs", "找成品"),
         )
         navigation = QHBoxLayout()
         navigation.setContentsMargins(0, 0, 0, 0)
@@ -993,7 +986,7 @@ class MainWindow(QMainWindow):
         output_button.setToolTip("打开成品文件夹")
         output_button.clicked.connect(self._open_output_dir)
 
-        self._top_run_button = QPushButton("选择文件")
+        self._top_run_button = QPushButton("导入文件")
         self._top_run_button.setObjectName("TopPrimaryButton")
         self._top_run_button.setIcon(make_icon("plus", "#FFFFFF"))
         self._top_run_button.clicked.connect(lambda: self._choose_start_file())
@@ -1030,14 +1023,14 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(44, 38, 44, 44)
         layout.setSpacing(18)
 
-        eyebrow = QLabel("文澜 · 中国文化多模态外译")
+        eyebrow = QLabel("中华文化智译 · 多模态外译工作台")
         eyebrow.setObjectName("StartEyebrow")
         eyebrow.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title = QLabel("今天想翻译什么？")
+        title = QLabel("把中国文化内容翻译成自然英文")
         title.setObjectName("StartTitle")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setWordWrap(True)
-        subtitle = QLabel("选择一个文件，系统会帮你提取内容、生成译文并整理成品。\n你只需要在导出前检查一遍。")
+        subtitle = QLabel("图片、Word、音视频和文字都可以处理。\n选好任务后，页面会一步一步带你完成。")
         subtitle.setObjectName("StartSubtitle")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitle.setWordWrap(True)
@@ -1053,31 +1046,58 @@ class MainWindow(QMainWindow):
         add_surface_shadow(self._start_drop_zone, blur=30, y_offset=8, alpha=18)
         layout.addWidget(self._start_drop_zone)
 
-        choice_label = QLabel("也可以直接选择")
+        choice_label = QLabel("你现在想处理什么？")
         choice_label.setObjectName("ChoiceLabel")
         choice_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(choice_label)
 
         choices = QHBoxLayout()
         choices.setSpacing(10)
-        for text, icon_name, kind in (
-            ("图片", "image", "image"),
-            ("Word 文档", "file-text", "docx"),
-            ("音频或视频", "audio-lines", "audio"),
+        for text, icon_name, kind, accent, color in (
+            ("翻译图片\n识别图中文字并生成英文", "image", "image", "coral", "#D97955"),
+            ("翻译 Word\n保留原版式导出英文文档", "file-text", "docx", "blue", "#5B83B8"),
+            ("翻译音视频\n生成审校表与英文配音", "audio-lines", "audio", "jade", "#3E8D7B"),
         ):
             button = QPushButton(text)
             button.setObjectName("QuickStartButton")
-            button.setIcon(make_icon(icon_name, "#33423D", 19))
+            button.setProperty("accent", accent)
+            button.setIcon(make_icon(icon_name, color, 19))
             button.setIconSize(QSize(19, 19))
             button.clicked.connect(lambda checked=False, target=kind: self._choose_start_file(target))
             choices.addWidget(button, 1)
-        text_button = QPushButton("粘贴一段文字")
+        text_button = QPushButton("翻译文字\n粘贴内容直接得到英文")
         text_button.setObjectName("QuickStartButton")
-        text_button.setIcon(make_icon("languages", "#33423D", 19))
+        text_button.setProperty("accent", "violet")
+        text_button.setIcon(make_icon("languages", "#846FA9", 19))
         text_button.setIconSize(QSize(19, 19))
         text_button.clicked.connect(lambda: self._open_text_translation())
         choices.addWidget(text_button, 1)
         layout.addLayout(choices)
+
+        outcome = QFrame()
+        outcome.setObjectName("OutcomeBand")
+        outcome_layout = QHBoxLayout(outcome)
+        outcome_layout.setContentsMargins(18, 11, 18, 11)
+        outcome_layout.setSpacing(14)
+        outcome_title = QLabel("你最终会拿到")
+        outcome_title.setObjectName("OutcomeTitle")
+        outcome_layout.addWidget(outcome_title)
+        for icon_name, text, color in (
+            ("clipboard-check", "中英审校表", "#3E8D7B"),
+            ("file-text", "保留版式的 Word", "#5B83B8"),
+            ("audio-lines", "可播放英文配音", "#846FA9"),
+            ("package-check", "完整验收记录", "#D97955"),
+        ):
+            item = QLabel(text)
+            item.setObjectName("OutcomeItem")
+            item_layout = QHBoxLayout()
+            icon_label = QLabel()
+            icon_label.setPixmap(make_icon(icon_name, color, 15).pixmap(15, 15))
+            item_layout.addWidget(icon_label)
+            item_layout.addWidget(item)
+            outcome_layout.addLayout(item_layout)
+        outcome_layout.addStretch(1)
+        layout.addWidget(outcome)
 
         first_time = QFrame()
         first_time.setObjectName("FirstTimePanel")
@@ -1086,14 +1106,14 @@ class MainWindow(QMainWindow):
         first_layout.setSpacing(18)
         sample_text = QVBoxLayout()
         sample_text.setSpacing(4)
-        sample_title = QLabel("第一次使用？先打开示例")
+        sample_title = QLabel("不知道从哪里开始？先看一个完整示例")
         sample_title.setObjectName("SampleTitle")
-        sample_description = QLabel("示例已经走完整个流程，可以直接查看译文、版式和英文配音。")
+        sample_description = QLabel("点开就能看到原文、译文、Word 版式和英文配音，不需要先配置密钥。")
         sample_description.setObjectName("SampleDescription")
         sample_description.setWordWrap(True)
-        sample_button = QPushButton("打开完整示例")
+        sample_button = QPushButton("立即体验示例")
         sample_button.setObjectName("SampleButton")
-        sample_button.setIcon(make_icon("play", "#2F6658", 16))
+        sample_button.setIcon(make_icon("play", "#C96F4B", 16))
         sample_button.clicked.connect(self._open_beginner_example)
         sample_text.addWidget(sample_title)
         sample_text.addWidget(sample_description)
@@ -1133,9 +1153,9 @@ class MainWindow(QMainWindow):
         steps_layout.setSpacing(10)
         for index, (step_title, detail) in enumerate(
             (
-                ("选择文件", "拖进来或从电脑选择"),
-                ("检查译文", "术语和格式已自动整理"),
-                ("导出成品", "得到 Word、表格或英文音频"),
+                ("选择素材", "拖进来，或从电脑选择"),
+                ("确认译文", "术语、语气和格式已整理"),
+                ("拿到成品", "下载 Word、表格或英文音频"),
             ),
             start=1,
         ):
@@ -1342,9 +1362,9 @@ class MainWindow(QMainWindow):
         panel.setMinimumHeight(266)
         add_surface_shadow(panel, blur=28, y_offset=7, alpha=34)
 
-        eyebrow = QLabel("WENLAN · CULTURAL TRANSLATION")
+        eyebrow = QLabel("CULTURE TRANSLATE · MULTIMODAL WORKBENCH")
         eyebrow.setObjectName("HeroEyebrow")
-        title = QLabel("文澜：中国文化多模态外译工作台")
+        title = QLabel("中华文化智译：多模态外译工作台")
         title.setObjectName("HeroTitle")
         title.setWordWrap(True)
         subtitle = QLabel(
@@ -1556,7 +1576,7 @@ class MainWindow(QMainWindow):
         intro_layout.addLayout(intro_text, 1)
         example_button = QPushButton("打开示例任务")
         example_button.setObjectName("SecondaryButton")
-        example_button.setIcon(make_icon("clipboard-check", "#344054"))
+        example_button.setIcon(make_icon("clipboard-check", "#4F8274"))
         example_button.clicked.connect(self._load_production_example)
         intro_layout.addWidget(example_button)
         layout.addWidget(intro)
@@ -1661,7 +1681,7 @@ class MainWindow(QMainWindow):
         ):
             button = QPushButton(text)
             button.setObjectName("SecondaryButton")
-            button.setIcon(make_icon(icon_name, "#344054"))
+            button.setIcon(make_icon(icon_name, "#4F8274"))
             button.clicked.connect(lambda checked=False, target=path: self._open_known_path(target))
             image_details.addWidget(button)
         image_details.addStretch(1)
@@ -1703,7 +1723,7 @@ class MainWindow(QMainWindow):
             (self._docx_refill_button, "clipboard-check"),
         ):
             button.setObjectName("PrimaryButton" if button is self._docx_refill_button else "SecondaryButton")
-            button.setIcon(make_icon(icon_name, "#FFFFFF" if button is self._docx_refill_button else "#344054"))
+            button.setIcon(make_icon(icon_name, "#FFFFFF" if button is self._docx_refill_button else "#4F8274"))
             docx_actions.addWidget(button)
             self._busy_controls.append(button)
         self._docx_extract_button.clicked.connect(self._run_docx_extract)
@@ -1751,7 +1771,7 @@ class MainWindow(QMainWindow):
             (self._audio_synthesize_button, "play"),
         ):
             button.setObjectName("PrimaryButton" if button is self._audio_synthesize_button else "SecondaryButton")
-            button.setIcon(make_icon(icon_name, "#FFFFFF" if button is self._audio_synthesize_button else "#344054"))
+            button.setIcon(make_icon(icon_name, "#FFFFFF" if button is self._audio_synthesize_button else "#4F8274"))
             audio_actions.addWidget(button)
             self._busy_controls.append(button)
         self._audio_transcribe_button.clicked.connect(self._run_audio_transcribe)
@@ -1885,16 +1905,50 @@ class MainWindow(QMainWindow):
         for mode, text in (
             ("agent", "快速翻译"),
             ("default_workflow", "精译模式"),
-            ("coze_workflow", "扣子工作流"),
+            ("coze_workflow", "多模型精译（扣子）"),
         ):
             button = QPushButton(text)
             button.setObjectName("SegmentButton")
             button.setCheckable(True)
             button.setProperty("mode", mode)
+            button.clicked.connect(
+                lambda checked=False, selected=mode: self._update_agent_mode_guide(selected)
+            )
             self._agent_modes.addButton(button)
             mode_row.addWidget(button)
         self._agent_modes.buttons()[0].setChecked(True)
         layout.addLayout(mode_row)
+
+        self._agent_mode_guide = QFrame()
+        self._agent_mode_guide.setObjectName("AgentModeGuide")
+        guide_layout = QHBoxLayout(self._agent_mode_guide)
+        guide_layout.setContentsMargins(12, 10, 12, 10)
+        guide_layout.setSpacing(10)
+        self._agent_mode_icon = QLabel()
+        self._agent_mode_icon.setObjectName("AgentModeIcon")
+        self._agent_mode_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._agent_mode_icon.setFixedSize(36, 36)
+        guide_copy = QVBoxLayout()
+        guide_copy.setSpacing(2)
+        self._agent_mode_title = QLabel()
+        self._agent_mode_title.setObjectName("AgentModeTitle")
+        self._agent_mode_detail = QLabel()
+        self._agent_mode_detail.setObjectName("AgentModeDetail")
+        self._agent_mode_detail.setWordWrap(True)
+        self._agent_mode_proof = QLabel()
+        self._agent_mode_proof.setObjectName("AgentModeProof")
+        self._agent_mode_proof.setWordWrap(True)
+        guide_copy.addWidget(self._agent_mode_title)
+        guide_copy.addWidget(self._agent_mode_detail)
+        guide_copy.addWidget(self._agent_mode_proof)
+        self._coze_demo_button = QPushButton("演示这套流程")
+        self._coze_demo_button.setObjectName("GuideAction")
+        self._coze_demo_button.setIcon(make_icon("play", "#3E8D7B", 15))
+        self._coze_demo_button.clicked.connect(self._show_coze_demo)
+        guide_layout.addWidget(self._agent_mode_icon)
+        guide_layout.addLayout(guide_copy, 1)
+        guide_layout.addWidget(self._coze_demo_button)
+        layout.addWidget(self._agent_mode_guide)
 
         self._agent_title = QLineEdit()
         self._agent_title.setObjectName("SearchInput")
@@ -1925,6 +1979,7 @@ class MainWindow(QMainWindow):
         footer.addStretch(1)
         footer.addWidget(self._agent_run_button)
         layout.addLayout(footer)
+        self._update_agent_mode_guide("agent")
         return panel
 
     def _agent_output_panel(self) -> QWidget:
@@ -1967,7 +2022,7 @@ class MainWindow(QMainWindow):
         search_button.clicked.connect(self._search_terms_now)
         self._use_term_button = QPushButton("用于本次翻译")
         self._use_term_button.setObjectName("SecondaryButton")
-        self._use_term_button.setIcon(make_icon("plus", "#344054"))
+        self._use_term_button.setIcon(make_icon("plus", "#4F8274"))
         self._use_term_button.setEnabled(False)
         self._use_term_button.clicked.connect(self._append_selected_term_to_agent)
         search_row.addWidget(self._term_search, 1)
@@ -2110,7 +2165,7 @@ class MainWindow(QMainWindow):
 
         hero_copy = QVBoxLayout()
         hero_copy.setSpacing(9)
-        hero_eyebrow = QLabel("WENLAN  ·  中国文化多模态外译")
+        hero_eyebrow = QLabel("中华文化智译  ·  可直接使用的完整成果")
         hero_eyebrow.setObjectName("ShowcaseEyebrow")
         hero_title = QLabel("让中国文化被准确地\n看见、读懂与听见")
         hero_title.setObjectName("ShowcaseTitle")
@@ -2193,6 +2248,39 @@ class MainWindow(QMainWindow):
             metric_layout.addWidget(detail_label)
             metrics.addWidget(metric, 1)
         layout.addLayout(metrics)
+
+        coze_highlight = QFrame()
+        coze_highlight.setObjectName("CozeHighlight")
+        coze_layout = QHBoxLayout(coze_highlight)
+        coze_layout.setContentsMargins(18, 14, 18, 14)
+        coze_layout.setSpacing(12)
+        coze_icon = QLabel()
+        coze_icon.setObjectName("CozeHighlightIcon")
+        coze_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        coze_icon.setFixedSize(38, 38)
+        coze_icon.setPixmap(make_icon("route", "#4D8E7C", 19).pixmap(19, 19))
+        coze_copy = QVBoxLayout()
+        coze_copy.setSpacing(2)
+        coze_title = QLabel("多模型不是一句提示词，而是一套可检查的翻译流程")
+        coze_title.setObjectName("CozeHighlightTitle")
+        coze_detail = QLabel(
+            "术语提取 → 风格提炼 → Kimi / DeepSeek / 豆包三路初译与互评 → GLM 融合终稿"
+        )
+        coze_detail.setObjectName("CozeHighlightDetail")
+        coze_detail.setWordWrap(True)
+        coze_copy.addWidget(coze_title)
+        coze_copy.addWidget(coze_detail)
+        coze_badge = QLabel("扣子真实配置  ·  18 个节点  ·  28 条连接  ·  图结构校验通过")
+        coze_badge.setObjectName("CozeHighlightBadge")
+        coze_action = QPushButton("查看流程演示")
+        coze_action.setObjectName("CozeHighlightAction")
+        coze_action.setIcon(make_icon("play", "#3E8D7B", 15))
+        coze_action.clicked.connect(self._open_coze_showcase)
+        coze_layout.addWidget(coze_icon)
+        coze_layout.addLayout(coze_copy, 1)
+        coze_layout.addWidget(coze_badge)
+        coze_layout.addWidget(coze_action)
+        layout.addWidget(coze_highlight)
 
         story = QFrame()
         story.setObjectName("ShowcaseStory")
@@ -2285,12 +2373,12 @@ class MainWindow(QMainWindow):
         for label, icon_name, target in evidence_paths:
             button = QPushButton(label)
             button.setObjectName("EvidenceButton")
-            button.setIcon(make_icon(icon_name, "#33423D", 16))
+            button.setIcon(make_icon(icon_name, "#4F8274", 16))
             button.clicked.connect(lambda checked=False, path=target: self._open_known_path(path))
             evidence_layout.addWidget(button)
         workflow_button = QPushButton("运行完整流程")
         workflow_button.setObjectName("EvidenceButton")
-        workflow_button.setIcon(make_icon("route", "#33423D", 16))
+        workflow_button.setIcon(make_icon("route", "#4F8274", 16))
         workflow_button.clicked.connect(lambda: self._switch_page("workflow"))
         evidence_layout.addWidget(workflow_button)
         layout.addWidget(evidence)
@@ -2323,7 +2411,7 @@ class MainWindow(QMainWindow):
         path_row.addLayout(path_text, 1)
         open_button = QPushButton("打开成品文件夹")
         open_button.setObjectName("SecondaryButton")
-        open_button.setIcon(make_icon("folder-open", "#344054"))
+        open_button.setIcon(make_icon("folder-open", "#4F8274"))
         open_button.clicked.connect(self._open_output_dir)
         report_button = QPushButton("整理成品清单")
         report_button.setObjectName("PrimaryButton")
@@ -2545,6 +2633,7 @@ class MainWindow(QMainWindow):
                 if button.property("mode") == "coze_workflow":
                     button.setChecked(True)
                     break
+            self._update_agent_mode_guide("coze_workflow")
             self._agent_input.setFocus()
             return
         if action == "workflow:run":
@@ -2916,8 +3005,8 @@ class MainWindow(QMainWindow):
             )
         else:
             self._agent_state_text.setText(
-                "当前未连接在线翻译。Word 提取、版式回填和英文配音仍可直接使用；"
-                "点击“载入示例”可以先体验完整结果。"
+                "还没有配置在线密钥。Word 回填和英文配音照常可用；"
+                "想先了解多模型精译，可以直接打开扣子的离线演示。"
             )
         self._agent_state_dot.setProperty("connected", online)
         self._agent_state_dot.style().unpolish(self._agent_state_dot)
@@ -2944,11 +3033,90 @@ class MainWindow(QMainWindow):
     def _run_agent(self) -> None:
         checked = self._agent_modes.checkedButton()
         mode = str(checked.property("mode")) if checked is not None else "agent"
+        if mode == "coze_workflow" and not self._config.has_coze_workflow:
+            self._show_coze_demo()
+            return
         title = self._agent_title.text().strip()
         prompt = self._agent_input.toPlainText()
         if title and mode != "coze_workflow":
             prompt = f"标题/来源：{title}\n\n正文/任务：\n{prompt}"
         self._start_job(mode, prompt, title=title)
+
+    def _update_agent_mode_guide(self, mode: str) -> None:
+        guides = {
+            "agent": (
+                "languages",
+                "#3E8D7B",
+                "快速翻译",
+                "适合短句、说明文字和临时内容，直接生成一版自然英文。",
+                "一次模型调用 · 速度最快 · 可继续人工修改",
+            ),
+            "default_workflow": (
+                "clipboard-check",
+                "#6D88B6",
+                "精译模式",
+                "先生成初译，再检查表达和文化信息，最后润色为可读终稿。",
+                "初译 → 自检 → 润色 · 适合正式说明和儿童文学",
+            ),
+            "coze_workflow": (
+                "route",
+                "#E69063",
+                "多模型精译（扣子）",
+                "它会先找出文化术语和文体要求，再让 Kimi、DeepSeek、豆包分别翻译、互相评议，最后由 GLM 合成终稿。",
+                "真实工作流 · 18 个节点 · 28 条连接 · 图结构校验通过",
+            ),
+        }
+        icon_name, color, title, detail, proof = guides.get(mode, guides["agent"])
+        self._agent_mode_icon.setPixmap(make_icon(icon_name, color, 19).pixmap(19, 19))
+        self._agent_mode_title.setText(title)
+        self._agent_mode_detail.setText(detail)
+        self._agent_mode_proof.setText(proof)
+        is_coze = mode == "coze_workflow"
+        self._coze_demo_button.setVisible(is_coze)
+        if is_coze:
+            self._agent_run_button.setText(
+                "运行多模型精译" if self._config.has_coze_workflow else "查看离线演示"
+            )
+        elif mode == "default_workflow":
+            self._agent_run_button.setText("开始精译")
+        else:
+            self._agent_run_button.setText("生成译文")
+
+    def _show_coze_demo(self) -> None:
+        for button in self._agent_modes.buttons():
+            if button.property("mode") == "coze_workflow":
+                button.setChecked(True)
+                break
+        self._update_agent_mode_guide("coze_workflow")
+        self._agent_title.setText("端午节儿童故事")
+        self._agent_input.setPlainText(
+            "端午节这天，孩子们把香囊挂在胸前，和家人一起看龙舟。"
+            "请译成自然、生动、适合儿童朗读的英文。"
+        )
+        self._agent_output.set_output(
+            "# 多模型精译流程演示\n\n"
+            "**演示状态**：根据仓库中的真实扣子工作流配置离线还原，未发起网络请求。\n\n"
+            "## 这套流程做了什么\n\n"
+            "1. **文化术语提取**：识别“端午节、香囊、龙舟”，优先采用术语库中的统一译法。\n"
+            "2. **读者与风格判断**：目标读者是儿童，要求句子短、画面感清楚、适合朗读。\n"
+            "3. **三路独立初译**：Kimi、DeepSeek、豆包分别给出译文，避免单一模型偏差。\n"
+            "4. **交叉评估与辩论**：三路模型比较文化准确性、自然度和儿童语气。\n"
+            "5. **融合终稿**：GLM 汇总术语、风格和互评意见，只输出可供人工审校的英文。\n\n"
+            "## 示例终稿\n\n"
+            "On the Dragon Boat Festival, children wear fragrant sachets and watch the dragon boat races "
+            "with their families.\n\n"
+            "## 可验证证据\n\n"
+            "- 工作流 ID：`7661678571702747178`\n"
+            "- 结构：18 个节点、28 条连接、3 个代码聚合节点\n"
+            "- 校验：起点与终点连通，代码节点样例全部通过\n"
+            "- 知识库：已接入中国文化术语库\n\n"
+            "> 配置扣子 Token 后，“查看离线演示”会变为“运行多模型精译”，直接执行线上工作流。"
+        )
+        self.statusBar().showMessage("已打开扣子多模型精译离线演示", 5000)
+
+    def _open_coze_showcase(self) -> None:
+        self._switch_page("agent")
+        self._show_coze_demo()
 
     def _clear_agent_input(self) -> None:
         self._agent_title.clear()
@@ -3062,8 +3230,13 @@ class MainWindow(QMainWindow):
         for control in self._busy_controls:
             control.setEnabled(not busy)
         self._progress.setVisible(busy)
-        self._top_run_button.setText("处理中…" if busy else "选择文件")
-        self._agent_run_button.setText("生成中…" if busy else "生成译文")
+        self._top_run_button.setText("处理中…" if busy else "导入文件")
+        if busy:
+            self._agent_run_button.setText("生成中…")
+        else:
+            checked = self._agent_modes.checkedButton()
+            current_mode = str(checked.property("mode")) if checked is not None else "agent"
+            self._update_agent_mode_guide(current_mode)
         self._workflow_run_button.setText("批量处理中…" if busy else "开始批量处理")
         if hasattr(self, "_report_button"):
             self._report_button.setToolTip("报告生成中…" if busy else "生成整合报告")
@@ -5060,6 +5233,238 @@ class MainWindow(QMainWindow):
             }
             """
         )
+        self.setStyleSheet(
+            self.styleSheet()
+            + """
+            QLabel#TopBrand {
+                color: #2F7868;
+                font-size: 16px;
+                font-weight: 760;
+            }
+            QPushButton#TopNavButton:checked {
+                color: #2F7868;
+                border-bottom-color: #4BA58E;
+            }
+            QPushButton#TopPrimaryButton, QPushButton#DropBrowseButton,
+            QPushButton#PrimaryButton {
+                background: #3E8D7B;
+                color: #FFFFFF;
+                border-color: #3E8D7B;
+            }
+            QPushButton#TopPrimaryButton:hover, QPushButton#DropBrowseButton:hover,
+            QPushButton#PrimaryButton:hover {
+                background: #347D6D;
+                border-color: #347D6D;
+            }
+            QLabel#StartTitle {
+                color: #315F54;
+                font-size: 35px;
+            }
+            QFrame#StartDropZone {
+                background: #FFFDF9;
+                border: 1px dashed #AFCFC2;
+            }
+            QLabel#DropIcon {
+                background: #E8F4EF;
+                border-color: #CAE2D8;
+            }
+            QLabel#DropTitle { color: #356C5F; }
+            QPushButton#QuickStartButton {
+                background: #FFFDF9;
+                color: #42685E;
+                border: 1px solid #D9E2DD;
+                min-height: 46px;
+                padding: 10px 14px;
+                text-align: left;
+                font-size: 11px;
+                font-weight: 650;
+            }
+            QPushButton#QuickStartButton:hover {
+                background: #F1F8F5;
+                color: #2F7868;
+                border-color: #8DBFAE;
+            }
+            QPushButton#QuickStartButton[accent="coral"] {
+                background: #FFF4ED;
+                color: #9E5539;
+                border-color: #F0D2C2;
+            }
+            QPushButton#QuickStartButton[accent="coral"]:hover {
+                background: #FFEDE2;
+                color: #87432D;
+                border-color: #E7A98B;
+            }
+            QPushButton#QuickStartButton[accent="blue"] {
+                background: #F0F5FB;
+                color: #496D99;
+                border-color: #D4E0EE;
+            }
+            QPushButton#QuickStartButton[accent="blue"]:hover {
+                background: #E8F0F9;
+                color: #375D88;
+                border-color: #9CB7D5;
+            }
+            QPushButton#QuickStartButton[accent="jade"] {
+                background: #EEF7F3;
+                color: #347666;
+                border-color: #D2E6DD;
+            }
+            QPushButton#QuickStartButton[accent="jade"]:hover {
+                background: #E5F3ED;
+                color: #286656;
+                border-color: #91BEAD;
+            }
+            QPushButton#QuickStartButton[accent="violet"] {
+                background: #F5F1F8;
+                color: #715C94;
+                border-color: #E1D8EA;
+            }
+            QPushButton#QuickStartButton[accent="violet"]:hover {
+                background: #EFE8F5;
+                color: #604B84;
+                border-color: #BCA9D0;
+            }
+            QFrame#OutcomeBand {
+                background: #EEF5F7;
+                border: 1px solid #D5E3E8;
+                border-radius: 7px;
+            }
+            QLabel#OutcomeTitle {
+                color: #4D7282;
+                font-size: 10px;
+                font-weight: 750;
+            }
+            QLabel#OutcomeItem {
+                color: #596E77;
+                font-size: 10px;
+                font-weight: 600;
+            }
+            QFrame#FirstTimePanel {
+                background: #FFF4EC;
+                border: 1px solid #F0D6C7;
+            }
+            QLabel#SampleTitle { color: #9B583D; }
+            QLabel#SampleDescription { color: #806C62; }
+            QPushButton#SampleButton {
+                background: #FFFDF9;
+                color: #A45C3D;
+                border: 1px solid #E8C7B5;
+                border-radius: 6px;
+                padding: 7px 11px;
+            }
+            QPushButton#SampleButton:hover {
+                background: #FFFFFF;
+                color: #8C482F;
+                border-color: #D99B7A;
+            }
+            QLabel#StartPreviewPage { border-color: #C9D9D2; }
+            QFrame#AgentModeGuide {
+                background: #F1F7F4;
+                border: 1px solid #D5E7DF;
+                border-radius: 7px;
+            }
+            QLabel#AgentModeIcon {
+                background: #FFFDF9;
+                border: 1px solid #D5E4DE;
+                border-radius: 7px;
+            }
+            QLabel#AgentModeTitle {
+                color: #346E60;
+                font-size: 11px;
+                font-weight: 750;
+            }
+            QLabel#AgentModeDetail {
+                color: #5F746C;
+                font-size: 9px;
+            }
+            QLabel#AgentModeProof {
+                color: #6D8DA1;
+                font-size: 9px;
+                font-weight: 650;
+            }
+            QPushButton#GuideAction, QPushButton#CozeHighlightAction {
+                background: #FFFDF9;
+                color: #347D6D;
+                border: 1px solid #C6DDD4;
+                border-radius: 6px;
+                padding: 7px 10px;
+                font-size: 10px;
+                font-weight: 700;
+            }
+            QPushButton#GuideAction:hover, QPushButton#CozeHighlightAction:hover {
+                background: #FFFFFF;
+                border-color: #89B9A9;
+            }
+            QPushButton#SegmentButton:checked {
+                color: #347D6D;
+                border-color: #91BFAF;
+            }
+            QFrame#ShowcaseHero {
+                background: #E7F2ED;
+                border: 1px solid #C9DED5;
+            }
+            QLabel#ShowcaseEyebrow { color: #3C8A77; }
+            QLabel#ShowcaseTitle { color: #2F6658; }
+            QLabel#ShowcaseSubtitle { color: #657A71; }
+            QPushButton#ShowcasePrimary {
+                background: #EE9B72;
+                color: #FFFFFF;
+                border-color: #EE9B72;
+            }
+            QPushButton#ShowcasePrimary:hover {
+                background: #E78B61;
+                border-color: #E78B61;
+            }
+            QPushButton#ShowcaseSecondary {
+                background: #FFFDF9;
+                color: #347D6D;
+                border-color: #BBD5CA;
+            }
+            QPushButton#ShowcaseSecondary:hover {
+                background: #FFFFFF;
+                border-color: #8DB9AA;
+            }
+            QFrame#ShowcasePreviewStage {
+                background: #FFFDF9;
+                border: 1px solid #C9DDD4;
+            }
+            QLabel#ShowcasePage { border-color: #C6D8D0; }
+            QFrame#CozeHighlight {
+                background: #EEF5F8;
+                border: 1px solid #D2E2E9;
+                border-radius: 8px;
+            }
+            QLabel#CozeHighlightIcon {
+                background: #FFFDF9;
+                border: 1px solid #D0E0E5;
+                border-radius: 7px;
+            }
+            QLabel#CozeHighlightTitle {
+                color: #356E61;
+                font-size: 12px;
+                font-weight: 740;
+            }
+            QLabel#CozeHighlightDetail {
+                color: #637982;
+                font-size: 9px;
+            }
+            QLabel#CozeHighlightBadge {
+                background: #FFFDF9;
+                color: #557E91;
+                border: 1px solid #D1E1E7;
+                border-radius: 6px;
+                padding: 6px 8px;
+                font-size: 9px;
+                font-weight: 650;
+            }
+            QPushButton#TextButton, QPushButton#CardAction {
+                color: #3E8D7B;
+            }
+            QPushButton#TextButton:hover, QPushButton#CardAction:hover {
+                color: #2F6F60;
+            }
+            """
+        )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -5145,8 +5550,8 @@ def main(argv: list[str] | None = None) -> int:
 
     app = QApplication(sys.argv)
     configure_application_fonts(app)
-    app.setApplicationName("文澜")
-    app.setOrganizationName("Wenlan Translation")
+    app.setApplicationName("中华文化智译")
+    app.setOrganizationName("Culture Translate")
     app.setWindowIcon(make_brand_icon())
     window = MainWindow()
     window.show()
