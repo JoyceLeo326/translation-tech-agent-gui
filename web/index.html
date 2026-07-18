@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f1e8" />
+    <meta
+      name="description"
+      content="译述 YISHU：中国文化多模态外译工作台。整合图文、Word、音视频、文化术语和扣子多模型精译流程。"
+    />
+    <meta property="og:title" content="译述 YISHU｜中国文化多模态外译工作台" />
+    <meta
+      property="og:description"
+      content="从素材提取、文化术语约束到人工审校与最终成品导出，一套可直接交付的桌面工作台。"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="./assets/workbench-overview.png" />
+    <title>译述 YISHU｜中国文化多模态外译工作台</title>
+    <link rel="icon" href="./assets/app-icon.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要内容</a>
+
+    <header class="site-header" data-header>
+      <a class="brand" href="#top" aria-label="回到首页">
+        <img src="./assets/app-icon.png" alt="" width="38" height="38" />
+        <span>
+          <strong>译述</strong>
+          <small>YISHU</small>
+        </span>
+      </a>
+      <nav aria-label="主要导航">
+        <a href="#demo">演示</a>
+        <a href="#capabilities">功能</a>
+        <a href="#workflow">流程</a>
+        <a href="#results">成果</a>
+      </nav>
+      <a
+        class="header-download"
+        href="https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.3.0/Yishu-v1.3.0-windows-x64.zip"
+      >
+        <i data-lucide="download" aria-hidden="true"></i>
+        下载 Windows 版
+      </a>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top" aria-labelledby="hero-title">
+        <img class="hero-background" src="./assets/workbench-overview.png" alt="译述工作台开始页面" />
+        <div class="hero-wash" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <p class="eyebrow">CULTURE TRANSLATION STUDIO</p>
+          <h1 id="hero-title">译述 <span>YISHU</span></h1>
+          <p class="hero-tagline">译文字，也译语境。</p>
+          <p class="hero-detail">
+            把图片、Word、音视频、文化术语与智能工作流放进同一条可审校链路，
+            从素材到成品清楚、可控、可追溯。
+          </p>
+          <div class="hero-actions">
+            <button class="primary-action" type="button" data-play-demo>
+              <i data-lucide="play" aria-hidden="true"></i>
+              观看完整演示
+            </button>
+            <a class="secondary-action" href="https://github.com/JoyceLeo326/translation-tech-agent-gui">
+              <i data-lucide="github" aria-hidden="true"></i>
+              查看开源仓库
+            </a>
+          </div>
+          <div class="hero-proof" aria-label="项目状态">
+            <span><i data-lucide="monitor-check" aria-hidden="true"></i> Windows 成品可用</span>
+            <span><i data-lucide="shield-check" aria-hidden="true"></i> 密钥不进入仓库</span>
+            <span><i data-lucide="git-branch" aria-hidden="true"></i> GitHub 公开开源</span>
+          </div>
+        </div>
+        <a class="hero-next" href="#demo" aria-label="继续查看演示">
+          <span>向下了解</span>
+          <i data-lucide="arrow-down" aria-hidden="true"></i>
+        </a>
+      </section>
+
+      <section class="demo-section section" id="demo" aria-labelledby="demo-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">PRODUCT TOUR · 02:25</p>
+            <h2 id="demo-title">先看它如何完成一次外译</h2>
+          </div>
+          <p>
+            从首页开始，依次进入多模态文件、扣子多模型精译、术语库、批量流程与最终导出。
+            讲解与画面均来自真实软件。
+          </p>
+        </div>
+
+        <div class="video-stage">
+          <video
+            data-demo-video
+            controls
+            preload="metadata"
+            poster="./assets/workbench-showcase.png"
+          >
+            <source src="./assets/Yishu-v1.3.0-demo.mp4" type="video/mp4" />
+            当前浏览器不支持视频播放，请使用下方链接下载。
+          </video>
+          <button class="video-cover" type="button" data-play-demo aria-label="播放完整演示">
+            <span class="play-symbol"><i data-lucide="play" aria-hidden="true"></i></span>
+            <span>
+              <strong>播放完整功能演示</strong>
+              <small>中文讲解 · 1920 × 1200 · 2 分 25 秒</small>
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <section class="capabilities section-band" id="capabilities" aria-labelledby="capabilities-title">
+        <div class="section inner">
+          <div class="section-heading compact">
+            <div>
+              <p class="eyebrow">START WITH THE MATERIAL</p>
+              <h2 id="capabilities-title">小白打开，也知道下一步做什么</h2>
+            </div>
+            <p>按真实任务命名入口，不要求使用者理解模型、脚本或项目目录。</p>
+          </div>
+
+          <div class="task-grid">
+            <article class="task-item rust">
+              <span class="task-index">01</span>
+              <i data-lucide="scan-text" aria-hidden="true"></i>
+              <h3>翻译图片</h3>
+              <p>识别图中文字，生成中英对照，并连接图文回填成品。</p>
+              <span class="task-proof">71 条人工审校记录</span>
+            </article>
+            <article class="task-item blue">
+              <span class="task-index">02</span>
+              <i data-lucide="file-text" aria-hidden="true"></i>
+              <h3>翻译 Word</h3>
+              <p>提取正文、表格与页眉页脚，审校后保持原版式回填。</p>
+              <span class="task-proof">5 / 5 份版式实测</span>
+            </article>
+            <article class="task-item green">
+              <span class="task-index">03</span>
+              <i data-lucide="audio-waveform" aria-hidden="true"></i>
+              <h3>翻译音视频</h3>
+              <p>识别、逐句翻译、人工审核，再生成英文配音和二维码。</p>
+              <span class="task-proof">219 句配音生成</span>
+            </article>
+            <article class="task-item gold">
+              <span class="task-index">04</span>
+              <i data-lucide="languages" aria-hidden="true"></i>
+              <h3>精译文字</h3>
+              <p>结合文化术语与儿童文学风格，输出可人工确认的译文。</p>
+              <span class="task-proof">251 条术语约束</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="gallery-section section" aria-labelledby="gallery-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">REAL PRODUCT · REAL DATA</p>
+            <h2 id="gallery-title">每一步都在同一套工作台里</h2>
+          </div>
+          <p>切换标签查看真实界面。图片未经过概念化重绘，展示的就是可下载版本。</p>
+        </div>
+
+        <div class="gallery-tabs" role="tablist" aria-label="软件界面预览">
+          <button class="is-active" type="button" role="tab" aria-selected="true" data-gallery="overview">
+            <i data-lucide="layout-dashboard" aria-hidden="true"></i>开始
+          </button>
+          <button type="button" role="tab" aria-selected="false" data-gallery="production">
+            <i data-lucide="clipboard-check" aria-hidden="true"></i>文件翻译
+          </button>
+          <button type="button" role="tab" aria-selected="false" data-gallery="agent">
+            <i data-lucide="bot" aria-hidden="true"></i>多模型精译
+          </button>
+          <button type="button" role="tab" aria-selected="false" data-gallery="terms">
+            <i data-lucide="book-open" aria-hidden="true"></i>文化术语
+          </button>
+          <button type="button" role="tab" aria-selected="false" data-gallery="workflow">
+            <i data-lucide="route" aria-hidden="true"></i>批量流程
+          </button>
+          <button type="button" role="tab" aria-selected="false" data-gallery="outputs">
+            <i data-lucide="package-check" aria-hidden="true"></i>导出文件
+          </button>
+        </div>
+
+        <figure class="product-frame">
+          <img data-gallery-image src="./assets/workbench-overview.png" alt="译述开始页面" />
+          <figcaption>
+            <span data-gallery-kicker>开始</span>
+            <strong data-gallery-title>把素材交给译述，系统自动进入对应流程</strong>
+            <p data-gallery-description>图片、Word、音频或视频都可以直接选择，完整示例与真实成果在首页即可打开。</p>
+          </figcaption>
+        </figure>
+      </section>
+
+      <section class="workflow-section section-band" id="workflow" aria-labelledby="workflow-title">
+        <div class="section inner workflow-layout">
+          <div class="workflow-copy">
+            <p class="eyebrow">COZE MULTI-MODEL WORKFLOW</p>
+            <h2 id="workflow-title">扣子工作流不是装饰，<br />而是一套可检查的精译流程</h2>
+            <p>
+              先识别文化术语和目标文体，再让 Kimi、DeepSeek、豆包分别初译与互评，
+              最后由 GLM 融合终稿。离线可看完整流程证据，配置安全令牌后可运行线上工作流。
+            </p>
+            <div class="workflow-proof">
+              <span><strong>18</strong> 个节点</span>
+              <span><strong>28</strong> 条连接</span>
+              <span><strong>3</strong> 路独立初译</span>
+            </div>
+          </div>
+
+          <ol class="workflow-steps">
+            <li><span>01</span><div><strong>术语提取</strong><p>从统一术语库读取文化概念的推荐译法。</p></div></li>
+            <li><span>02</span><div><strong>风格判断</strong><p>识别儿童文学读者、语气、节奏与朗读要求。</p></div></li>
+            <li><span>03</span><div><strong>多路初译与互评</strong><p>降低单一模型偏差，比较准确性与自然度。</p></div></li>
+            <li><span>04</span><div><strong>融合终稿</strong><p>输出可进入人工审校表的英文译文。</p></div></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="results-section section" id="results" aria-labelledby="results-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">VERIFIED DELIVERY</p>
+            <h2 id="results-title">不是功能清单，是已经完成的成果</h2>
+          </div>
+          <p>所有资源统一进入成品区，保留人工审校与技术回填记录，可继续修改和追溯。</p>
+        </div>
+
+        <div class="metrics" aria-label="项目成果数据">
+          <div><strong>403</strong><span>统一资源</span></div>
+          <div><strong>251</strong><span>文化术语</span></div>
+          <div><strong>5 / 5</strong><span>Word 实测</span></div>
+          <div><strong>219</strong><span>英文配音句</span></div>
+        </div>
+
+        <div class="result-showcase">
+          <img src="./assets/workbench-showcase.png" alt="译述成果总览页面" />
+          <div>
+            <p class="eyebrow">READY TO USE</p>
+            <h3>最终文档、表格、配音与验收记录集中导出</h3>
+            <ul>
+              <li><i data-lucide="check" aria-hidden="true"></i>图文译文逐条人工审校</li>
+              <li><i data-lucide="check" aria-hidden="true"></i>DOCX 保留原有版式与图片</li>
+              <li><i data-lucide="check" aria-hidden="true"></i>音视频逐句审核并生成英文配音</li>
+              <li><i data-lucide="check" aria-hidden="true"></i>资源索引、哈希与验收状态可追溯</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="final-cta" aria-labelledby="cta-title">
+        <div>
+          <p class="eyebrow">OPEN SOURCE · WINDOWS READY</p>
+          <h2 id="cta-title">现在就可以打开、演示与交付</h2>
+          <p>下载 Windows 完整包，解压后双击 Yishu.exe；也可以前往 GitHub 查看全部源码和交付说明。</p>
+        </div>
+        <div class="cta-actions">
+          <a
+            class="primary-action"
+            href="https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.3.0/Yishu-v1.3.0-windows-x64.zip"
+          >
+            <i data-lucide="download" aria-hidden="true"></i>
+            下载 Windows 完整版
+          </a>
+          <a class="secondary-action light" href="https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/tag/v1.3.0">
+            <i data-lucide="external-link" aria-hidden="true"></i>
+            查看 v1.3.0 发布页
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <a class="brand footer-brand" href="#top">
+        <img src="./assets/app-icon.png" alt="" width="34" height="34" />
+        <span><strong>译述 YISHU</strong><small>中国文化多模态外译工作台</small></span>
+      </a>
+      <p>开源项目 · Python / Qt · Coze Workflow · Vercel</p>
+      <a href="https://github.com/JoyceLeo326/translation-tech-agent-gui" aria-label="前往 GitHub">
+        <i data-lucide="github" aria-hidden="true"></i>
+      </a>
+    </footer>
+
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
