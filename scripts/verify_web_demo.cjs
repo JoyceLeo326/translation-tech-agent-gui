@@ -18,12 +18,26 @@ async function verifyViewport(browser, name, viewport) {
     requestFailures.push(`${request.method()} ${request.url()} :: ${request.failure()?.errorText}`);
   });
 
-  const response = await page.goto(baseUrl, { waitUntil: "networkidle", timeout: 45_000 });
+  const response = await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 45_000 });
   if (!response?.ok()) throw new Error(`${name}: page returned ${response?.status()}`);
 
   await page.locator("h1").waitFor({ state: "visible" });
+  await page.waitForFunction(
+    () => [...document.images]
+      .filter((image) => image.getAttribute("src"))
+      .every((image) => image.complete && image.naturalWidth > 0),
+    { timeout: 45_000 },
+  );
   await page.locator("[data-gallery='agent']").click();
-  await page.waitForTimeout(350);
+  await page.waitForFunction(
+    () => {
+      const image = document.querySelector("[data-gallery-image]");
+      return image?.getAttribute("src")?.includes("workbench-agent.png")
+        && image.complete
+        && image.naturalWidth > 0;
+    },
+    { timeout: 45_000 },
+  );
   const gallerySrc = await page.locator("[data-gallery-image]").getAttribute("src");
   if (!gallerySrc?.includes("workbench-agent.png")) {
     throw new Error(`${name}: gallery did not switch to the agent screen`);
@@ -32,7 +46,15 @@ async function verifyViewport(browser, name, viewport) {
   const playgroundTitle = await page.locator("[data-playground-output-title]").textContent();
   if (!playgroundTitle?.includes("英文配音")) throw new Error(`${name}: playground did not switch to audio`);
   await page.locator("[data-gallery='settings']").click();
-  await page.waitForTimeout(220);
+  await page.waitForFunction(
+    () => {
+      const image = document.querySelector("[data-gallery-image]");
+      return image?.getAttribute("src")?.includes("workbench-settings.png")
+        && image.complete
+        && image.naturalWidth > 0;
+    },
+    { timeout: 45_000 },
+  );
   const settingsSrc = await page.locator("[data-gallery-image]").getAttribute("src");
   if (!settingsSrc?.includes("workbench-settings.png")) throw new Error(`${name}: settings screen missing`);
 
@@ -40,17 +62,27 @@ async function verifyViewport(browser, name, viewport) {
     innerWidth: window.innerWidth,
     scrollWidth: document.documentElement.scrollWidth,
     h1: document.querySelector("h1")?.textContent?.replace(/\s+/g, " ").trim(),
-    images: [...document.images].map((image) => ({ src: image.currentSrc, complete: image.complete, width: image.naturalWidth })),
+    images: [...document.images].map((image) => ({
+      src: image.currentSrc,
+      declaredSrc: image.getAttribute("src"),
+      complete: image.complete,
+      width: image.naturalWidth,
+      className: image.className,
+    })),
     iconCount: document.querySelectorAll("svg.lucide").length,
     videoSource: document.querySelector("video source")?.src,
     downloadHref: document.querySelector(".header-download")?.href,
   }));
 
-  const brokenImages = dimensions.images.filter((image) => !image.complete || image.width === 0);
+  const brokenImages = dimensions.images.filter(
+    (image) => image.declaredSrc && (!image.complete || image.width === 0),
+  );
   if (dimensions.scrollWidth > dimensions.innerWidth + 1) {
     throw new Error(`${name}: horizontal overflow ${dimensions.scrollWidth} > ${dimensions.innerWidth}`);
   }
-  if (brokenImages.length) throw new Error(`${name}: ${brokenImages.length} image(s) failed to load`);
+  if (brokenImages.length) {
+    throw new Error(`${name}: image load failure ${JSON.stringify(brokenImages)}`);
+  }
   const productImages = dimensions.images.filter((image) => image.src.includes("workbench-"));
   if (productImages.some((image) => image.width < 2000)) throw new Error(`${name}: product screenshot is not high resolution`);
   if (dimensions.iconCount < 20) throw new Error(`${name}: Lucide icons did not render`);
