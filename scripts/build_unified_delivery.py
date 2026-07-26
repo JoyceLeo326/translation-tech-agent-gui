@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+import subprocess
+import wave
 import zipfile
 from datetime import datetime
 from pathlib import Path
@@ -22,6 +24,10 @@ def main() -> int:
     terms_source = COLLABORATION / "shared/terminology"
     corpus_source = COLLABORATION / "shared/corpus"
     style_source = COLLABORATION / "groups/B_terms_style/prompts"
+    terms_workflow_source = (
+        COLLABORATION
+        / "groups/B_terms_style/deliverables/workflow_translation_draft_3045"
+    )
     docx_source = (
         COLLABORATION
         / "groups/C_text_audio_translation/deliverables/docx_translation/revised_20260717"
@@ -67,11 +73,19 @@ def main() -> int:
         ),
         (corpus_source, TARGET / "02_术语与风格/官方文化补充语料"),
         (style_source, TARGET / "02_术语与风格/儿童文学风格提示词"),
+        (terms_workflow_source, TARGET / "02_术语与风格/文化术语工作流"),
         (docx_source / "test_cases", TARGET / "03_DOCX翻译/五套完整测试样例"),
         (audio_source / "supplement", TARGET / "04_音视频翻译/完整音频测试与成品"),
+        (audio_source / "README.md", TARGET / "04_音视频翻译/音视频工作流说明.md"),
+        (audio_source / "logs", TARGET / "04_音视频翻译/交付日志"),
     ]
     for source, destination in copy_plan:
         _copy(source, destination)
+    delivery_audio = TARGET / "04_音视频翻译/完整音频测试与成品"
+    _transcode_to_pcm_wav(
+        delivery_audio / "模式二生成总音频.mp3",
+        delivery_audio / "模式二生成总音频.wav",
+    )
     _extract_docx_media(
         image_source / "final_outputs/翻译资源编写-中国文化知识百科_A组更新完整修正版.docx",
         TARGET / "01_图文翻译/已翻译图片资源",
@@ -135,6 +149,66 @@ def _extract_docx_media(source_docx: Path, destination: Path) -> None:
         for member in archive.namelist():
             if member.startswith("word/media/") and not member.endswith("/"):
                 (destination / Path(member).name).write_bytes(archive.read(member))
+
+
+def _transcode_to_pcm_wav(
+    source: Path,
+    destination: Path,
+    *,
+    ffmpeg_executable: str | None = None,
+) -> Path:
+    if not source.is_file() or source.stat().st_size == 0:
+        raise FileNotFoundError(f"Required source audio is missing: {source}")
+    executable = ffmpeg_executable or shutil.which("ffmpeg")
+    if not executable:
+        raise RuntimeError(
+            "FFmpeg is required to create the reproducible PCM WAV delivery asset."
+        )
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    command = [
+        executable,
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-y",
+        "-i",
+        str(source),
+        "-vn",
+        "-acodec",
+        "pcm_s16le",
+        "-ar",
+        "24000",
+        "-ac",
+        "1",
+        str(destination),
+    ]
+    try:
+        subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        detail = (exc.stderr or exc.stdout or str(exc)).strip()
+        raise RuntimeError(f"FFmpeg failed to create delivery WAV: {detail}") from exc
+    if not _is_valid_wav(destination):
+        raise RuntimeError(f"FFmpeg created an invalid PCM WAV: {destination}")
+    return destination
+
+
+def _is_valid_wav(path: Path) -> bool:
+    try:
+        with wave.open(str(path), "rb") as audio:
+            return (
+                audio.getcomptype() == "NONE"
+                and audio.getnchannels() > 0
+                and audio.getsampwidth() > 0
+                and audio.getframerate() > 0
+                and audio.getnframes() > 0
+            )
+    except (EOFError, OSError, wave.Error):
+        return False
 
 
 def _build_catalog() -> list[dict[str, object]]:
@@ -219,7 +293,12 @@ def _write_readme(records: list[dict[str, object]]) -> None:
 def _write_acceptance(records: list[dict[str, object]]) -> None:
     required_channels = {"01_图文翻译", "02_术语与风格", "03_DOCX翻译", "04_音视频翻译"}
     actual_channels = {str(record["任务通道"]) for record in records}
-    wav_files = [record for record in records if str(record["格式"]) == "WAV"]
+    wav_files = [
+        record
+        for record in records
+        if str(record["格式"]) == "WAV"
+        and _is_valid_wav(TARGET / str(record["相对路径"]))
+    ]
     acceptance = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "passed": required_channels.issubset(actual_channels) and bool(wav_files),
