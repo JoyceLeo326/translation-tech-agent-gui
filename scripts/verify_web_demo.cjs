@@ -87,7 +87,7 @@ async function verifyViewport(browser, name, viewport) {
   if (productImages.some((image) => image.width < 2000)) throw new Error(`${name}: product screenshot is not high resolution`);
   if (dimensions.iconCount < 20) throw new Error(`${name}: Lucide icons did not render`);
   if (!dimensions.videoSource?.includes("Yishu-v1.4.0-demo.mp4")) throw new Error(`${name}: video source missing`);
-  if (!dimensions.downloadHref?.includes("Yishu-v1.4.0-windows-x64.zip")) throw new Error(`${name}: download link missing`);
+  if (!dimensions.downloadHref?.includes("Yishu-v1.4.1-windows-x64.zip")) throw new Error(`${name}: download link missing`);
 
   await page.screenshot({ path: path.join(outputDir, `${name}.png`), fullPage: true });
   await page.locator(".video-cover").click();

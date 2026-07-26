@@ -14,6 +14,7 @@ Windows 发布包建议解压到较短路径（例如 `D:\Yishu`），避免 Win
 Yishu\Yishu.exe
 ```
 
+- [下载 Windows v1.4.1 完整版](https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.4.1/Yishu-v1.4.1-windows-x64.zip)
 - [观看完整操作视频（MP4）](https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.4.0/Yishu-v1.4.0-demo.mp4)
 - [打开 Vercel 在线展示页](https://yishu-translation-studio.vercel.app)
 

@@ -108,7 +108,7 @@ Copy-DirIfExists (Join-Path $ProjectRoot "collaboration") $SnapshotRoot
 Copy-DirIfExists (Join-Path $ProjectRoot "docs\architecture") (Join-Path $DistRoot "docs\architecture")
 
 $ReleaseRoot = Join-Path $ToolRoot "releases"
-$ReleaseArchive = Join-Path $ReleaseRoot "Yishu-v1.4.0-windows-x64.zip"
+$ReleaseArchive = Join-Path $ReleaseRoot "Yishu-v1.4.1-windows-x64.zip"
 New-Item -ItemType Directory -Force -Path $ReleaseRoot | Out-Null
 & $VenvPython (Join-Path $PSScriptRoot "package_release.py") --source $DistRoot --output $ReleaseArchive
 if ($LASTEXITCODE -ne 0) {

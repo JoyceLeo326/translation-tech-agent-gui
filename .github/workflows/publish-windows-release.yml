@@ -1,0 +1,99 @@
+name: Publish Windows Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Windows Build run ID
+        required: true
+        type: string
+      tag:
+        description: Release tag
+        required: true
+        type: string
+      target_sha:
+        description: Commit SHA used by the build run
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Download verified Windows artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: Yishu-windows
+          path: release/Yishu
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.run_id }}
+
+      - name: Verify and package release
+        id: package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $exe = Join-Path $PWD "release\Yishu\Yishu.exe"
+          $collaboration = Join-Path $PWD "release\Yishu\collaboration"
+          if (-not (Test-Path -LiteralPath $exe)) {
+            throw "Downloaded artifact does not contain Yishu.exe."
+          }
+          if (-not (Test-Path -LiteralPath $collaboration)) {
+            throw "Downloaded artifact does not contain the collaboration snapshot."
+          }
+
+          $archiveName = "Yishu-${{ inputs.tag }}-windows-x64.zip"
+          $archive = Join-Path $PWD $archiveName
+          Compress-Archive -LiteralPath (Join-Path $PWD "release\Yishu") -DestinationPath $archive -CompressionLevel Optimal
+          if (-not (Test-Path -LiteralPath $archive) -or (Get-Item -LiteralPath $archive).Length -lt 100MB) {
+            throw "Packaged release archive is unexpectedly small."
+          }
+
+          $sha = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          $hashFile = "$archive.sha256"
+          "$sha  $archiveName" | Set-Content -LiteralPath $hashFile -Encoding ascii
+          @"
+          ## 译述 YISHU ${{ inputs.tag }}
+
+          - Windows 桌面工作台与完整协作资源
+          - 未连接模型时不生成替代译文，只显示所需配置与下一步
+          - 统一交付在干净 CI 中生成并通过 25 项验收
+          - 来源提交：${{ inputs.target_sha }}
+          - 构建运行：https://github.com/${{ github.repository }}/actions/runs/${{ inputs.run_id }}
+          - ZIP SHA256：$sha
+          "@ | Set-Content -LiteralPath release-notes.md -Encoding utf8
+
+          "archive=$archive" >> $env:GITHUB_OUTPUT
+          "hash_file=$hashFile" >> $env:GITHUB_OUTPUT
+          "sha256=$sha" >> $env:GITHUB_OUTPUT
+          "archive_size=$((Get-Item -LiteralPath $archive).Length)" >> $env:GITHUB_OUTPUT
+
+      - name: Publish GitHub release
+        shell: pwsh
+        run: |
+          gh release create "${{ inputs.tag }}" `
+            "${{ steps.package.outputs.archive }}" `
+            "${{ steps.package.outputs.hash_file }}" `
+            --repo "${{ github.repository }}" `
+            --target "${{ inputs.target_sha }}" `
+            --title "译述 YISHU ${{ inputs.tag }}" `
+            --notes-file release-notes.md
+
+      - name: Record release evidence
+        shell: pwsh
+        run: |
+          @"
+          ### Published ${{ inputs.tag }}
+
+          - Source run: ${{ inputs.run_id }}
+          - Source commit: ${{ inputs.target_sha }}
+          - Archive bytes: ${{ steps.package.outputs.archive_size }}
+          - SHA256: ${{ steps.package.outputs.sha256 }}
+          "@ >> $env:GITHUB_STEP_SUMMARY

@@ -23,3 +23,6 @@ def test_web_page_uses_product_task_language() -> None:
 
     for phrase in banned_phrases:
         assert phrase not in public_copy
+
+    assert "Yishu-v1.4.1-windows-x64.zip" in public_copy
+    assert "/releases/tag/v1.4.1" in public_copy
