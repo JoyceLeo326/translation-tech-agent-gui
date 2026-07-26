@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import unittest
+from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -96,30 +97,63 @@ class WorkbenchUITests(unittest.TestCase):
         self.assertEqual(self.window._overview_layout_mode, 1)
         self.assertEqual(overview.horizontalScrollBar().maximum(), 0)
 
-    def test_beginner_example_populates_input_and_visible_result(self) -> None:
+    def test_sample_text_is_input_only_until_a_model_runs(self) -> None:
         self.window._switch_page("agent")
         self.window._insert_translation_example()
         self.assertIn("端午节", self.window._agent_input.toPlainText())
-        self.assertIn("Dragon Boat Festival", self.window._agent_output.raw_text())
+        self.assertIn("尚未执行翻译", self.window._agent_output.raw_text())
+        self.assertNotIn("Dragon Boat Festival", self.window._agent_output.raw_text())
 
     def test_showcase_exposes_real_verifiable_outputs(self) -> None:
         self.window._switch_page("showcase")
         self.app.processEvents()
         self.assertEqual(self.window._current_page_key, "showcase")
         buttons = {button.text() for button in self.window.findChildren(QPushButton)}
-        self.assertIn("开始现场演示", buttons)
+        self.assertIn("载入测试素材", buttons)
         self.assertIn("审校表", buttons)
         self.assertIn("英文配音", buttons)
-        self.assertIn("查看流程演示", buttons)
+        self.assertIn("查看工作流配置", buttons)
 
-    def test_coze_mode_has_a_token_free_explainable_demo(self) -> None:
+    def test_coze_mode_shows_verified_configuration_without_fake_result(self) -> None:
         self.window._switch_page("agent")
-        self.window._show_coze_demo()
+        self.window._show_coze_workflow_details()
         output = self.window._agent_output.raw_text()
-        self.assertIn("多模型精译流程演示", output)
+        self.assertIn("多模型精译工作流配置", output)
         self.assertIn("18 个节点", output)
-        self.assertIn("未发起网络请求", output)
-        self.assertIn("Dragon Boat Festival", output)
+        self.assertIn("尚未执行翻译", output)
+        self.assertNotIn("Dragon Boat Festival", output)
+
+    def test_user_facing_source_has_no_demo_meta_narrative(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        public_source = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in (
+                root / "src" / "agent_gui_starter" / "app.py",
+                root / "src" / "agent_gui_starter" / "agent.py",
+                root / "README.md",
+                root / "docs" / "architecture" / "README.md",
+                root / "docs" / "architecture" / "AGENT_ARCHITECTURE.md",
+                root / "docs" / "architecture" / "WORKFLOW_ARCHITECTURE.md",
+                root / "web" / "index.html",
+                root / "web" / "app.js",
+            )
+        )
+        for phrase in (
+            "离线演示",
+            "现场演示",
+            "演示这套流程",
+            "可演示的本地结果",
+            "真实性",
+            "MVP",
+            "BYOK",
+            "0成本",
+            "零成本",
+            "无需登录",
+            "账号稍后",
+            "本地起步",
+            "按需同步",
+        ):
+            self.assertNotIn(phrase, public_source)
 
     def test_term_search_can_feed_agent_constraints(self) -> None:
         self.window._term_search.setText("孔子")
@@ -145,7 +179,7 @@ class WorkbenchUITests(unittest.TestCase):
         self.assertTrue(self.window._docx_review.text().endswith(".xlsx"))
         self.assertTrue(self.window._audio_source.text().endswith("测试音频.mp3"))
         self.assertTrue(self.window._audio_review.text().endswith("模式二生成终版表格.xlsx"))
-        self.assertIn("完整示例已载入", self.window._production_output.raw_text())
+        self.assertIn("测试素材已载入", self.window._production_output.raw_text())
 
     def test_each_workspace_page_renders_nonblank(self) -> None:
         for page_key in ("overview", "production", "agent", "terms", "workflow", "showcase", "outputs", "settings"):

@@ -4,7 +4,7 @@
 
 **译文字，也译语境。**
 
-译述把图片、Word、文化术语和声音放进同一条可审校的外译流程。无需密钥即可演示完整本地生产链；从左下角“模型接口”连接自己的在线或本机模型后，文字、图片、Word、音视频和 Coze 多模型精译会直接执行真实在线处理。
+译述把图片、Word、文化术语和声音放进同一条可审校的外译流程。本机可直接完成文件提取、术语检索、DOCX 回填、资源验收与 Windows 语音合成；翻译新文字、识别图片、转写音频或运行 Coze 工作流前，需要先在左下角“模型接口”连接对应服务。
 
 ## 直接使用
 
@@ -14,10 +14,10 @@ Windows 发布包建议解压到较短路径（例如 `D:\Yishu`），避免 Win
 Yishu\Yishu.exe
 ```
 
-- [观看新版完整功能演示（MP4）](https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.4.0/Yishu-v1.4.0-demo.mp4)
+- [观看完整操作视频（MP4）](https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.4.0/Yishu-v1.4.0-demo.mp4)
 - [打开 Vercel 在线展示页](https://yishu-translation-studio.vercel.app)
 
-演示视频依次展示首页、模型接口、多模态文件翻译、Word 审校回填、音视频外译、Coze 多模型精译、文化术语库、批量流程、成果总览和最终文件导出，并配有中文讲解。
+操作视频依次展示首页、模型接口、多模态文件翻译、Word 审校回填、音视频外译、Coze 多模型精译、文化术语库、批量流程、成果总览和最终文件导出，并配有中文讲解。
 
 打开程序后只需要按三步操作：
 
@@ -25,7 +25,7 @@ Yishu\Yishu.exe
 2. 按页面上从左到右的编号按钮处理并确认译文；不满足条件的按钮会自动保持不可点击。
 3. 在“导出文件”双击打开最终 Word、表格、英文音频和验收记录。
 
-需要真实在线翻译时，只需额外打开左下角“模型接口”，选择 OpenAI、Ollama、LM Studio 或其他兼容服务，填写模型信息后点击“保存并测试”。配置只保存在本机，后续页面会自动使用，无需重复设置。
+需要翻译新内容时，打开左下角“模型接口”，选择 OpenAI、Ollama、LM Studio 或其他兼容服务，填写模型信息后点击“保存并测试”。配置只保存在本机，后续页面会自动使用，无需重复设置。
 
 “翻译文件”包含四个入口：
 
@@ -34,7 +34,7 @@ Yishu\Yishu.exe
 3. **音视频**：在线转写并生成逐句确认表；人工确认后优先使用在线 TTS，服务不支持时回退 Windows 本机语音，同时生成 WAV、朗读文本和二维码。
 4. **查看全部文件**：检索并双击打开完整整合资源；原协作来源只保留在内部路径中用于追溯。
 
-首页的“打开完整示例”会连接真实 Word、译文确认表、测试音频与终版音频表格，可以直接运行回填和语音生成。“成果总览”集中呈现真实翻译页面、核心成果数字和可现场打开的审校表、配音及验收记录，便于比赛演示。
+首页的“载入测试素材”会连接已有 Word、译文确认表、测试音频与终版音频表格，可以直接运行回填和语音生成。“成果总览”集中呈现翻译页面、核心成果数字和可直接打开的审校表、配音及验收记录，便于逐项核验。
 
 ## 已完成内容
 
@@ -70,7 +70,7 @@ collaboration\integration\final_outputs\ready_to_use\
 
 其他页面：
 
-- [文字翻译与 Coze 多模型精译演示](docs/screenshots/workbench-agent.png)
+- [文字翻译与 Coze 多模型精译](docs/screenshots/workbench-agent.png)
 - [文化术语库](docs/screenshots/workbench-terms.png)
 - [统一工作流](docs/screenshots/workbench-workflow.png)
 - [我的成品](docs/screenshots/workbench-outputs.png)
@@ -96,7 +96,7 @@ COZE_WORKFLOW_ID=7661678571702747178
 
 ### Coze 多模型精译是什么
 
-Coze 多模型精译是项目的核心精译能力：一套已校验的 18 节点、28 连接工作流先提取文化术语和目标文体，再由 Kimi、DeepSeek、豆包分别初译并交叉评估，最后由 GLM 融合终稿。未配置 Token 时，界面会根据真实工作流结构展示离线演示；配置后同一入口直接执行线上工作流。
+Coze 多模型精译使用一套已校验的 18 节点、28 连接工作流：先提取文化术语和目标文体，再由 Kimi、DeepSeek、豆包分别初译并交叉评估，最后由 GLM 融合终稿。未配置 Token 时，界面只显示工作流结构、校验依据和连接步骤，不生成译文；配置并测试成功后，同一入口执行线上工作流。
 
 详细设计见 [智能体架构](docs/architecture/AGENT_ARCHITECTURE.md) 和 [工作流架构](docs/architecture/WORKFLOW_ARCHITECTURE.md)。
 
@@ -140,7 +140,7 @@ dist\Yishu\Yishu.exe
 .\.venv\Scripts\python.exe main.py --term-search 春节
 ```
 
-`--production-self-check` 会重新运行五套 DOCX 回填样例，并从真实审校表生成一段可播放英文 WAV，而不是只检查文件是否存在。
+`--production-self-check` 会重新运行五套 DOCX 回填样例，并从已审校表格生成一段可播放英文 WAV，同时检查生成文件内容。
 
 ## 当前验收基线
 

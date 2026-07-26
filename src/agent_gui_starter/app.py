@@ -102,7 +102,7 @@ PAGE_META = {
     "agent": ("翻译文字", "快速翻译、精译与多模型精译"),
     "terms": ("查文化术语", "统一文化术语译法"),
     "workflow": ("批量处理", "一次处理多个素材"),
-    "showcase": ("看完整成果", "查看完整能力与真实成品"),
+    "showcase": ("看完整成果", "查看完整能力与可交付成品"),
     "outputs": ("找成品", "查看已生成的文件"),
     "settings": ("模型接口", "连接在线模型或本机模型服务"),
 }
@@ -764,7 +764,7 @@ class StartDropZone(QFrame):
         formats.setObjectName("DropFormats")
         formats.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        privacy = QLabel("文件默认保留在本机；未配置在线模型时仍可打开完整示例。")
+        privacy = QLabel("文件默认保留在本机；文件提取、术语检索和版式回填无需模型连接。")
         privacy.setObjectName("DropPrivacy")
         privacy.setWordWrap(True)
 
@@ -1172,12 +1172,12 @@ class MainWindow(QMainWindow):
         first_layout.setSpacing(18)
         sample_text = QVBoxLayout()
         sample_text.setSpacing(4)
-        sample_title = QLabel("不知道从哪里开始？先看一个完整示例")
+        sample_title = QLabel("使用内置测试素材熟悉完整处理流程")
         sample_title.setObjectName("SampleTitle")
         sample_description = QLabel("点开就能看到原文、译文、Word 版式和英文配音，不需要先配置密钥。")
         sample_description.setObjectName("SampleDescription")
         sample_description.setWordWrap(True)
-        sample_button = QPushButton("立即体验示例")
+        sample_button = QPushButton("载入测试素材")
         sample_button.setObjectName("SampleButton")
         sample_button.setIcon(make_icon("play", "#C96F4B", 16))
         sample_button.clicked.connect(self._open_beginner_example)
@@ -1397,7 +1397,7 @@ class MainWindow(QMainWindow):
         evidence_box = QVBoxLayout()
         evidence_box.setContentsMargins(0, 0, 0, 0)
         evidence_box.setSpacing(2)
-        evidence_title = QLabel("示例与资料已准备好")
+        evidence_title = QLabel("测试素材与资料已准备好")
         evidence_title.setObjectName("ReadinessTitle")
         evidence = QLabel("71 条图文审校清单 · 文化术语与风格约束 · 5 套 DOCX · 音频、表格与二维码样例")
         evidence.setObjectName("ReadinessSummary")
@@ -1486,7 +1486,7 @@ class MainWindow(QMainWindow):
         status_layout.setSpacing(9)
 
         preview_header = QHBoxLayout()
-        status_title = QLabel("真实成品预览")
+        status_title = QLabel("成品预览")
         status_title.setObjectName("HeroStatusTitle")
         preview_proof = QLabel("17 PAGES  ·  REVIEWED")
         preview_proof.setObjectName("HeroPreviewProof")
@@ -1659,7 +1659,7 @@ class MainWindow(QMainWindow):
         sample_layout.setContentsMargins(22, 20, 22, 20)
         sample_layout.setSpacing(8)
         sample_header = QHBoxLayout()
-        sample_kicker = QLabel("完整示例")
+        sample_kicker = QLabel("测试素材")
         sample_kicker.setObjectName("StudioSampleKicker")
         sample_proof = QLabel("17 页 · 已审校")
         sample_proof.setObjectName("StudioSampleProof")
@@ -1668,7 +1668,7 @@ class MainWindow(QMainWindow):
         sample_header.addWidget(sample_proof)
         sample_layout.addLayout(sample_header)
 
-        sample_title = QLabel("先看一份真实译成品")
+        sample_title = QLabel("先看一份已审校译成品")
         sample_title.setObjectName("StudioSampleTitle")
         sample_description = QLabel("从中文原稿、图文替换到英文 Word，完整保留版式与审校记录。")
         sample_description.setObjectName("StudioSampleDescription")
@@ -1707,7 +1707,7 @@ class MainWindow(QMainWindow):
 
         sample_actions = QHBoxLayout()
         sample_actions.setSpacing(8)
-        sample_button = QPushButton("打开完整示例")
+        sample_button = QPushButton("载入测试素材")
         sample_button.setObjectName("StudioSampleButton")
         sample_button.setIcon(make_icon("play", "#FFFFFF", 16))
         sample_button.clicked.connect(self._open_beginner_example)
@@ -1813,9 +1813,9 @@ class MainWindow(QMainWindow):
         online_layout.setSpacing(0)
         online_intro = QVBoxLayout()
         online_intro.setSpacing(2)
-        online_kicker = QLabel("两种运行方式，一套成品链路")
+        online_kicker = QLabel("每项能力都标明实际运行条件")
         online_kicker.setObjectName("StudioOnlineKicker")
-        online_title = QLabel("先离线演示，再连接自己的模型真实处理")
+        online_title = QLabel("本机处理与模型处理，各自负责明确环节")
         online_title.setObjectName("StudioOnlineTitle")
         online_detail = QLabel("模型只负责智能处理，人工审校与文件回填始终保留。")
         online_detail.setObjectName("StudioOnlineDetail")
@@ -1824,8 +1824,8 @@ class MainWindow(QMainWindow):
         online_intro.addWidget(online_detail)
         online_layout.addLayout(online_intro, 3)
         for icon_name, title_text, detail_text, color in (
-            ("circle-check", "不接 API", "打开完整成品、提取和回填 Word、检索术语、本机配音", "#496F82"),
-            ("plug", "连接模型 API", "真实翻译文字与 Word，识别图片，转写音频并优先在线配音", "#B9563B"),
+            ("circle-check", "本机直接处理", "打开成品、提取和回填 Word、检索术语、本机配音", "#496F82"),
+            ("plug", "模型连接后", "翻译文字与 Word、识别图片、转写音频并优先在线配音", "#B9563B"),
             ("route", "连接 Coze", "运行 18 节点多模型精译，让重要译文经过独立初译和互评", "#2F7567"),
         ):
             item = QWidget()
@@ -1955,7 +1955,7 @@ class MainWindow(QMainWindow):
         stage_row.addStretch(1)
         intro_text.addLayout(stage_row)
         intro_layout.addLayout(intro_text, 1)
-        example_button = QPushButton("打开示例任务")
+        example_button = QPushButton("载入测试素材")
         example_button.setObjectName("SecondaryButton")
         example_button.setIcon(make_icon("clipboard-check", "#4F8274"))
         example_button.clicked.connect(self._load_production_example)
@@ -2324,13 +2324,13 @@ class MainWindow(QMainWindow):
         guide_copy.addWidget(self._agent_mode_title)
         guide_copy.addWidget(self._agent_mode_detail)
         guide_copy.addWidget(self._agent_mode_proof)
-        self._coze_demo_button = QPushButton("演示这套流程")
-        self._coze_demo_button.setObjectName("GuideAction")
-        self._coze_demo_button.setIcon(make_icon("play", "#3E8D7B", 15))
-        self._coze_demo_button.clicked.connect(self._show_coze_demo)
+        self._coze_details_button = QPushButton("查看工作流配置")
+        self._coze_details_button.setObjectName("GuideAction")
+        self._coze_details_button.setIcon(make_icon("route", "#3E8D7B", 15))
+        self._coze_details_button.clicked.connect(self._show_coze_workflow_details)
         guide_layout.addWidget(self._agent_mode_icon)
         guide_layout.addLayout(guide_copy, 1)
-        guide_layout.addWidget(self._coze_demo_button)
+        guide_layout.addWidget(self._coze_details_button)
         layout.addWidget(self._agent_mode_guide)
 
         self._agent_title = QLineEdit()
@@ -2349,7 +2349,7 @@ class MainWindow(QMainWindow):
         clear = QPushButton("清空")
         clear.setObjectName("TextButton")
         clear.clicked.connect(self._clear_agent_input)
-        example = QPushButton("载入示例")
+        example = QPushButton("填入测试文本")
         example.setObjectName("TextButton")
         example.clicked.connect(self._insert_translation_example)
         self._agent_run_button = QPushButton("生成译文")
@@ -2498,7 +2498,7 @@ class MainWindow(QMainWindow):
         command_hint.setObjectName("WorkflowPanelHint")
         self._workflow_input = QPlainTextEdit()
         self._workflow_input.setObjectName("WorkflowInput")
-        self._workflow_input.setPlaceholderText("例如：检查文化术语一致性，生成可供课堂演示的最终交付清单。")
+        self._workflow_input.setPlaceholderText("例如：检查文化术语一致性，并生成最终交付清单。")
         self._workflow_input.setMaximumHeight(84)
         self._workflow_input.setLineWrapMode(QPlainTextEdit.LineWrapMode.WidgetWidth)
         self._workflow_run_button = QPushButton("开始批量处理")
@@ -2664,17 +2664,17 @@ class MainWindow(QMainWindow):
         hero_subtitle.setWordWrap(True)
         hero_actions = QHBoxLayout()
         hero_actions.setSpacing(9)
-        demo_button = QPushButton("开始现场演示")
-        demo_button.setObjectName("ShowcasePrimary")
-        demo_button.setIcon(make_icon("play", "#FFFFFF", 17))
-        demo_button.clicked.connect(self._open_beginner_example)
+        sample_button = QPushButton("载入测试素材")
+        sample_button.setObjectName("ShowcasePrimary")
+        sample_button.setIcon(make_icon("folder-open", "#FFFFFF", 17))
+        sample_button.clicked.connect(self._open_beginner_example)
         final_button = QPushButton("打开最终文档")
         final_button.setObjectName("ShowcaseSecondary")
         final_button.setIcon(make_icon("file-text", "#327568", 17))
         final_button.clicked.connect(
             lambda: self._open_known_path(image_root / "中国文化知识百科_图文英文回填终版.docx")
         )
-        hero_actions.addWidget(demo_button)
+        hero_actions.addWidget(sample_button)
         hero_actions.addWidget(final_button)
         hero_actions.addStretch(1)
         hero_copy.addWidget(hero_eyebrow)
@@ -2757,9 +2757,9 @@ class MainWindow(QMainWindow):
         coze_detail.setWordWrap(True)
         coze_copy.addWidget(coze_title)
         coze_copy.addWidget(coze_detail)
-        coze_badge = QLabel("Coze 真实配置  ·  18 个节点  ·  28 条连接  ·  图结构校验通过")
+        coze_badge = QLabel("Coze 工作流配置  ·  18 个节点  ·  28 条连接  ·  图结构校验通过")
         coze_badge.setObjectName("CozeHighlightBadge")
-        coze_action = QPushButton("查看流程演示")
+        coze_action = QPushButton("查看工作流配置")
         coze_action.setObjectName("CozeHighlightAction")
         coze_action.setIcon(make_icon("play", "#3E8D7B", 15))
         coze_action.clicked.connect(self._open_coze_showcase)
@@ -2841,7 +2841,7 @@ class MainWindow(QMainWindow):
         evidence_layout.setSpacing(10)
         evidence_text = QVBoxLayout()
         evidence_text.setSpacing(2)
-        evidence_title = QLabel("现场可验证，不依赖演示话术")
+        evidence_title = QLabel("成品可直接核验")
         evidence_title.setObjectName("EvidenceTitle")
         evidence_detail = QLabel("直接打开成品、审校表、配音和验收记录。")
         evidence_detail.setObjectName("EvidenceDetail")
@@ -2902,7 +2902,7 @@ class MainWindow(QMainWindow):
         hero_copy.setSpacing(4)
         hero_kicker = QLabel("YOUR MODEL  /  YOUR DATA")
         hero_kicker.setObjectName("ApiHeroKicker")
-        hero_title = QLabel("连接你自己的模型，开启真实在线处理")
+        hero_title = QLabel("连接模型服务，启用在线处理")
         hero_title.setObjectName("ApiHeroTitle")
         hero_body = QLabel(
             "配置只保存在这台电脑。连接后，文字精译、图片识别、Word 批量翻译、"
@@ -2929,7 +2929,7 @@ class MainWindow(QMainWindow):
         capability_layout.setSpacing(0)
         self._api_capability_values: list[QLabel] = []
         capabilities = (
-            ("languages", "文字与 Word", "真实翻译与精译", "#B9563B"),
+            ("languages", "文字与 Word", "翻译与精译", "#B9563B"),
             ("image", "图片理解", "识别图中文字", "#496F82"),
             ("audio-lines", "音频能力", "转写与英文配音", "#98723D"),
             ("route", "Coze 工作流", "多模型交叉评议", "#2F7567"),
@@ -3039,7 +3039,7 @@ class MainWindow(QMainWindow):
         coze_layout.addWidget(self._api_card_title("接入 Coze 多模型精译工作流"))
         coze_intro = QLabel(
             "接入后会在线运行术语识别、三路模型初译、交叉评议与终稿融合。"
-            "不配置也能查看完整离线演示。"
+            "未连接时仅显示工作流结构与配置状态，不生成译文。"
         )
         coze_intro.setObjectName("ApiCardDescription")
         coze_intro.setWordWrap(True)
@@ -3116,7 +3116,7 @@ class MainWindow(QMainWindow):
         usage_intro.setSpacing(3)
         usage_kicker = QLabel("连接成功后")
         usage_kicker.setObjectName("ApiCardKicker")
-        usage_title = QLabel("同一个接口，进入四条真实生产链")
+        usage_title = QLabel("同一个接口，进入四条生产链")
         usage_title.setObjectName("ApiUsageTitle")
         usage_detail = QLabel(
             "无需在每个页面重复选择模型。新任务会自动读取这里的配置，"
@@ -3313,7 +3313,7 @@ class MainWindow(QMainWindow):
         self._config = load_config()
         self._api_key_input.clear()
         self._coze_token_input.clear()
-        self._api_config_result.setText("本机密钥已清除。离线提取、回填与演示仍可继续使用。")
+        self._api_config_result.setText("本机密钥已清除。文件提取、回填、术语检索与本机语音仍可继续使用。")
         self._refresh_from_scan()
 
     def _update_api_settings_status(self) -> None:
@@ -3326,10 +3326,10 @@ class MainWindow(QMainWindow):
         self._api_hero_status.style().unpolish(self._api_hero_status)
         self._api_hero_status.style().polish(self._api_hero_status)
         values = (
-            "已启用真实调用" if model_online else "连接后启用",
+            "已启用模型调用" if model_online else "连接后启用",
             "按所选模型能力" if model_online else "连接视觉模型后启用",
             "在线优先 / 本机回退" if model_online else "本机配音可用",
-            "已连接" if coze_online else "离线演示可用",
+            "已连接" if coze_online else "等待连接",
         )
         for label, value in zip(self._api_capability_values, values):
             label.setText(value)
@@ -3725,11 +3725,11 @@ class MainWindow(QMainWindow):
         if audio_review.exists():
             self._audio_review.setText(str(audio_review))
         self._production_output.set_output(
-            "# 完整示例已载入\n\n"
-            "文档和音频字段已连接到项目真实交付样例。可直接执行 DOCX 回填或英文语音合成；"
+            "# 测试素材已载入\n\n"
+            "文档和音频字段已连接到项目已有测试文件。可直接执行 DOCX 回填或英文语音合成；"
             "智能翻译与音频识别会使用已配置的在线模型通道。"
         )
-        self.statusBar().showMessage("已载入完整生产示例", 4000)
+        self.statusBar().showMessage("已载入测试素材", 4000)
 
     def _run_docx_extract(self) -> None:
         source = self._docx_source.text().strip()
@@ -4000,12 +4000,12 @@ class MainWindow(QMainWindow):
             self._studio_status_text.setText("在线模型与本机流程已就绪" if online else "本机流程已就绪")
         if online:
             self._agent_state_text.setText(
-                f"{'、'.join(providers)} 已连接。粘贴中文后即可生成真实译文。"
+                f"{'、'.join(providers)} 已连接。粘贴中文后即可生成译文。"
             )
         else:
             self._agent_state_text.setText(
-                "还没有配置在线密钥。Word 回填和英文配音照常可用；"
-                "想先了解多模型精译，可以直接打开 Coze 工作流的完整离线演示。"
+                "当前未连接文本模型。术语检索、Word 提取与回填仍可直接使用；"
+                "翻译新内容前，请在“模型接口”连接服务并完成测试。"
             )
         self._agent_state_dot.setProperty("connected", online)
         self._agent_state_dot.style().unpolish(self._agent_state_dot)
@@ -4034,7 +4034,7 @@ class MainWindow(QMainWindow):
         checked = self._agent_modes.checkedButton()
         mode = str(checked.property("mode")) if checked is not None else "agent"
         if mode == "coze_workflow" and not self._config.has_coze_workflow:
-            self._show_coze_demo()
+            self._show_coze_workflow_details()
             return
         title = self._agent_title.text().strip()
         prompt = self._agent_input.toPlainText()
@@ -4063,7 +4063,7 @@ class MainWindow(QMainWindow):
                 "#E69063",
                 "Coze 多模型精译工作流",
                 "它会先找出文化术语和文体要求，再让 Kimi、DeepSeek、豆包分别翻译、互相评议，最后由 GLM 合成终稿。",
-                "真实工作流 · 18 个节点 · 28 条连接 · 图结构校验通过",
+                "已校验工作流 · 18 个节点 · 28 条连接 · 图结构校验通过",
             ),
         }
         icon_name, color, title, detail, proof = guides.get(mode, guides["agent"])
@@ -4075,51 +4075,46 @@ class MainWindow(QMainWindow):
         self._agent_mode_guide.setProperty("featured", is_coze)
         self._agent_mode_guide.style().unpolish(self._agent_mode_guide)
         self._agent_mode_guide.style().polish(self._agent_mode_guide)
-        self._coze_demo_button.setVisible(is_coze)
+        self._coze_details_button.setVisible(is_coze)
         if is_coze:
             self._agent_run_button.setText(
-                "运行多模型精译" if self._config.has_coze_workflow else "查看离线演示"
+                "运行多模型精译" if self._config.has_coze_workflow else "查看连接要求"
             )
         elif mode == "default_workflow":
             self._agent_run_button.setText("开始精译")
         else:
             self._agent_run_button.setText("生成译文")
 
-    def _show_coze_demo(self) -> None:
+    def _show_coze_workflow_details(self) -> None:
         for button in self._agent_modes.buttons():
             if button.property("mode") == "coze_workflow":
                 button.setChecked(True)
                 break
         self._update_agent_mode_guide("coze_workflow")
-        self._agent_title.setText("端午节儿童故事")
-        self._agent_input.setPlainText(
-            "端午节这天，孩子们把香囊挂在胸前，和家人一起看龙舟。"
-            "请译成自然、生动、适合儿童朗读的英文。"
-        )
+        connection_status = "已连接，可运行" if self._config.has_coze_workflow else "尚未连接"
         self._agent_output.set_output(
-            "# 多模型精译流程演示\n\n"
-            "**演示状态**：根据仓库中的真实 Coze 工作流配置离线还原，未发起网络请求。\n\n"
-            "## 这套流程做了什么\n\n"
+            "# 多模型精译工作流配置\n\n"
+            f"**连接状态**：{connection_status}。本页仅显示已校验配置，尚未执行翻译。\n\n"
+            "## 已校验的处理结构\n\n"
             "1. **文化术语提取**：识别“端午节、香囊、龙舟”，优先采用术语库中的统一译法。\n"
             "2. **读者与风格判断**：目标读者是儿童，要求句子短、画面感清楚、适合朗读。\n"
             "3. **三路独立初译**：Kimi、DeepSeek、豆包分别给出译文，避免单一模型偏差。\n"
             "4. **交叉评估与辩论**：三路模型比较文化准确性、自然度和儿童语气。\n"
             "5. **融合终稿**：GLM 汇总术语、风格和互评意见，只输出可供人工审校的英文。\n\n"
-            "## 示例终稿\n\n"
-            "On the Dragon Boat Festival, children wear fragrant sachets and watch the dragon boat races "
-            "with their families.\n\n"
             "## 可验证证据\n\n"
-            "- 工作流 ID：`7661678571702747178`\n"
+            f"- 工作流 ID：`{self._config.coze_workflow_id or '未配置'}`\n"
             "- 结构：18 个节点、28 条连接、3 个代码聚合节点\n"
             "- 校验：起点与终点连通，代码节点样例全部通过\n"
             "- 知识库：已接入中国文化术语库\n\n"
-            "> 配置 Coze Token 后，“查看离线演示”会变为“运行多模型精译”，直接执行线上工作流。"
+            "## 下一步\n\n"
+            "在左下角“模型接口”填写 Coze Token，保存后回到这里输入待翻译正文；"
+            "只有平台返回成功结果后，译文才会显示在此处。"
         )
-        self.statusBar().showMessage("已打开 Coze 多模型精译工作流离线演示", 5000)
+        self.statusBar().showMessage("已显示 Coze 工作流配置与连接状态", 5000)
 
     def _open_coze_showcase(self) -> None:
         self._switch_page("agent")
-        self._show_coze_demo()
+        self._show_coze_workflow_details()
 
     def _clear_agent_input(self) -> None:
         self._agent_title.clear()
@@ -4132,12 +4127,11 @@ class MainWindow(QMainWindow):
             "请译成自然、生动、适合儿童朗读的英文。"
         )
         self._agent_output.set_output(
-            "### 示例译文\n\n"
-            "On the Dragon Boat Festival, children wear fragrant sachets and watch the dragon boat races "
-            "with their families.\n\n"
-            "**表达说明**：保留节日名称与“香囊”“龙舟”的文化信息，句子简短，适合儿童朗读。"
+            "### 测试文本已填入\n\n"
+            "**尚未执行翻译。** 请选择翻译模式并点击运行；"
+            "系统只会显示模型服务或 Coze 工作流实际返回的译文。"
         )
-        self.statusBar().showMessage("翻译示例已载入，可以修改中文或直接查看结果", 5000)
+        self.statusBar().showMessage("测试文本已填入，等待执行翻译", 5000)
 
     def _run_group_adapter(self) -> None:
         self._start_job(f"adapter:{self._active_group}", self._group_query.text(), allow_empty=True)

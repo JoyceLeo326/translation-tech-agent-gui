@@ -47,6 +47,17 @@ class _FakeOpenAI:
 
 
 class ModelApiTests(unittest.TestCase):
+    def test_unconfigured_model_refuses_to_fabricate_translation(self) -> None:
+        client = AgentClient(
+            _config(
+                openai_api_key=None,
+                openai_base_url="https://api.openai.com/v1",
+            )
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "未执行翻译"):
+            client.run("system", "待翻译正文")
+
     def test_local_compatible_api_does_not_require_key(self) -> None:
         fake_module = types.SimpleNamespace(OpenAI=_FakeOpenAI)
         with patch.dict(sys.modules, {"openai": fake_module}):

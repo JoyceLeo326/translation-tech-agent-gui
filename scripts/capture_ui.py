@@ -26,7 +26,7 @@ def capture_all(output_dir: Path) -> None:
     page_setups = {
         "overview": lambda: None,
         "production": window._load_production_example,
-        "agent": window._show_coze_demo,
+        "agent": window._show_coze_workflow_details,
         "terms": window._search_terms_now,
         "workflow": lambda: None,
         "showcase": lambda: None,

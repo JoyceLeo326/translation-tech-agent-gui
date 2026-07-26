@@ -4,14 +4,14 @@ const galleryItems = {
     alt: "译述开始页面",
     kicker: "开始",
     title: "把素材交给译述，系统自动进入对应流程",
-    description: "图片、Word、音频或视频都可以直接选择，完整示例与真实成果在首页即可打开。",
+    description: "图片、Word、音频或视频都可以直接选择，测试素材与已有成果在首页即可打开。",
   },
   production: {
     image: "./assets/workbench-production.png",
     alt: "译述文件翻译页面",
     kicker: "文件翻译",
     title: "图片、Word 与音视频共享同一套审校逻辑",
-    description: "真实测试文件、审校表与回填按钮已经接入，不需要使用者手动寻找项目目录。",
+    description: "测试文件、审校表与回填按钮已经接入，不需要使用者手动寻找项目目录。",
   },
   agent: {
     image: "./assets/workbench-agent.png",

@@ -44,9 +44,10 @@ class AgentClient:
 
     def run(self, system_prompt: str, user_prompt: str) -> AgentResponse:
         if self._client is None:
-            return AgentResponse(
-                text=self._fallback_response(system_prompt, user_prompt),
-                source="local-fallback",
+            raise RuntimeError(
+                "未执行翻译：当前没有可用的文本模型连接。"
+                "请打开左下角“模型接口”，连接在线 API、Ollama 或 LM Studio，"
+                "保存并测试成功后再运行。"
             )
 
         text = self._create_text_response(system_prompt, user_prompt, temperature=0.2)
@@ -200,22 +201,6 @@ class AgentClient:
             temperature=temperature,
         )
         return _extract_response_text(response)
-
-    @staticmethod
-    def _fallback_response(system_prompt: str, user_prompt: str) -> str:
-        preview = user_prompt.strip().replace("\r\n", "\n")
-        if len(preview) > 800:
-            preview = preview[:800].rstrip() + "..."
-
-        return (
-            "当前没有连接模型接口，所以返回可演示的本地结果。\n\n"
-            "系统提示：\n"
-            f"{system_prompt.strip()}\n\n"
-            "用户输入：\n"
-            f"{preview}\n\n"
-            "在左下角打开“模型接口”并保存配置后，这里会替换为真实模型输出。"
-        )
-
 
 def _extract_response_text(response: object) -> str:
     output_text = getattr(response, "output_text", None)
