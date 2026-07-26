@@ -45,7 +45,7 @@ const galleryItems = {
     image: "./assets/workbench-settings.png",
     alt: "译述模型接口配置页面",
     kicker: "模型接口",
-    title: "连接自己的 API，让离线演示切换为真实在线处理",
+    title: "连接自己的 API，启用在线模型处理",
     description: "支持 OpenAI、Ollama、LM Studio、其他兼容服务和 Coze；密钥只保存在 Windows 本机。",
   },
 };
