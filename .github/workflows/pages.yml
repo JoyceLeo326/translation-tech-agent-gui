@@ -1,0 +1,85 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/pages.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Verify the static display
+        shell: python
+        run: |
+          from html.parser import HTMLParser
+          from pathlib import Path
+          from urllib.parse import urlparse
+
+          root = Path("web")
+          index = root / "index.html"
+          assert index.is_file(), "web/index.html is missing"
+
+          class LocalAssetParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.paths = []
+
+              def handle_starttag(self, _tag, attrs):
+                  for key, value in attrs:
+                      if key in {"href", "src"} and value:
+                          parsed = urlparse(value)
+                          if not parsed.scheme and not parsed.netloc and not value.startswith(("#", "/")):
+                              self.paths.append(parsed.path)
+
+          parser = LocalAssetParser()
+          parser.feed(index.read_text(encoding="utf-8"))
+          missing = sorted({path for path in parser.paths if not (root / path).is_file()})
+          assert not missing, f"missing local assets: {missing}"
+          assert (root / "app.js").is_file()
+          assert (root / "styles.css").is_file()
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload static display
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

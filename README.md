@@ -13,7 +13,7 @@
 | 目标 | 推荐入口 | 适合场景 |
 | --- | --- | --- |
 | 直接处理真实文件 | [Windows v1.4.1 发布包](https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.4.1/Yishu-v1.4.1-windows-x64.zip) | 图片、Word、音视频、术语库、审校与最终导出 |
-| 先了解产品全貌 | [在线展示页](https://yishu-translation-studio.vercel.app) | 浏览完整流程、界面与能力边界，不上传文件 |
+| 先了解产品全貌 | [Vercel 在线展示](https://yishu-translation-studio.vercel.app) · [GitHub Pages 备用入口](https://joyceleo326.github.io/translation-tech-agent-gui/) | 浏览完整流程、界面与能力边界，不上传文件；一个入口网络不畅时可切换另一个 |
 | 跟随完整演示 | [操作视频](https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.4.0/Yishu-v1.4.0-demo.mp4) | 依次查看首页、模型配置、四类任务和成果验收 |
 | 二次开发或复核 | 本仓库源码 | 检查处理链、运行测试、重建交付区或打包 EXE |
 
@@ -38,6 +38,7 @@ Yishu\Yishu.exe
 - [下载 Windows v1.4.1 完整版](https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.4.1/Yishu-v1.4.1-windows-x64.zip)
 - [观看完整操作视频（MP4）](https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.4.0/Yishu-v1.4.0-demo.mp4)
 - [打开 Vercel 在线展示页](https://yishu-translation-studio.vercel.app)
+- [打开 GitHub Pages 备用展示页](https://joyceleo326.github.io/translation-tech-agent-gui/)
 
 下载发布包后，可同时下载同一 Release 中的 `.sha256` 文件，并在 PowerShell 里运行 `Get-FileHash .\Yishu-v1.4.1-windows-x64.zip -Algorithm SHA256` 核对完整性。哈希不一致时不要运行压缩包。
 
