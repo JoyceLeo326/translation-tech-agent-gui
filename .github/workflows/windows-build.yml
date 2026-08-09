@@ -30,8 +30,23 @@ jobs:
       - name: Install dependencies
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
           Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-          choco install ffmpeg --yes --no-progress
+          $ffmpegReady = $false
+          foreach ($attempt in 1..3) {
+            choco install ffmpeg --yes --no-progress
+            if ($LASTEXITCODE -eq 0 -and (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+              $ffmpegReady = $true
+              break
+            }
+            if ($attempt -lt 3) {
+              Start-Sleep -Seconds (10 * $attempt)
+            }
+          }
+          if (-not $ffmpegReady) {
+            throw "FFmpeg installation failed after 3 attempts."
+          }
+          ffmpeg -version | Select-Object -First 1
           .\scripts\setup_env.ps1
 
       - name: Run smoke checks
