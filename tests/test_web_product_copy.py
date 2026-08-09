@@ -32,3 +32,8 @@ def test_readme_offers_primary_and_backup_display_entries() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "https://yishu-translation-studio.vercel.app" in readme
     assert "https://joyceleo326.github.io/translation-tech-agent-gui/" in readme
+
+    page = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    pages_url = "https://joyceleo326.github.io/translation-tech-agent-gui/"
+    assert f'<link rel="canonical" href="{pages_url}" />' in page
+    assert f'<meta property="og:url" content="{pages_url}" />' in page
