@@ -19,7 +19,7 @@
 | **运行平台** | Coze Coding（LangGraph 1.0 编排引擎） |
 | **核心语言** | Python 3.12 |
 | **依赖管理** | uv（pyproject.toml + uv.lock） |
-| **对接方** | 多模态翻译 App（负责人：刘佳锐） |
+| **对接方** | 多模态翻译 App（负责人：Joyce Leo） |
 
 ---
 
