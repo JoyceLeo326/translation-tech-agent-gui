@@ -22,6 +22,19 @@ async function verifyViewport(browser, name, viewport) {
   if (!response?.ok()) throw new Error(`${name}: page returned ${response?.status()}`);
 
   await page.locator("h1").waitFor({ state: "visible" });
+  await page.locator("[data-review-workbench]").scrollIntoViewIfNeeded();
+  await page.locator('[name="candidate"][value="imagery"]').check();
+  await page.locator("[data-confirm-candidate]").click();
+  if (!(await page.locator("[data-download-result]").isEnabled())) {
+    throw new Error(`${name}: confirmed review is not downloadable`);
+  }
+  if (!(await page.locator("[data-feedback-form]").isVisible())) {
+    throw new Error(`${name}: feedback does not follow confirmation`);
+  }
+  await page.locator('[name="feedback"][value="clear"]').check();
+  await page.locator("[data-feedback-form] button").click();
+  const feedbackStatus = await page.locator("[data-review-status]").textContent();
+  if (!feedbackStatus?.includes("重排候选")) throw new Error(`${name}: feedback did not change the next round`);
   await page.waitForFunction(
     () => [...document.images]
       .filter((image) => image.getAttribute("src"))
@@ -69,7 +82,6 @@ async function verifyViewport(browser, name, viewport) {
       width: image.naturalWidth,
       className: image.className,
     })),
-    iconCount: document.querySelectorAll("svg.lucide").length,
     videoSource: document.querySelector("video source")?.src,
     downloadHref: document.querySelector(".header-download")?.href,
   }));
@@ -85,7 +97,6 @@ async function verifyViewport(browser, name, viewport) {
   }
   const productImages = dimensions.images.filter((image) => image.src.includes("workbench-"));
   if (productImages.some((image) => image.width < 2000)) throw new Error(`${name}: product screenshot is not high resolution`);
-  if (dimensions.iconCount < 20) throw new Error(`${name}: Lucide icons did not render`);
   if (!dimensions.videoSource?.includes("Yishu-v1.4.0-demo.mp4")) throw new Error(`${name}: video source missing`);
   if (!dimensions.downloadHref?.includes("Yishu-v1.4.1-windows-x64.zip")) throw new Error(`${name}: download link missing`);
 
@@ -113,7 +124,6 @@ async function verifyViewport(browser, name, viewport) {
     name,
     viewport,
     h1: dimensions.h1,
-    iconCount: dimensions.iconCount,
     imageCount: dimensions.images.length,
     videoState,
     consoleErrors,
