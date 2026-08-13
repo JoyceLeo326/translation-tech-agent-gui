@@ -37,3 +37,49 @@ def test_readme_offers_primary_and_backup_display_entries() -> None:
     pages_url = "https://joyceleo326.github.io/translation-tech-agent-gui/"
     assert f'<link rel="canonical" href="{pages_url}" />' in page
     assert f'<meta property="og:url" content="{pages_url}" />' in page
+
+
+def test_web_page_offers_a_complete_review_decision_journey() -> None:
+    page = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    script = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+
+    assert 'data-review-workbench' in page
+    assert 'data-source-input' in page
+    assert page.count('data-candidate=') == 3
+    assert 'data-confirm-candidate' in page
+    assert 'data-download-result' in page
+    assert 'data-feedback-form' in page
+    assert 'data-history-list' in page
+
+    assert '浏览器练习样本' in page
+    assert '不会上传文件或调用在线模型' in page
+    assert 'localStorage' in script
+    assert 'Blob' in script
+    assert 'download' in script
+
+
+def test_web_page_has_no_required_third_party_runtime() -> None:
+    page = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    assert 'unpkg.com' not in page
+    assert 'cdn.' not in page
+
+
+def test_public_web_identity_is_joyce_only() -> None:
+    public_copy = "\n".join(
+        [
+            (ROOT / "web" / "index.html").read_text(encoding="utf-8"),
+            (ROOT / "web" / "README.md").read_text(encoding="utf-8"),
+        ]
+    )
+    assert "Joyce" in public_copy
+    disallowed = "Jer" + "ry"
+    assert disallowed not in public_copy
+
+
+def test_browser_verifier_replays_review_at_both_viewports() -> None:
+    verifier = (ROOT / "scripts" / "verify_web_demo.cjs").read_text(encoding="utf-8")
+    assert '[data-confirm-candidate]' in verifier
+    assert '[data-download-result]' in verifier
+    assert '[data-feedback-form]' in verifier
+    assert '{ width: 1440, height: 1000 }' in verifier
+    assert '{ width: 390, height: 844 }' in verifier

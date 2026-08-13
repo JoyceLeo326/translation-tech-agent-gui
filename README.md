@@ -13,7 +13,7 @@
 | 目标 | 推荐入口 | 适合场景 |
 | --- | --- | --- |
 | 直接处理真实文件 | [Windows v1.4.1 发布包](https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.4.1/Yishu-v1.4.1-windows-x64.zip) | 图片、Word、音视频、术语库、审校与最终导出 |
-| 先了解产品全貌 | [GitHub Pages 在线展示](https://joyceleo326.github.io/translation-tech-agent-gui/) · [Vercel 备用入口](https://yishu-translation-studio.vercel.app) | 浏览完整流程、界面与能力边界，不上传文件；一个入口网络不畅时可切换另一个 |
+| 先做一次译文取舍 | [GitHub Pages 在线工作台](https://joyceleo326.github.io/translation-tech-agent-gui/) · [Vercel 备用入口](https://yishu-translation-studio.vercel.app) | 比较三版规则样本、确认、下载审校记录并反馈重排；浏览器不上传文件或调用在线模型 |
 | 跟随完整演示 | [操作视频](https://github.com/JoyceLeo326/translation-tech-agent-gui/releases/download/v1.4.0/Yishu-v1.4.0-demo.mp4) | 依次查看首页、模型配置、四类任务和成果验收 |
 | 二次开发或复核 | 本仓库源码 | 检查处理链、运行测试、重建交付区或打包 EXE |
 

@@ -33,8 +33,8 @@
         </span>
       </a>
       <nav aria-label="主要导航">
+        <a href="#review">亲自审校</a>
         <a href="#demo">产品导览</a>
-        <a href="#playground">玩法</a>
         <a href="#workflow">Coze 精译</a>
         <a href="#results">交付实证</a>
       </nav>
@@ -60,10 +60,7 @@
             文字、图片、Word、音视频与 Coze 多模型精译会进入在线处理。
           </p>
           <div class="hero-actions">
-            <button class="primary-action" type="button" data-play-demo>
-              <i data-lucide="play" aria-hidden="true"></i>
-              查看处理全流程
-            </button>
+            <a class="primary-action" href="#review">亲自比较三版译文</a>
             <a class="secondary-action" href="https://github.com/JoyceLeo326/translation-tech-agent-gui">
               <i data-lucide="github" aria-hidden="true"></i>
               查看开源仓库
@@ -76,10 +73,104 @@
             <span><i data-lucide="git-branch" aria-hidden="true"></i> GitHub 公开开源</span>
           </div>
         </div>
-        <a class="hero-next" href="#demo" aria-label="继续查看产品导览">
+        <a class="hero-next" href="#review" aria-label="开始译文审校练习">
           <span>向下了解</span>
           <i data-lucide="arrow-down" aria-hidden="true"></i>
         </a>
+      </section>
+
+      <section class="review-section section" id="review" aria-labelledby="review-title" data-review-workbench>
+        <div class="section-heading review-heading">
+          <div>
+            <p class="eyebrow">REVIEW BEFORE DELIVERY</p>
+            <h2 id="review-title">先亲自做一次译文取舍</h2>
+          </div>
+          <p>
+            输入一段中国文化介绍，比较准确、自然、保留意象三种处理，再确认、下载并留下反馈。
+            这是<strong>浏览器练习样本</strong>：规则在本机运行，不会上传文件或调用在线模型。
+          </p>
+        </div>
+
+        <div class="review-shell">
+          <form class="review-brief" data-brief-form>
+            <label for="source-input">这次要翻译的中文</label>
+            <textarea id="source-input" data-source-input rows="5">立秋之后，山里的风有了凉意。孩子们把桂花收进纸袋，带回教室观察香气从哪里来。</textarea>
+            <div class="review-context-grid">
+              <label>使用场景
+                <select data-scene-input>
+                  <option value="museum">文化展签</option>
+                  <option value="children">儿童读物</option>
+                  <option value="voice">英文配音</option>
+                </select>
+              </label>
+              <label>最重视
+                <select data-priority-input>
+                  <option value="clarity">清楚易懂</option>
+                  <option value="imagery">保留意象</option>
+                  <option value="rhythm">朗读节奏</option>
+                </select>
+              </label>
+            </div>
+            <button class="primary-action" type="submit">生成三种审校方向</button>
+            <p class="review-status" data-review-status aria-live="polite">已载入示例，可直接比较。</p>
+          </form>
+
+          <div class="review-decision">
+            <div class="candidate-toolbar">
+              <div><span class="stage-label">三版比较</span><strong>选中一版后仍可修改</strong></div>
+              <button type="button" class="text-action" data-reset-review>恢复本次示例</button>
+            </div>
+            <div class="candidate-grid" role="radiogroup" aria-label="选择译文方案">
+              <label class="candidate-card is-selected" data-candidate="clear">
+                <input type="radio" name="candidate" value="clear" checked />
+                <span class="candidate-kind">清楚版</span>
+                <strong>信息完整，适合第一次接触这个文化场景的读者</strong>
+                <p data-candidate-copy="clear"></p>
+                <small data-candidate-note="clear"></small>
+              </label>
+              <label class="candidate-card" data-candidate="natural">
+                <input type="radio" name="candidate" value="natural" />
+                <span class="candidate-kind">自然版</span>
+                <strong>英语表达更顺，适合连续阅读</strong>
+                <p data-candidate-copy="natural"></p>
+                <small data-candidate-note="natural"></small>
+              </label>
+              <label class="candidate-card" data-candidate="imagery">
+                <input type="radio" name="candidate" value="imagery" />
+                <span class="candidate-kind">意象版</span>
+                <strong>保留节气与山风的画面感</strong>
+                <p data-candidate-copy="imagery"></p>
+                <small data-candidate-note="imagery"></small>
+              </label>
+            </div>
+            <label class="final-editor" for="final-translation">确认前微调</label>
+            <textarea id="final-translation" data-final-translation rows="5"></textarea>
+            <div class="decision-actions">
+              <button class="primary-action" type="button" data-confirm-candidate>确认这版译文</button>
+              <button class="secondary-action" type="button" data-download-result disabled>下载审校记录</button>
+            </div>
+            <form class="feedback-form" data-feedback-form hidden>
+              <fieldset>
+                <legend>下一轮希望更接近哪种方向？</legend>
+                <label><input type="radio" name="feedback" value="clear" checked /> 更清楚</label>
+                <label><input type="radio" name="feedback" value="natural" /> 更自然</label>
+                <label><input type="radio" name="feedback" value="imagery" /> 更有画面</label>
+              </fieldset>
+              <label for="feedback-note">补充一句（可选）</label>
+              <input id="feedback-note" data-feedback-note maxlength="120" placeholder="例如：给 8—10 岁孩子读，句子再短一点" />
+              <button class="secondary-action" type="submit">保存反馈并重排候选</button>
+            </form>
+          </div>
+        </div>
+
+        <aside class="review-history" aria-labelledby="history-title">
+          <div>
+            <p class="eyebrow">LOCAL REVIEW HISTORY</p>
+            <h3 id="history-title">本机审校记录</h3>
+          </div>
+          <ol data-history-list><li class="empty-history">还没有确认记录。完成一次选择后会显示在这里。</li></ol>
+          <button class="text-action" type="button" data-clear-history>清空本机记录</button>
+        </aside>
       </section>
 
       <section class="demo-section section" id="demo" aria-labelledby="demo-title">
@@ -355,7 +446,6 @@
       </a>
     </footer>
 
-    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>
